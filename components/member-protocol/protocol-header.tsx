@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FlaskConical } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { AppNavigation } from "@/components/navigation/app-navigation";
 
 export function ProtocolHeader() {
   return (
@@ -10,10 +10,7 @@ export function ProtocolHeader() {
         <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm"><FlaskConical className="size-5" aria-hidden="true" /></span>
         <span className="text-xl font-bold tracking-[-0.03em]">PepPilot</span>
       </Link>
-      <nav className="flex items-center gap-1" aria-label="Protocol navigation">
-        <Button variant="ghost" size="sm" asChild><Link href="/protocols">My protocols</Link></Button>
-        <Button variant="outline" size="sm" asChild><Link href="/templates">Templates</Link></Button>
-      </nav>
+      <AppNavigation />
     </header>
   );
 }

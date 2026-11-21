@@ -12,11 +12,12 @@ import { getPublishedProtocolTemplateVersionById } from "@/lib/protocol-template
 
 export const metadata: Metadata = { title: "New private protocol" };
 
-type NewProtocolPageProps = { searchParams: Promise<{ templateVersion?: string }> };
+type NewProtocolPageProps = { searchParams: Promise<{ onboarding?: string; templateVersion?: string }> };
 
 export default async function NewProtocolPage({ searchParams }: NewProtocolPageProps) {
   await requireActor();
-  const { templateVersion } = await searchParams;
+  const { onboarding, templateVersion } = await searchParams;
+  const inOnboarding = onboarding === "1";
   const [catalogue, source] = await Promise.all([
     getCatalogueEntries(),
     templateVersion ? getPublishedProtocolTemplateVersionById(templateVersion) : null,
@@ -46,7 +47,7 @@ export default async function NewProtocolPage({ searchParams }: NewProtocolPageP
     <main className="min-h-screen bg-secondary/20">
       <ProtocolHeader />
       <section className="mx-auto w-full max-w-5xl px-5 pb-16 pt-8 sm:px-8 lg:px-10">
-        <Button variant="ghost" size="sm" asChild><Link href={source ? `/templates/${source.slug}` : "/protocols"}><ArrowLeft className="size-4" aria-hidden="true" />Back</Link></Button>
+        <Button variant="ghost" size="sm" asChild><Link href={inOnboarding ? "/onboarding/protocols" : source ? `/templates/${source.slug}` : "/protocols"}><ArrowLeft className="size-4" aria-hidden="true" />Back</Link></Button>
         <div className="mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">Private draft</p>
           <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em]">{source ? "Copy and customise template" : "Create custom protocol"}</h1>
@@ -55,6 +56,7 @@ export default async function NewProtocolPage({ searchParams }: NewProtocolPageP
             <ProtocolForm
               catalogue={catalogue.map(({ id, displayName }) => ({ id, displayName }))}
               initial={initial}
+              onboarding={inOnboarding}
               source={source ? { name: source.name, versionId: source.id, versionNumber: source.versionNumber } : undefined}
             />
           </div>

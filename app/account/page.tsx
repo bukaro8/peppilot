@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ExternalLink, FlaskConical, LockKeyhole, MapPin, ShieldCheck, UserRound } from "lucide-react";
+import { Compass, ExternalLink, FlaskConical, LockKeyhole, MapPin, ShieldCheck, UserRound } from "lucide-react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { AnalyticsPreferenceForm } from "@/components/profile/analytics-preference-form";
 import { InjectionSitePreferencesForm } from "@/components/injection/site-preferences-form";
+import { AppNavigation } from "@/components/navigation/app-navigation";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { Button } from "@/components/ui/button";
 import { requireCompletedProfile } from "@/lib/auth/session";
@@ -28,7 +29,7 @@ export default async function AccountPage() {
             </span>
             <span className="text-xl font-bold tracking-[-0.03em]">PepPilot</span>
           </Link>
-          <SignOutButton />
+          <div className="flex items-center gap-2"><AppNavigation /><SignOutButton /></div>
         </header>
 
         <section className="mt-12 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
@@ -42,12 +43,10 @@ export default async function AccountPage() {
                 Choose what visitors see on your public profile. Your username is permanent.
               </p>
             </div>
-            <Button className="self-start" variant="outline" asChild>
-              <Link href={`/u/${profile.username}`}>
-                View public profile
-                <ExternalLink className="size-4" aria-hidden="true" />
-              </Link>
-            </Button>
+            <div className="flex flex-col gap-2 sm:items-end">
+              <Button variant="outline" asChild><Link href="/onboarding"><Compass className="size-4" aria-hidden="true" />Guided setup</Link></Button>
+              <Button variant="ghost" asChild><Link href={`/u/${profile.username}`}>View public profile<ExternalLink className="size-4" aria-hidden="true" /></Link></Button>
+            </div>
           </div>
 
           <dl className="mt-8 grid gap-4 rounded-2xl border bg-muted/40 p-5 sm:grid-cols-2">
@@ -69,7 +68,7 @@ export default async function AccountPage() {
           <ProfileForm displayName={profile.displayName} bio={profile.bio} />
         </section>
 
-        <section className="mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
+        <section id="injection-sites" className="mt-6 scroll-mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
           <div className="grid size-12 place-items-center rounded-2xl bg-secondary text-primary">
             <ShieldCheck className="size-6" aria-hidden="true" />
           </div>

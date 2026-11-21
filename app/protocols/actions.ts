@@ -66,6 +66,7 @@ function actionError(error: unknown): MemberProtocolActionState {
 
 export async function createMemberProtocolAction(
   sourceVersionId: string | null,
+  onboarding: boolean,
   _previousState: MemberProtocolActionState,
   formData: FormData,
 ): Promise<MemberProtocolActionState> {
@@ -76,6 +77,8 @@ export async function createMemberProtocolAction(
       ? await copyPublishedTemplateToProtocol(actor, sourceVersionId, input)
       : await createMemberProtocol(actor, input);
     revalidatePath("/protocols");
+    revalidatePath("/onboarding/protocols");
+    if (onboarding) redirect("/onboarding/protocols?created=1");
     redirect(`/protocols/${result.protocolId}?created=1`);
   } catch (error) {
     return actionError(error);

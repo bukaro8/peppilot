@@ -59,13 +59,16 @@ export async function startProtocolCycleAction(formData: FormData) {
   const actor = await requireActor();
   const protocolId = String(formData.get("protocolId") ?? "");
   const startDate = String(formData.get("startDate") ?? "");
+  const onboarding = formData.get("onboarding") === "1";
   let result;
   try {
     result = await startProtocolCycle(actor, { protocolId, startDate });
   } catch (error) {
-    redirect(`/cycles/new?protocolId=${encodeURIComponent(protocolId)}&error=${encodeURIComponent(errorMessage(error))}`);
+    redirect(`/cycles/new?protocolId=${encodeURIComponent(protocolId)}${onboarding ? "&onboarding=1" : ""}&error=${encodeURIComponent(errorMessage(error))}`);
   }
   revalidatePath("/cycles");
+  revalidatePath("/onboarding/cycles");
+  if (onboarding) redirect("/onboarding/cycles?started=1");
   redirect(`/cycles/${result.cycleId}?created=1`);
 }
 

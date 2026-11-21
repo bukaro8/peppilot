@@ -79,7 +79,7 @@ export function RegistrationForm() {
 
       <Button className="w-full" size="lg" type="submit" disabled={pending}>
         {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : null}
-        {pending ? "Checking username…" : "Complete registration"}
+        {pending ? "Checking username…" : "Continue to injection sites"}
       </Button>
     </form>
   );

@@ -34,7 +34,7 @@ export async function completeRegistrationAction(
   }
 
   revalidatePath("/account");
-  redirect("/account");
+  redirect("/onboarding/sites");
 }
 
 export async function updateCommunityAnalyticsPreferenceAction(

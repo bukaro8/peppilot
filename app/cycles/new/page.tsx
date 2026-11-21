@@ -14,12 +14,13 @@ import { getMemberProtocol, MemberProtocolError } from "@/lib/member-protocol/se
 export const metadata: Metadata = { title: "Start protocol cycle" };
 
 type NewCyclePageProps = {
-  searchParams: Promise<{ error?: string; protocolId?: string }>;
+  searchParams: Promise<{ error?: string; onboarding?: string; protocolId?: string }>;
 };
 
 export default async function NewCyclePage({ searchParams }: NewCyclePageProps) {
   const actor = await requireActor();
   const query = await searchParams;
+  const inOnboarding = query.onboarding === "1";
   if (!query.protocolId) notFound();
   let protocol;
   try {
@@ -34,7 +35,7 @@ export default async function NewCyclePage({ searchParams }: NewCyclePageProps) 
     <main className="min-h-screen bg-secondary/20">
       <CycleHeader />
       <section className="mx-auto w-full max-w-3xl px-5 pb-16 pt-8 sm:px-8 lg:px-10">
-        <Button variant="ghost" size="sm" asChild><Link href={`/protocols/${protocol.id}`}><ArrowLeft className="size-4" aria-hidden="true" />Back to protocol</Link></Button>
+        <Button variant="ghost" size="sm" asChild><Link href={inOnboarding ? "/onboarding/cycles" : `/protocols/${protocol.id}`}><ArrowLeft className="size-4" aria-hidden="true" />{inOnboarding ? "Back to onboarding" : "Back to protocol"}</Link></Button>
         <div className="mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
           <CalendarPlus className="size-8 text-primary" aria-hidden="true" />
           <p className="mt-6 text-sm font-semibold uppercase tracking-wider text-primary">Independent cycle</p>
@@ -44,6 +45,7 @@ export default async function NewCyclePage({ searchParams }: NewCyclePageProps) 
           {query.error ? <div className="mt-6"><FormMessage tone="error">{query.error}</FormMessage></div> : null}
           <form action={startProtocolCycleAction} className="mt-8 space-y-6">
             <input type="hidden" name="protocolId" value={protocol.id} />
+            {inOnboarding ? <input type="hidden" name="onboarding" value="1" /> : null}
             <div className="space-y-2"><label className="text-sm font-semibold" htmlFor="cycle-start-date">Start date</label><input id="cycle-start-date" name="startDate" type="date" required className="h-12 w-full rounded-xl border bg-background px-4 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/40" /><p className="text-xs leading-5 text-muted-foreground">The planned end date is calculated from the saved {protocol.durationDays}-day duration.</p></div>
             <Button type="submit" size="lg">Start active cycle</Button>
           </form>

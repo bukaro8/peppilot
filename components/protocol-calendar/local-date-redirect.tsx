@@ -9,7 +9,7 @@ export function LocalDateRedirect({ path }: { path: string }) {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60_000;
     const date = new Date(now.valueOf() - offset).toISOString().slice(0, 10);
-    router.replace(`${path}?date=${date}`);
+    router.replace(`${path}${path.includes("?") ? "&" : "?"}date=${date}`);
   }, [path, router]);
   return null;
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, CalendarPlus, Clock3, Copy, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, CalendarPlus, Clock3, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { deleteMemberProtocolAction } from "@/app/protocols/actions";
@@ -50,7 +50,7 @@ export default async function ProtocolPage({ params, searchParams }: ProtocolPag
             <div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link href={`/protocols/${protocol.id}/edit`}><Pencil className="size-4" aria-hidden="true" />Edit draft</Link></Button><Button asChild><Link href={`/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />Start cycle</Link></Button></div>
           </div>
 
-          {query.created ? <div className="mt-6"><FormMessage tone="success">Private protocol draft created.</FormMessage></div> : null}
+          {query.created ? <div className="mt-6 space-y-4"><FormMessage tone="success">Private protocol draft created. Start its first cycle or add another protocol.</FormMessage><div className="flex flex-col gap-2 sm:flex-row"><Button asChild><Link href={`/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />Start cycle</Link></Button><Button variant="outline" asChild><Link href="/protocols/new"><Plus className="size-4" aria-hidden="true" />Add another protocol</Link></Button></div></div> : null}
           {query.saved ? <div className="mt-6"><FormMessage tone="success">Protocol draft saved.</FormMessage></div> : null}
 
           {protocol.origin === "template" ? (

@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { LoaderCircle } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, LoaderCircle } from "lucide-react";
 
 import {
   updateInjectionSitePreferencesAction,
@@ -12,8 +13,10 @@ import { FormMessage } from "@/components/ui/form-message";
 import { injectionSites, type InjectionSiteId } from "@/lib/injection/sites";
 
 export function InjectionSitePreferencesForm({
+  continueHref,
   disabledSiteIds,
 }: {
+  continueHref?: string;
   disabledSiteIds: InjectionSiteId[];
 }) {
   const [state, action, pending] = useActionState(
@@ -30,7 +33,10 @@ export function InjectionSitePreferencesForm({
         {regions.map((region) => <section key={region} className="rounded-2xl border bg-muted/25 p-4"><h3 className="font-semibold">{region}</h3><div className="mt-3 space-y-2">{injectionSites.filter((site) => site.region === region).map((site) => <label key={site.id} className="flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm hover:bg-background"><input type="checkbox" name="enabledSiteIds" value={site.id} defaultChecked={!disabled.has(site.id)} className="size-4 accent-primary" /><span>{site.subzone}</span></label>)}</div></section>)}
       </fieldset>
       {state.message ? <FormMessage tone={state.status === "error" ? "error" : "success"}>{state.message}</FormMessage> : null}
-      <Button type="submit" disabled={pending}>{pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : null}{pending ? "Saving…" : "Save injection sites"}</Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Button type="submit" size={continueHref ? "lg" : "default"} disabled={pending}>{pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : null}{pending ? "Saving…" : "Save injection sites"}</Button>
+        {continueHref ? <Button type="button" size="lg" variant="outline" asChild><Link href={continueHref}>Continue to protocols<ArrowRight className="size-4" aria-hidden="true" /></Link></Button> : null}
+      </div>
     </form>
   );
 }

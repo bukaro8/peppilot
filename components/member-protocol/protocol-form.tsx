@@ -48,6 +48,7 @@ type ProtocolFormProps = {
     protocolId?: string;
     schedules: InitialSchedule[];
   };
+  onboarding?: boolean;
   source?: {
     name: string;
     versionId: string;
@@ -91,10 +92,10 @@ function frequencyLabel(row: EditableSchedule) {
   return "Frequency not set";
 }
 
-export function ProtocolForm({ catalogue, initial, source }: ProtocolFormProps) {
+export function ProtocolForm({ catalogue, initial, onboarding = false, source }: ProtocolFormProps) {
   const action = initial?.protocolId
     ? updateMemberProtocolAction.bind(null, initial.protocolId)
-    : createMemberProtocolAction.bind(null, source?.versionId ?? null);
+    : createMemberProtocolAction.bind(null, source?.versionId ?? null, onboarding);
   const [state, formAction, pending] = useActionState(action, initialMemberProtocolActionState);
   const [name, setName] = useState(initial?.name ?? source?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");

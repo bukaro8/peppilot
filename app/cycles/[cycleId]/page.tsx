@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, ArrowLeft, CalendarClock, CheckCircle2, Clock3, History, PencilLine, Target } from "lucide-react";
+import { Activity, ArrowLeft, CalendarClock, CalendarDays, CalendarPlus, CheckCircle2, Clock3, History, PencilLine, Target } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import {
@@ -94,7 +94,7 @@ export default async function CyclePage({ params, searchParams }: CyclePageProps
           </div>
 
           {query.error ? <div className="mt-6"><FormMessage tone="error">{query.error}</FormMessage></div> : null}
-          {query.created ? <div className="mt-6"><FormMessage tone="success">Independent cycle started.</FormMessage></div> : null}
+          {query.created ? <div className="mt-6 space-y-4"><FormMessage tone="success">Independent cycle started. Its scheduled actions are ready.</FormMessage><div className="flex flex-col gap-2 sm:flex-row"><Button asChild><Link href={`/calendar/week?date=${cycle.startDate}`}><CalendarDays className="size-4" aria-hidden="true" />View calendar</Link></Button>{cycle.sourceProtocolId ? <Button variant="outline" asChild><Link href={`/cycles/new?protocolId=${cycle.sourceProtocolId}`}><CalendarPlus className="size-4" aria-hidden="true" />Start another cycle</Link></Button> : null}</div></div> : null}
           {query.paused ? <div className="mt-6"><FormMessage tone="success">Cycle paused and interruption recorded.</FormMessage></div> : null}
           {query.resumed ? <div className="mt-6"><FormMessage tone="success">Cycle resumed.</FormMessage></div> : null}
           {query.revised ? <div className="mt-6"><FormMessage tone="success">New schedule revision added without changing earlier history.</FormMessage></div> : null}
