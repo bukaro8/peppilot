@@ -10,12 +10,12 @@ services:
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET must be set}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL must be set}
-      EMAIL_FROM: "${EMAIL_FROM:-PepPilot <noreply@weightpilot.uk>}"
-      SMTP_HOST: ${SMTP_HOST:-smtp.resend.com}
-      SMTP_PORT: ${SMTP_PORT:-465}
-      SMTP_SECURE: ${SMTP_SECURE:-true}
-      SMTP_USER: ${SMTP_USER:-resend}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:?SMTP_PASSWORD must be set to the Resend API key}
+      EMAIL_FROM: "${EMAIL_FROM:?EMAIL_FROM must be set}"
+      SMTP_HOST: "${SMTP_HOST:?SMTP_HOST must be set to smtp.resend.com}"
+      SMTP_PORT: "${SMTP_PORT:?SMTP_PORT must be set to 465}"
+      SMTP_SECURE: "${SMTP_SECURE:?SMTP_SECURE must be set to true}"
+      SMTP_USER: "${SMTP_USER:?SMTP_USER must be set to resend}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD:?SMTP_PASSWORD must be set to the Resend API key}"
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
     expose:
