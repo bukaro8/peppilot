@@ -1,0 +1,21 @@
+# dependencies
+/node_modules
+
+# Next.js build output
+/.next
+/out
+
+# local environment files
+.env*
+!.env.example
+!.env.production.example
+
+# logs and local tooling
+*.log
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# local database directories (Docker uses named volumes)
+/.postgres-data/
+/postgres-data/

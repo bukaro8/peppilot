@@ -1,0 +1,55 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    init: true
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-peppilot}:${POSTGRES_PASSWORD:-peppilot_dev_only}@database:5432/${POSTGRES_DB:-peppilot}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-peppilot-local-auth-secret-change-before-production}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      EMAIL_FROM: ${EMAIL_FROM:-PepPilot <no-reply@peppilot.local>}
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_SECURE: "false"
+      NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - peppilot_node_modules:/app/node_modules
+      - peppilot_next_cache:/app/.next
+    depends_on:
+      database:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-peppilot}
+      POSTGRES_USER: ${POSTGRES_USER:-peppilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-peppilot_dev_only}
+    ports:
+      - "5432:5432"
+    volumes:
+      - peppilot_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+
+volumes:
+  peppilot_node_modules:
+  peppilot_next_cache:
+  peppilot_postgres_data:

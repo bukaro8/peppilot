@@ -1,0 +1,28 @@
+import type { Metadata } from "next";
+import { Activity, ClipboardCheck, Ruler } from "lucide-react";
+import Link from "next/link";
+
+import { JournalNav } from "@/components/health/journal-nav";
+import { CalendarHeader } from "@/components/protocol-calendar/calendar-header";
+import { Button } from "@/components/ui/button";
+import { FormMessage } from "@/components/ui/form-message";
+import { requireActor } from "@/lib/auth/session";
+import { JournalError, listJournalEntries, parseJournalFilters, type JournalRecordType } from "@/lib/health/journal-service";
+import { outcomeMetrics } from "@/lib/health/outcome-metrics";
+import { formatCalendarDate } from "@/lib/protocol-calendar/presentation";
+
+export const metadata: Metadata = { title: "Health journal" };
+
+const typeLabels: Record<JournalRecordType, string> = { check_in: "Check-in", measurement: "Measurement", symptom: "Symptom" };
+const typeStyles: Record<JournalRecordType, string> = { check_in: "bg-sky-100 text-sky-800", measurement: "bg-emerald-100 text-emerald-800", symptom: "bg-rose-100 text-rose-800" };
+const TypeIcon = ({ type }: { type: JournalRecordType }) => type === "measurement" ? <Ruler className="size-4" aria-hidden="true" /> : type === "check_in" ? <ClipboardCheck className="size-4" aria-hidden="true" /> : <Activity className="size-4" aria-hidden="true" />;
+
+export default async function JournalPage({ searchParams }: { searchParams: Promise<{ from?: string; metric?: string; to?: string; type?: string }> }) {
+  const query = await searchParams;
+  let error = "";
+  let filters;
+  try { filters = parseJournalFilters(query); }
+  catch (cause) { error = cause instanceof JournalError ? cause.message : "Journal filters are invalid."; filters = parseJournalFilters({}); }
+  const entries = await listJournalEntries(await requireActor(), filters);
+  return <main className="min-h-screen bg-secondary/20"><CalendarHeader /><JournalNav /><section className="mx-auto w-full max-w-5xl px-5 pb-16 pt-8 sm:px-8 lg:px-10"><div><p className="text-sm font-semibold uppercase tracking-wider text-primary">Private health journal</p><h1 className="mt-2 text-4xl font-bold tracking-[-0.045em] sm:text-5xl">Journal history</h1><p className="mt-3 max-w-2xl text-muted-foreground">Measurements, daily check-ins and symptoms in one chronological history.</p></div>{error ? <div className="mt-6"><FormMessage tone="error">{error}</FormMessage></div> : null}<form className="mt-8 rounded-2xl border bg-background p-4 shadow-sm" aria-label="Filter health journal"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><label className="text-sm font-semibold">Record type<select name="type" defaultValue={filters.recordType} className="mt-2 h-11 w-full rounded-xl border bg-background px-3 font-normal"><option value="all">All records</option><option value="measurement">Measurements</option><option value="check_in">Daily check-ins</option><option value="symptom">Symptoms</option></select></label><label className="text-sm font-semibold">Metric<select name="metric" defaultValue={filters.metricId} className="mt-2 h-11 w-full rounded-xl border bg-background px-3 font-normal"><option value="">All metrics</option>{outcomeMetrics.map((metric) => <option key={metric.id} value={metric.id}>{metric.label}</option>)}</select></label><label className="text-sm font-semibold">From<input name="from" type="date" defaultValue={filters.dateFrom} className="mt-2 h-11 w-full rounded-xl border bg-background px-3 font-normal" /></label><label className="text-sm font-semibold">To<input name="to" type="date" defaultValue={filters.dateTo} className="mt-2 h-11 w-full rounded-xl border bg-background px-3 font-normal" /></label></div><div className="mt-4 flex flex-wrap gap-2"><Button type="submit">Apply filters</Button><Button variant="ghost" asChild><Link href="/journal">Clear</Link></Button></div></form><div className="mt-8 flex items-baseline justify-between"><h2 className="text-2xl font-bold">Entries</h2><p className="text-sm text-muted-foreground">{entries.length} record{entries.length === 1 ? "" : "s"}</p></div>{entries.length ? <ol className="mt-4 space-y-3">{entries.map((entry) => <li key={`${entry.recordType}-${entry.id}`}><article className="rounded-2xl border bg-background p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${typeStyles[entry.recordType]}`}><TypeIcon type={entry.recordType} />{typeLabels[entry.recordType]}</span><h3 className="mt-3 text-lg font-bold"><Link href={entry.href} className="hover:text-primary">{entry.title}</Link></h3><p className="mt-1 text-sm text-muted-foreground">{formatCalendarDate(entry.date, { dateStyle: "long" })}</p></div><Button variant="outline" size="sm" asChild><Link href={entry.href}>Open</Link></Button></div><p className="mt-3 text-sm leading-6">{entry.summary}</p>{entry.cycles.length ? <div className="mt-4 border-t pt-3"><p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cycles active on this date</p><div className="mt-2 flex flex-wrap gap-2">{entry.cycles.map((cycle) => <Link key={cycle.id} href={`/cycles/${cycle.id}`} className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">{cycle.name}</Link>)}</div></div> : null}</article></li>)}</ol> : <div className="mt-4 rounded-[2rem] border border-dashed bg-background p-10 text-center"><h3 className="text-xl font-bold">No matching journal entries</h3><p className="mt-2 text-muted-foreground">Try changing the date, record type or metric filters.</p></div>}</section></main>;
+}

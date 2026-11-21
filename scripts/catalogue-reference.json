@@ -1,0 +1,206 @@
+{
+  "entries": [
+    {
+      "id": "catalogue-retatrutide",
+      "slug": "retatrutide",
+      "displayName": "Retatrutide",
+      "category": "weight_management",
+      "kind": "peptide",
+      "description": "A weight-management catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Weight management"
+    },
+    {
+      "id": "catalogue-tirzepatide",
+      "slug": "tirzepatide",
+      "displayName": "Tirzepatide",
+      "category": "weight_management",
+      "kind": "peptide",
+      "description": "A weight-management catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Weight management"
+    },
+    {
+      "id": "catalogue-semaglutide",
+      "slug": "semaglutide",
+      "displayName": "Semaglutide",
+      "category": "weight_management",
+      "kind": "peptide",
+      "description": "A weight-management catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Weight management"
+    },
+    {
+      "id": "catalogue-cagrilintide",
+      "slug": "cagrilintide",
+      "displayName": "Cagrilintide",
+      "category": "weight_management",
+      "kind": "peptide",
+      "description": "A weight-management catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Weight management"
+    },
+    {
+      "id": "catalogue-bpc-157",
+      "slug": "bpc-157",
+      "displayName": "BPC-157",
+      "category": "healing_skin_recovery",
+      "kind": "peptide",
+      "description": "A recovery catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Recovery"
+    },
+    {
+      "id": "catalogue-tb-500",
+      "slug": "tb-500",
+      "displayName": "TB-500",
+      "category": "healing_skin_recovery",
+      "kind": "peptide",
+      "description": "A recovery catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Recovery"
+    },
+    {
+      "id": "catalogue-ghk-cu",
+      "slug": "ghk-cu",
+      "displayName": "GHK-Cu",
+      "category": "healing_skin_recovery",
+      "kind": "peptide",
+      "description": "A skin and recovery catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Skin and recovery"
+    },
+    {
+      "id": "catalogue-klow",
+      "slug": "klow",
+      "displayName": "KLOW",
+      "category": "healing_skin_recovery",
+      "kind": "blend",
+      "description": "A catalogue entry for the GHK-Cu, BPC-157, TB-500 and KPV combination product.",
+      "trackingFocus": "Healing, skin and recovery"
+    },
+    {
+      "id": "catalogue-wolverine-blend",
+      "slug": "wolverine-blend",
+      "displayName": "Wolverine Blend",
+      "category": "healing_skin_recovery",
+      "kind": "blend",
+      "description": "A catalogue entry for the approved BPC-157 and TB-500 combination product.",
+      "trackingFocus": "Recovery"
+    },
+    {
+      "id": "catalogue-cjc-1295-no-dac-ipamorelin",
+      "slug": "cjc-1295-no-dac-ipamorelin",
+      "displayName": "CJC-1295 (no DAC) + Ipamorelin",
+      "category": "growth_body_composition",
+      "kind": "blend",
+      "description": "A catalogue entry for the approved CJC-1295 (no DAC) and Ipamorelin combination product.",
+      "trackingFocus": "Growth and body composition"
+    },
+    {
+      "id": "catalogue-tesamorelin",
+      "slug": "tesamorelin",
+      "displayName": "Tesamorelin",
+      "category": "growth_body_composition",
+      "kind": "peptide",
+      "description": "A body-composition catalogue entry with waist measurement as its approved primary tracking focus.",
+      "trackingFocus": "Waist measurement"
+    },
+    {
+      "id": "catalogue-mots-c",
+      "slug": "mots-c",
+      "displayName": "MOTS-c",
+      "category": "metabolic_wellness",
+      "kind": "peptide",
+      "description": "A metabolic and wellness catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Metabolic wellness"
+    },
+    {
+      "id": "catalogue-nad-plus",
+      "slug": "nad-plus",
+      "displayName": "NAD+",
+      "category": "metabolic_wellness",
+      "kind": "tracked_compound",
+      "description": "A tracked compound in PepPilot’s metabolic and wellness catalogue; NAD+ is not itself a peptide.",
+      "trackingFocus": "Metabolic wellness"
+    },
+    {
+      "id": "catalogue-ss-31",
+      "slug": "ss-31",
+      "displayName": "SS-31",
+      "category": "metabolic_wellness",
+      "kind": "peptide",
+      "description": "A metabolic and wellness catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Metabolic wellness"
+    },
+    {
+      "id": "catalogue-semax",
+      "slug": "semax",
+      "displayName": "Semax",
+      "category": "cognitive",
+      "kind": "peptide",
+      "description": "A cognitive catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Cognitive"
+    },
+    {
+      "id": "catalogue-selank",
+      "slug": "selank",
+      "displayName": "Selank",
+      "category": "cognitive",
+      "kind": "peptide",
+      "description": "A cognitive catalogue entry for organising protocols and future tracking records.",
+      "trackingFocus": "Cognitive"
+    }
+  ],
+  "ingredients": [
+    {
+      "catalogueEntryId": "catalogue-klow",
+      "ingredientSlug": "ghk-cu",
+      "displayName": "GHK-Cu",
+      "linkedCatalogueEntryId": "catalogue-ghk-cu",
+      "position": 1
+    },
+    {
+      "catalogueEntryId": "catalogue-klow",
+      "ingredientSlug": "bpc-157",
+      "displayName": "BPC-157",
+      "linkedCatalogueEntryId": "catalogue-bpc-157",
+      "position": 2
+    },
+    {
+      "catalogueEntryId": "catalogue-klow",
+      "ingredientSlug": "tb-500",
+      "displayName": "TB-500",
+      "linkedCatalogueEntryId": "catalogue-tb-500",
+      "position": 3
+    },
+    {
+      "catalogueEntryId": "catalogue-klow",
+      "ingredientSlug": "kpv",
+      "displayName": "KPV",
+      "linkedCatalogueEntryId": null,
+      "position": 4
+    },
+    {
+      "catalogueEntryId": "catalogue-wolverine-blend",
+      "ingredientSlug": "bpc-157",
+      "displayName": "BPC-157",
+      "linkedCatalogueEntryId": "catalogue-bpc-157",
+      "position": 1
+    },
+    {
+      "catalogueEntryId": "catalogue-wolverine-blend",
+      "ingredientSlug": "tb-500",
+      "displayName": "TB-500",
+      "linkedCatalogueEntryId": "catalogue-tb-500",
+      "position": 2
+    },
+    {
+      "catalogueEntryId": "catalogue-cjc-1295-no-dac-ipamorelin",
+      "ingredientSlug": "cjc-1295-no-dac",
+      "displayName": "CJC-1295 (no DAC)",
+      "linkedCatalogueEntryId": null,
+      "position": 1
+    },
+    {
+      "catalogueEntryId": "catalogue-cjc-1295-no-dac-ipamorelin",
+      "ingredientSlug": "ipamorelin",
+      "displayName": "Ipamorelin",
+      "linkedCatalogueEntryId": null,
+      "position": 2
+    }
+  ]
+}
