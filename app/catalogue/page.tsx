@@ -37,7 +37,7 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_78%_4%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_3%_35%,oklch(0.9_0.06_155/.75),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_78%_4%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_3%_35%,oklch(0.86_0.08_292/.72),transparent_38%)]" />
       <CatalogueHeader />
 
       <section className="mx-auto w-full max-w-6xl px-5 pb-16 pt-12 sm:px-8 sm:pt-20 lg:px-10">
@@ -128,7 +128,7 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
                     <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground">
                       {catalogueKindLabels[kind] ?? "Catalogue entry"}
                     </span>
-                    {entry.kind === "blend" ? <Layers3 className="size-5 text-primary" aria-hidden="true" /> : null}
+                    {entry.kind === "blend" || entry.kind === "combination" ? <Layers3 className="size-5 text-primary" aria-hidden="true" /> : null}
                   </div>
                   <h3 className="mt-6 text-2xl font-bold tracking-[-0.035em]">{entry.displayName}</h3>
                   <p className="mt-2 text-sm font-medium text-primary">{catalogueCategoryLabels[entryCategory]}</p>

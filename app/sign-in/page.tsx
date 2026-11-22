@@ -14,11 +14,22 @@ type SignInPageProps = {
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const { error } = await searchParams;
+  const normalizedError = error?.toLowerCase();
+  const invalidLinkErrors = new Set([
+    "invalid-link",
+    "invalid_token",
+    "invalid-token",
+    "token_expired",
+    "token-expired",
+  ]);
+  const authError = normalizedError
+    ? invalidLinkErrors.has(normalizedError) ? "invalid-link" as const : "unexpected" as const
+    : undefined;
 
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden px-5 py-12">
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_70%,oklch(0.9_0.06_155/.75),transparent_38%)]" />
-      <section className="w-full max-w-md rounded-[2rem] border border-white/80 bg-white/85 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_165/.4)] backdrop-blur sm:p-9">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_70%,oklch(0.86_0.08_292/.72),transparent_38%)]" />
+      <section className="w-full max-w-md rounded-[2rem] border bg-card/90 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_275/.4)] backdrop-blur sm:p-9">
         <Link
           href="/"
           className="inline-flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
@@ -34,7 +45,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           No password needed. We&apos;ll send a one-time link to verify your email securely.
         </p>
 
-        <SignInForm invalidLink={error === "invalid-link"} />
+        <SignInForm authError={authError} />
       </section>
     </main>
   );

@@ -26,6 +26,7 @@ export type InjectionRecordInput = {
   actualDoseAmount?: string | null;
   actualDoseUnit?: string | null;
   actualTime?: string | null;
+  actualVolumeMl?: string | null;
   injectionSiteId?: InjectionSiteId | "" | null;
   notes?: string | null;
   status: InjectionStatus;
@@ -46,6 +47,7 @@ export type InjectionRecordRow = {
   actualDoseAmount: string | null;
   actualDoseUnit: string | null;
   actualTime: string | null;
+  actualVolumeMl: string | null;
   catalogueEntryId: string;
   createdAt: Date;
   cycleId: string;
@@ -111,6 +113,7 @@ function recordSelection() {
     to_char(record.actual_time, 'HH24:MI') as "actualTime",
     record.actual_dose_amount::text as "actualDoseAmount",
     record.actual_dose_unit as "actualDoseUnit",
+    record.actual_volume_ml::text as "actualVolumeMl",
     record.injection_site_id as "injectionSiteId",
     record.notes,
     record.created_at as "createdAt",
@@ -132,6 +135,7 @@ function normalizeInput(input: InjectionRecordInput) {
       actualDoseAmount: null,
       actualDoseUnit: null,
       actualTime: null,
+      actualVolumeMl: null,
       injectionSiteId: null,
       notes,
       status: input.status,
@@ -142,6 +146,7 @@ function normalizeInput(input: InjectionRecordInput) {
   const actualTime = input.actualTime?.trim() ?? "";
   const actualDoseAmount = input.actualDoseAmount?.trim() ?? "";
   const actualDoseUnit = input.actualDoseUnit?.trim() ?? "";
+  const actualVolumeMl = input.actualVolumeMl?.trim() || null;
   const injectionSiteId = input.injectionSiteId?.trim() || null;
   try {
     parseCalendarDate(actualDate);
@@ -157,6 +162,9 @@ function normalizeInput(input: InjectionRecordInput) {
   if (actualDoseUnit.length < 1 || actualDoseUnit.length > 20) {
     throw new InjectionRecordError("Actual dose unit must be 1 to 20 characters.", "invalid");
   }
+  if (actualVolumeMl !== null && (!Number.isFinite(Number(actualVolumeMl)) || Number(actualVolumeMl) <= 0)) {
+    throw new InjectionRecordError("Injection volume must be greater than zero.", "invalid");
+  }
   if (injectionSiteId && !isInjectionSiteId(injectionSiteId)) {
     throw new InjectionRecordError("Choose a valid injection site.", "invalid");
   }
@@ -165,6 +173,7 @@ function normalizeInput(input: InjectionRecordInput) {
     actualDoseAmount,
     actualDoseUnit,
     actualTime,
+    actualVolumeMl,
     injectionSiteId,
     notes,
     status: input.status,
@@ -220,12 +229,12 @@ export async function createInjectionRecord(
         id, owner_user_id, cycle_id, scheduled_occurrence_id, schedule_revision_id,
         schedule_step_id, catalogue_entry_id, scheduled_date, scheduled_time,
         scheduled_dose_amount, scheduled_dose_unit, status, actual_date, actual_time,
-        actual_dose_amount, actual_dose_unit, injection_site_id, notes
+        actual_dose_amount, actual_dose_unit, actual_volume_ml, injection_site_id, notes
       ) values (
         ${recordId}, ${actor.userId}, ${event.cycleId}, ${event.id}, ${event.revisionId},
         ${event.scheduleStepId}, ${event.catalogueEntryId}, ${event.date}, ${event.timeOfDay},
         ${event.doseAmount}, ${event.doseUnit}, ${value.status}, ${value.actualDate},
-        ${value.actualTime}, ${value.actualDoseAmount}, ${value.actualDoseUnit},
+        ${value.actualTime}, ${value.actualDoseAmount}, ${value.actualDoseUnit}, ${value.actualVolumeMl},
         ${value.injectionSiteId}, ${value.notes}
       )
     `;
@@ -282,6 +291,7 @@ export async function updateInjectionRecord(
       actualDoseAmount: string | null;
       actualDoseUnit: string | null;
       actualTime: string | null;
+      actualVolumeMl: string | null;
       injectionSiteId: InjectionSiteId | null;
       notes: string | null;
       status: InjectionStatus;
@@ -289,7 +299,8 @@ export async function updateInjectionRecord(
       select status, actual_date::text as "actualDate",
         to_char(actual_time, 'HH24:MI') as "actualTime",
         actual_dose_amount::text as "actualDoseAmount",
-        actual_dose_unit as "actualDoseUnit", injection_site_id as "injectionSiteId", notes
+        actual_dose_unit as "actualDoseUnit", actual_volume_ml::text as "actualVolumeMl",
+        injection_site_id as "injectionSiteId", notes
       from injection_record where id = ${recordId}
     `;
     if (!current) throw new InjectionRecordError("Injection record not found.", "not_found");
@@ -297,10 +308,10 @@ export async function updateInjectionRecord(
       insert into injection_record_history (
         id, injection_record_id, previous_status, previous_actual_date,
         previous_actual_time, previous_actual_dose_amount, previous_actual_dose_unit,
-        previous_injection_site_id, previous_notes
+        previous_actual_volume_ml, previous_injection_site_id, previous_notes
       ) values (
         ${crypto.randomUUID()}, ${recordId}, ${current.status}, ${current.actualDate},
-        ${current.actualTime}, ${current.actualDoseAmount}, ${current.actualDoseUnit},
+        ${current.actualTime}, ${current.actualDoseAmount}, ${current.actualDoseUnit}, ${current.actualVolumeMl},
         ${current.injectionSiteId}, ${current.notes}
       )
     `;
@@ -308,7 +319,8 @@ export async function updateInjectionRecord(
       update injection_record
       set status = ${value.status}, actual_date = ${value.actualDate},
         actual_time = ${value.actualTime}, actual_dose_amount = ${value.actualDoseAmount},
-        actual_dose_unit = ${value.actualDoseUnit}, injection_site_id = ${value.injectionSiteId},
+        actual_dose_unit = ${value.actualDoseUnit}, actual_volume_ml = ${value.actualVolumeMl},
+        injection_site_id = ${value.injectionSiteId},
         notes = ${value.notes}, updated_at = now()
       where id = ${recordId}
     `;

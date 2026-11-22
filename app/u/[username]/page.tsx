@@ -36,7 +36,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   return (
     <main className="relative min-h-screen overflow-hidden px-5 py-8 sm:px-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_30%,oklch(0.9_0.06_155/.75),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_30%,oklch(0.86_0.08_292/.72),transparent_38%)]" />
       <div className="mx-auto max-w-3xl">
         <header className="flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2.5">
@@ -50,7 +50,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
           </Button>
         </header>
 
-        <article className="mt-16 rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_165/.4)] backdrop-blur sm:p-10">
+        <article className="mt-16 rounded-[2rem] border bg-card/90 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_275/.4)] backdrop-blur sm:p-10">
           <div className="grid size-20 place-items-center rounded-3xl bg-primary text-3xl font-bold text-primary-foreground shadow-sm">
             {initial || <UserRound className="size-8" aria-hidden="true" />}
           </div>

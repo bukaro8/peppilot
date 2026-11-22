@@ -52,7 +52,7 @@ describe("private injection records", () => {
     const first = occurrence(revisionId, firstStepId, "2026-04-01");
     completedRecordId = (await injections.createInjectionRecord(owner, first, {
       actualDate: "2026-04-01", actualDoseAmount: "0.75", actualDoseUnit: "mg",
-      actualTime: "08:15", injectionSiteId: "abdomen_left_upper",
+      actualTime: "08:15", actualVolumeMl: "0.9", injectionSiteId: "abdomen_left_upper",
       notes: "Adjusted actual amount.", status: "completed",
     })).recordId;
     skippedRecordId = (await injections.createInjectionRecord(
@@ -62,7 +62,7 @@ describe("private injection records", () => {
     )).recordId;
 
     expect(await injections.getInjectionRecord(owner, completedRecordId)).toMatchObject({
-      actualDoseAmount: "0.7500", injectionSiteId: "abdomen_left_upper",
+      actualDoseAmount: "0.7500", actualVolumeMl: "0.9000", injectionSiteId: "abdomen_left_upper",
       scheduledDoseAmount: "0.5000", status: "completed",
     });
     expect(await injections.getInjectionRecord(owner, skippedRecordId)).toMatchObject({
@@ -89,14 +89,16 @@ describe("private injection records", () => {
     expect(await injections.getInjectionRecord(owner, completedRecordId)).toMatchObject({
       injectionSiteId: null,
     });
-    const history = await sql<{ previousInjectionSiteId: string | null }[]>`
-      select previous_injection_site_id as "previousInjectionSiteId"
+    const history = await sql<{ previousActualVolumeMl: string | null; previousInjectionSiteId: string | null }[]>`
+      select previous_actual_volume_ml::text as "previousActualVolumeMl",
+        previous_injection_site_id as "previousInjectionSiteId"
       from injection_record_history where injection_record_id = ${completedRecordId}
       order by changed_at
     `;
     expect(history.map((entry) => entry.previousInjectionSiteId)).toEqual([
       "abdomen_left_upper", "thigh_right_lower",
     ]);
+    expect(history.map((entry) => entry.previousActualVolumeMl)).toEqual(["0.9000", null]);
   });
 
   it("supports multiple same-day injections across overlapping cycles", async () => {
@@ -127,8 +129,8 @@ describe("private injection records", () => {
 
   it("combines protocols, applies private disabled sites, and recalculates corrections", async () => {
     const combined = await rotation.getInjectionSiteRotation(owner, "2026-04-02");
-    expect(combined.activity.upper_arm_left).toBe("earlier");
-    expect(combined.activity.thigh_left_upper).toBe("recent");
+    expect(combined.activity.upper_arm_left).toBe("yellow");
+    expect(combined.activity.thigh_left_upper).toBe("red");
     const isolated = await rotation.getInjectionSiteRotation(other, "2026-04-02");
     expect(isolated.activity.upper_arm_left).toBe("neutral");
     expect(isolated.activity.thigh_left_upper).toBe("neutral");
@@ -149,7 +151,7 @@ describe("private injection records", () => {
     });
     const corrected = await rotation.getInjectionSiteRotation(owner, "2026-04-02");
     expect(corrected.activity.thigh_left_upper).toBe("neutral");
-    expect(corrected.activity.abdomen_right_lower).toBe("recent");
+    expect(corrected.activity.abdomen_right_lower).toBe("red");
   });
 
   it("calculates adherence from due occurrences without mixing cycles", async () => {

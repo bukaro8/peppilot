@@ -18,9 +18,9 @@ afterAll(async () => {
 });
 
 describe("catalogue queries", () => {
-  it("returns the 16 active catalogue entries", async () => {
+  it("returns the 28 active catalogue entries", async () => {
     const entries = await catalogueService.getCatalogueEntries();
-    expect(entries).toHaveLength(16);
+    expect(entries).toHaveLength(28);
     expect(entries.every((entry) => entry.isActive)).toBe(true);
   });
 
@@ -35,7 +35,7 @@ describe("catalogue queries", () => {
 
   it("filters by approved category", async () => {
     const entries = await catalogueService.getCatalogueEntries({ category: "weight_management" });
-    expect(entries).toHaveLength(4);
+    expect(entries).toHaveLength(5);
     expect(entries.every((entry) => entry.category === "weight_management")).toBe(true);
   });
 

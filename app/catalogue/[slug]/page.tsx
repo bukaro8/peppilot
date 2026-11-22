@@ -28,14 +28,14 @@ export default async function CatalogueDetailPage({ params }: CatalogueDetailPag
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_78%_4%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_3%_35%,oklch(0.9_0.06_155/.75),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_78%_4%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_3%_35%,oklch(0.86_0.08_292/.72),transparent_38%)]" />
       <CatalogueHeader />
       <article className="mx-auto w-full max-w-4xl px-5 pb-16 pt-8 sm:px-8 sm:pt-16 lg:px-10">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/catalogue"><ArrowLeft className="size-4" aria-hidden="true" />Back to catalogue</Link>
         </Button>
 
-        <div className="mt-6 rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_165/.4)] backdrop-blur sm:p-10">
+        <div className="mt-6 rounded-[2rem] border bg-card/90 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_275/.4)] backdrop-blur sm:p-10">
           <div className="flex flex-wrap gap-2">
             <span className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">{catalogueKindLabels[kind]}</span>
             <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground">{catalogueCategoryLabels[category]}</span>
@@ -56,13 +56,13 @@ export default async function CatalogueDetailPage({ params }: CatalogueDetailPag
             </section>
           </div>
 
-          {entry.kind === "blend" ? (
+          {entry.kind === "blend" || entry.kind === "combination" ? (
             <section className="mt-8 border-t pt-8">
               <div className="flex items-center gap-3">
                 <span className="grid size-10 place-items-center rounded-xl bg-secondary text-primary"><Layers3 className="size-5" aria-hidden="true" /></span>
                 <div>
-                  <h2 className="text-xl font-bold">Blend ingredients</h2>
-                  <p className="text-sm text-muted-foreground">Ingredient names only—no dosing guidance.</p>
+                  <h2 className="text-xl font-bold">Ingredients</h2>
+                  <p className="text-sm text-muted-foreground">Compositions and ratios can vary by formulation; none are assumed when they are not recorded.</p>
                 </div>
               </div>
               {entry.ingredients.length > 0 ? (
@@ -72,6 +72,7 @@ export default async function CatalogueDetailPage({ params }: CatalogueDetailPag
                       {ingredient.linkedCatalogueEntryId ? (
                         <Link className="text-primary underline-offset-4 hover:underline" href={`/catalogue/${ingredient.slug}`}>{ingredient.displayName}</Link>
                       ) : ingredient.displayName}
+                      {ingredient.composition ? <span className="mt-1 block text-sm font-normal text-muted-foreground">{ingredient.composition}</span> : null}
                     </li>
                   ))}
                 </ul>

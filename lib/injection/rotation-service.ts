@@ -60,7 +60,8 @@ export async function getInjectionSiteRotation(
   const sql = getPostgresClient();
   const history = await sql<InjectionSiteHistoryItem[]>`
     select id as "recordId", injection_site_id as "injectionSiteId",
-      actual_date::text as "actualDate", to_char(actual_time, 'HH24:MI') as "actualTime"
+      actual_date::text as "actualDate", to_char(actual_time, 'HH24:MI') as "actualTime",
+      actual_volume_ml::text as "actualVolumeMl"
     from injection_record
     where owner_user_id = ${actor.userId}
       and status = 'completed'

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { Eye, LoaderCircle, Plus, Trash2 } from "lucide-react";
 
 import {
@@ -60,7 +60,7 @@ const blankSchedule: Omit<EditableSchedule, "key"> = {
   catalogueEntryId: "",
   daysOfWeek: "",
   doseAmount: "",
-  doseUnit: "",
+  doseUnit: "mg",
   endDay: "",
   frequency: "",
   intervalDays: "",
@@ -85,7 +85,11 @@ function editableSchedule(schedule: InitialSchedule, key: string): EditableSched
 
 function frequencyLabel(row: EditableSchedule) {
   if (row.frequency === "daily") return "Daily";
-  if (row.frequency === "weekly") return row.daysOfWeek ? `Weekdays ${row.daysOfWeek}` : "Weekdays not set";
+  if (row.frequency === "weekly") {
+    const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const selected = row.daysOfWeek.split(",").filter(Boolean).map(Number).map((day) => weekdayNames[day]);
+    return selected.length ? `Weekly on ${selected.join(", ")}` : "Weekly days not set";
+  }
   if (row.frequency === "interval_days") {
     return row.intervalDays ? `Every ${row.intervalDays} days` : "Interval not set";
   }
@@ -108,13 +112,33 @@ export function ProtocolForm({ catalogue, initial, onboarding = false, source }:
       ? initial.schedules.map((schedule, index) => editableSchedule(schedule, `initial-${index}`))
       : [{ ...blankSchedule, key: "new-0" }],
   );
+  const [lastAddedKey, setLastAddedKey] = useState<string | null>(null);
   const catalogueNames = useMemo(
     () => new Map(catalogue.map((entry) => [entry.id, entry.displayName])),
     [catalogue],
   );
 
+  useEffect(() => {
+    if (!lastAddedKey) return;
+    document.getElementById(`schedule-${lastAddedKey}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [lastAddedKey, rows.length]);
+
   function addRow() {
-    setRows((current) => [...current, { ...blankSchedule, key: crypto.randomUUID() }]);
+    const key = crypto.randomUUID();
+    setRows((current) => [...current, { ...blankSchedule, key }]);
+    setLastAddedKey(key);
+  }
+
+  function toggleWeekday(key: string, day: number) {
+    const row = rows.find((item) => item.key === key);
+    if (!row) return;
+    const selected = new Set(row.daysOfWeek.split(",").filter(Boolean).map(Number));
+    if (selected.has(day)) selected.delete(day);
+    else selected.add(day);
+    updateRow(key, "daysOfWeek", [...selected].sort((left, right) => left - right).join(","));
   }
 
   function removeRow(key: string) {
@@ -155,19 +179,16 @@ export function ProtocolForm({ catalogue, initial, onboarding = false, source }:
       </fieldset>
 
       <section aria-labelledby="member-schedule-heading">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 id="member-schedule-heading" className="text-xl font-bold">Planned schedule</h2>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">Enter only what you intend to follow. PepPilot does not supply dose or timing defaults.</p>
-          </div>
-          <Button type="button" variant="outline" onClick={addRow} disabled={pending || rows.length >= 100}><Plus className="size-4" aria-hidden="true" />Add schedule</Button>
+        <div>
+          <h2 id="member-schedule-heading" className="text-xl font-bold">Planned schedule</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">Enter only what you intend to follow. PepPilot does not supply dose or timing defaults.</p>
         </div>
 
         <div className="mt-5 space-y-4">
           {rows.map((row, index) => {
             const prefix = `schedule.${index}`;
             return (
-              <fieldset key={row.key} className="rounded-2xl border bg-muted/25 p-4 sm:p-5" disabled={pending}>
+              <fieldset id={`schedule-${row.key}`} key={row.key} className="scroll-mt-5 rounded-2xl border bg-muted/25 p-4 sm:p-5" disabled={pending}>
                 <legend className="px-2 text-sm font-semibold">Schedule {index + 1}</legend>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="space-y-2 sm:col-span-2">
@@ -178,26 +199,36 @@ export function ProtocolForm({ catalogue, initial, onboarding = false, source }:
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor={`${prefix}.doseAmount`}>Dose amount</label>
+                    <label className="text-sm font-medium" htmlFor={`${prefix}.doseAmount`}>Compound dose</label>
                     <input id={`${prefix}.doseAmount`} name={`${prefix}.doseAmount`} inputMode="decimal" required value={row.doseAmount} onChange={(event) => updateRow(row.key, "doseAmount", event.target.value)} placeholder="Enter amount" className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor={`${prefix}.doseUnit`}>Unit</label>
-                    <input id={`${prefix}.doseUnit`} name={`${prefix}.doseUnit`} required maxLength={20} value={row.doseUnit} onChange={(event) => updateRow(row.key, "doseUnit", event.target.value)} placeholder="Enter unit" className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
+                    <label className="text-sm font-medium" htmlFor={`${prefix}.doseUnit`}>Mass unit</label>
+                    <select id={`${prefix}.doseUnit`} name={`${prefix}.doseUnit`} required value={row.doseUnit} onChange={(event) => updateRow(row.key, "doseUnit", event.target.value)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
+                      {!['mg', 'mcg'].includes(row.doseUnit) && row.doseUnit ? <option value={row.doseUnit}>{row.doseUnit} (existing)</option> : null}
+                      <option value="mg">mg</option>
+                      <option value="mcg">mcg</option>
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium" htmlFor={`${prefix}.frequency`}>Frequency</label>
                     <select id={`${prefix}.frequency`} name={`${prefix}.frequency`} required value={row.frequency} onChange={(event) => updateRow(row.key, "frequency", event.target.value)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
                       <option value="">Select frequency</option>
                       <option value="daily">Daily</option>
-                      <option value="weekly">Selected weekdays</option>
-                      <option value="interval_days">Every N days</option>
+                      <option value="weekly">Weekly (choose days)</option>
+                      <option value="interval_days">Custom (every N days)</option>
                     </select>
                   </div>
                   {row.frequency === "weekly" ? (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium" htmlFor={`${prefix}.daysOfWeek`}>Weekdays</label>
-                      <input id={`${prefix}.daysOfWeek`} name={`${prefix}.daysOfWeek`} required value={row.daysOfWeek} onChange={(event) => updateRow(row.key, "daysOfWeek", event.target.value)} placeholder="0,2,4 (Sun–Sat)" className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
+                    <div className="space-y-2 sm:col-span-2">
+                      <span className="text-sm font-medium">Days of week</span>
+                      <input type="hidden" id={`${prefix}.daysOfWeek`} name={`${prefix}.daysOfWeek`} value={row.daysOfWeek} />
+                      <div className="grid grid-cols-7 gap-1" role="group" aria-label={`Schedule ${index + 1} days of week`}>
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label, day) => {
+                          const selected = row.daysOfWeek.split(",").filter(Boolean).map(Number).includes(day);
+                          return <button key={label} type="button" aria-pressed={selected} onClick={() => toggleWeekday(row.key, day)} className={`min-h-11 rounded-lg border px-1 text-xs font-semibold transition ${selected ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}>{label}</button>;
+                        })}
+                      </div>
                     </div>
                   ) : null}
                   {row.frequency === "interval_days" ? (
@@ -226,6 +257,8 @@ export function ProtocolForm({ catalogue, initial, onboarding = false, source }:
             );
           })}
         </div>
+        <p className="mt-4 text-xs leading-5 text-muted-foreground">mg and mcg describe compound mass. Injection liquid volume and syringe markings are recorded separately when logging an injection.</p>
+        <Button className="mt-5 w-full sm:w-auto" type="button" variant="outline" onClick={addRow} disabled={pending || rows.length >= 100}><Plus className="size-4" aria-hidden="true" />Add another schedule</Button>
       </section>
 
       <section className="rounded-2xl border bg-secondary/30 p-5" aria-labelledby="protocol-preview-heading">

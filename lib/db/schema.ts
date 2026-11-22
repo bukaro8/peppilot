@@ -42,7 +42,7 @@ export const catalogueEntry = pgTable(
     ),
     check(
       "catalogue_entry_kind_check",
-      sql`${table.kind} in ('peptide', 'blend', 'tracked_compound')`,
+      sql`${table.kind} in ('peptide', 'blend', 'combination', 'tracked_compound')`,
     ),
     check("catalogue_entry_slug_check", sql`${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`),
   ],
@@ -59,6 +59,7 @@ export const catalogueEntryIngredient = pgTable(
     linkedCatalogueEntryId: text("linked_catalogue_entry_id").references(() => catalogueEntry.id, {
       onDelete: "set null",
     }),
+    composition: text("composition"),
     position: integer("position").notNull(),
   },
   (table) => [
@@ -474,6 +475,7 @@ export const injectionRecord = pgTable(
     actualTime: time("actual_time"),
     actualDoseAmount: numeric("actual_dose_amount", { precision: 12, scale: 4 }),
     actualDoseUnit: text("actual_dose_unit"),
+    actualVolumeMl: numeric("actual_volume_ml", { precision: 8, scale: 4 }),
     injectionSiteId: text("injection_site_id"),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -486,6 +488,10 @@ export const injectionRecord = pgTable(
     check("injection_record_status_check", sql`${table.status} in ('completed', 'skipped', 'missed')`),
     check("injection_record_scheduled_unit_check", sql`char_length(${table.scheduledDoseUnit}) between 1 and 20`),
     check("injection_record_scheduled_dose_check", sql`${table.scheduledDoseAmount} > 0`),
+    check(
+      "injection_record_actual_volume_check",
+      sql`${table.actualVolumeMl} is null or ${table.actualVolumeMl} > 0`,
+    ),
     check("injection_record_notes_check", sql`${table.notes} is null or char_length(${table.notes}) <= 1000`),
     check(
       "injection_record_site_check",
@@ -510,6 +516,7 @@ export const injectionRecord = pgTable(
         and ${table.actualTime} is null
         and ${table.actualDoseAmount} is null
         and ${table.actualDoseUnit} is null
+        and ${table.actualVolumeMl} is null
         and ${table.injectionSiteId} is null
       )`,
     ),
@@ -531,6 +538,7 @@ export const injectionRecordHistory = pgTable(
       scale: 4,
     }),
     previousActualDoseUnit: text("previous_actual_dose_unit"),
+    previousActualVolumeMl: numeric("previous_actual_volume_ml", { precision: 8, scale: 4 }),
     previousInjectionSiteId: text("previous_injection_site_id"),
     previousNotes: text("previous_notes"),
     changedAt: timestamp("changed_at", { withTimezone: true }).defaultNow().notNull(),

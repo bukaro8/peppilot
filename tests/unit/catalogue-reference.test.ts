@@ -8,14 +8,18 @@ import {
 } from "@/lib/catalogue/constants";
 
 describe("catalogue reference data", () => {
-  it("contains the 16 approved unique catalogue entries", () => {
-    expect(referenceData.entries).toHaveLength(16);
-    expect(new Set(referenceData.entries.map((entry) => entry.id)).size).toBe(16);
-    expect(new Set(referenceData.entries.map((entry) => entry.slug)).size).toBe(16);
+  it("contains the 28 approved unique catalogue entries", () => {
+    expect(referenceData.entries).toHaveLength(28);
+    expect(new Set(referenceData.entries.map((entry) => entry.id)).size).toBe(28);
+    expect(new Set(referenceData.entries.map((entry) => entry.slug)).size).toBe(28);
     expect(referenceData.entries.filter((entry) => entry.kind === "blend").map((entry) => entry.displayName)).toEqual([
       "KLOW",
       "Wolverine Blend",
       "CJC-1295 (no DAC) + Ipamorelin",
+      "GLOW",
+    ]);
+    expect(referenceData.entries.filter((entry) => entry.kind === "combination").map((entry) => entry.slug)).toEqual([
+      "tesamorelin-ipamorelin",
     ]);
   });
 
@@ -36,6 +40,12 @@ describe("catalogue reference data", () => {
       "Ipamorelin",
     ]);
     expect(ingredientsFor("catalogue-klow")).toEqual(["GHK-Cu", "BPC-157", "TB-500", "KPV"]);
+    expect(ingredientsFor("catalogue-glow")).toEqual(["GHK-Cu", "BPC-157", "TB-500"]);
+    expect(ingredientsFor("catalogue-tesamorelin-ipamorelin")).toEqual([
+      "Tesamorelin",
+      "Ipamorelin",
+    ]);
+    expect(referenceData.ingredients.every((ingredient) => "composition" in ingredient)).toBe(true);
     expect(JSON.stringify(referenceData)).not.toMatch(/dose|dosage|price/i);
   });
 

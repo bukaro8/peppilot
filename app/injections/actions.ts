@@ -20,6 +20,7 @@ function inputFromForm(formData: FormData): InjectionRecordInput {
     actualDoseAmount: String(formData.get("actualDoseAmount") ?? ""),
     actualDoseUnit: String(formData.get("actualDoseUnit") ?? ""),
     actualTime: String(formData.get("actualTime") ?? ""),
+    actualVolumeMl: String(formData.get("actualVolumeMl") ?? ""),
     injectionSiteId: String(formData.get("injectionSiteId") ?? "") as InjectionRecordInput["injectionSiteId"],
     notes: String(formData.get("notes") ?? ""),
     status: String(formData.get("status") ?? "") as InjectionStatus,

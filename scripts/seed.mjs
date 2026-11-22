@@ -31,7 +31,14 @@ try {
           ${entry.id}, ${entry.slug}, ${entry.displayName}, ${entry.category}, ${entry.kind},
           ${entry.description}, ${entry.trackingFocus}
         )
-        on conflict (id) do nothing
+        on conflict (id) do update set
+          display_name = excluded.display_name,
+          category = excluded.category,
+          kind = excluded.kind,
+          description = excluded.description,
+          tracking_focus = excluded.tracking_focus,
+          is_active = true,
+          updated_at = now()
         returning id
       `;
       entryCount += rows.length;
@@ -41,12 +48,17 @@ try {
     for (const ingredient of catalogue.ingredients) {
       const rows = await sql`
         insert into catalogue_entry_ingredient (
-          catalogue_entry_id, ingredient_slug, display_name, linked_catalogue_entry_id, position
+          catalogue_entry_id, ingredient_slug, display_name, linked_catalogue_entry_id,
+          composition, position
         ) values (
           ${ingredient.catalogueEntryId}, ${ingredient.ingredientSlug}, ${ingredient.displayName},
-          ${ingredient.linkedCatalogueEntryId}, ${ingredient.position}
+          ${ingredient.linkedCatalogueEntryId}, ${ingredient.composition ?? null}, ${ingredient.position}
         )
-        on conflict (catalogue_entry_id, ingredient_slug) do nothing
+        on conflict (catalogue_entry_id, ingredient_slug) do update set
+          display_name = excluded.display_name,
+          linked_catalogue_entry_id = excluded.linked_catalogue_entry_id,
+          composition = excluded.composition,
+          position = excluded.position
         returning catalogue_entry_id
       `;
       ingredientCount += rows.length;
@@ -56,7 +68,7 @@ try {
   });
 
   console.log(
-    `Initial seed complete: ${inserted.entryCount} catalogue entries and ${inserted.ingredientCount} ingredient links added.`,
+    `Initial seed complete: ${inserted.entryCount} catalogue entries and ${inserted.ingredientCount} ingredient links synchronized.`,
   );
 } finally {
   await client.end({ timeout: 5 });

@@ -2,25 +2,47 @@
 @import "tw-animate-css";
 
 :root {
-  --background: oklch(0.985 0.009 151);
-  --foreground: oklch(0.25 0.034 166);
+  --background: oklch(0.985 0.008 285);
+  --foreground: oklch(0.22 0.055 273);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.25 0.034 166);
+  --card-foreground: oklch(0.22 0.055 273);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.25 0.034 166);
-  --primary: oklch(0.48 0.12 165);
-  --primary-foreground: oklch(0.99 0.004 150);
-  --secondary: oklch(0.93 0.035 153);
-  --secondary-foreground: oklch(0.3 0.06 163);
-  --muted: oklch(0.95 0.014 151);
-  --muted-foreground: oklch(0.5 0.033 163);
-  --accent: oklch(0.91 0.065 83);
-  --accent-foreground: oklch(0.34 0.06 67);
+  --popover-foreground: oklch(0.22 0.055 273);
+  --primary: oklch(0.47 0.2 286);
+  --primary-foreground: oklch(0.99 0.004 285);
+  --secondary: oklch(0.93 0.035 289);
+  --secondary-foreground: oklch(0.31 0.11 282);
+  --muted: oklch(0.95 0.014 285);
+  --muted-foreground: oklch(0.49 0.04 278);
+  --accent: oklch(0.82 0.16 68);
+  --accent-foreground: oklch(0.29 0.07 55);
   --destructive: oklch(0.58 0.22 27);
-  --border: oklch(0.89 0.02 154);
-  --input: oklch(0.89 0.02 154);
-  --ring: oklch(0.58 0.1 165);
+  --border: oklch(0.89 0.025 285);
+  --input: oklch(0.89 0.025 285);
+  --ring: oklch(0.58 0.18 286);
   --radius: 0.875rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.16 0.045 273);
+    --foreground: oklch(0.94 0.012 285);
+    --card: oklch(0.2 0.05 275);
+    --card-foreground: oklch(0.94 0.012 285);
+    --popover: oklch(0.2 0.05 275);
+    --popover-foreground: oklch(0.94 0.012 285);
+    --primary: oklch(0.7 0.18 288);
+    --primary-foreground: oklch(0.16 0.045 273);
+    --secondary: oklch(0.27 0.07 281);
+    --secondary-foreground: oklch(0.92 0.02 287);
+    --muted: oklch(0.24 0.035 278);
+    --muted-foreground: oklch(0.72 0.025 283);
+    --accent: oklch(0.76 0.16 62);
+    --accent-foreground: oklch(0.18 0.045 273);
+    --border: oklch(0.34 0.045 280);
+    --input: oklch(0.34 0.045 280);
+    --ring: oklch(0.7 0.18 288);
+  }
 }
 
 @theme inline {

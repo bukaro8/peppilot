@@ -72,11 +72,13 @@ function MapView({
           const activityClass = disabled
             ? "border-border bg-muted text-muted-foreground opacity-55"
             : activity === "suggested"
-              ? "border-background bg-emerald-600 text-white hover:bg-emerald-700"
-              : activity === "recent"
-                ? "border-background bg-rose-600 text-white hover:bg-rose-700"
-                : activity === "earlier"
-                  ? "border-background bg-amber-400 text-amber-950 hover:bg-amber-500"
+              ? "border-background bg-green-600 text-white hover:bg-green-700"
+              : activity === "red"
+                ? "border-background bg-red-600 text-white hover:bg-red-700"
+                : activity === "yellow"
+                  ? "border-background bg-yellow-400 text-yellow-950 hover:bg-yellow-500"
+                  : activity === "green"
+                    ? "border-background bg-green-600 text-white hover:bg-green-700"
                   : "border-background bg-foreground/85 text-background hover:bg-primary";
           return <button key={site.id} type="button" name="body-map-site" aria-label={`${readOnly ? "History for" : disabled ? "Disabled" : "Select"} ${label}`} aria-pressed={active} disabled={readOnly || (disabled && !active)} title={`${label}${disabled ? " — disabled" : ""}`} onClick={() => onChange(site.id)} style={{ left: position.left, top: position.top }} className={`absolute flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 px-1 text-[10px] font-bold shadow-sm transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/40 ${activityClass} ${active ? "z-10 scale-110 ring-4 ring-primary/45" : ""}`}>{position.short}</button>;
         })}
@@ -99,12 +101,12 @@ export function BodyMap({
   return (
     <div className="space-y-4">
       {!readOnly ? <input type="hidden" name="injectionSiteId" value={value ?? ""} /> : null}
-      {!readOnly ? <div className="rounded-2xl border border-emerald-600/25 bg-emerald-50 p-4 text-emerald-950 dark:bg-emerald-950/25 dark:text-emerald-100"><p className="text-sm font-semibold">{rotation.suggestionLabel ? `Suggested: ${rotation.suggestionLabel}` : "No site suggestion available"}</p><p className="mt-1 text-xs leading-5 opacity-80">{rotation.reason} This is a rotation-history reference, not a guarantee that the site is suitable.</p>{rotation.suggestedSiteId && value !== rotation.suggestedSiteId ? <Button type="button" variant="outline" size="sm" className="mt-3 border-emerald-700/30 bg-background" onClick={() => onChange(rotation.suggestedSiteId)}>Use suggestion</Button> : null}</div> : null}
+      {!readOnly ? <div className="rounded-2xl border border-primary/25 bg-secondary/55 p-4"><p className="text-sm font-semibold text-primary">{rotation.suggestionLabel ? `Suggested: ${rotation.suggestionLabel}` : "No site suggestion available"}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{rotation.reason} This is a rotation-history reference, not a guarantee that the site is suitable.</p>{rotation.suggestedSiteId && value !== rotation.suggestedSiteId ? <Button type="button" variant="outline" size="sm" className="mt-3 bg-background" onClick={() => onChange(rotation.suggestedSiteId)}>Use suggestion</Button> : null}</div> : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <MapView view="front" selected={value} onChange={onChange} rotation={rotation} readOnly={readOnly} />
         <MapView view="rear" selected={value} onChange={onChange} rotation={rotation} readOnly={readOnly} />
       </div>
-      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4"><span className="inline-flex items-center gap-2"><span className="size-3 rounded-full bg-rose-600" />Used today</span><span className="inline-flex items-center gap-2"><span className="size-3 rounded-full bg-amber-400" />Used 1–2 days ago</span><span className="inline-flex items-center gap-2"><span className="size-3 rounded-full bg-emerald-600" />Suggested</span><span className="inline-flex items-center gap-2"><span className="size-3 rounded-full bg-muted ring-1 ring-border" />Disabled/neutral</span></div>
+      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4"><span className="inline-flex items-center gap-2"><span className="size-3 rounded-full bg-red-600" />Rest day</span><span className="inline-flex items-center gap-2"><span className="size-3 rounded-full bg-yellow-400" />Use caution</span><span className="inline-flex items-center gap-2"><span className="size-3 rounded-full bg-green-600" />Available/suggested</span><span className="inline-flex items-center gap-2"><span className="size-3 rounded-full bg-muted ring-1 ring-border" />Disabled/unused</span></div>
       {!readOnly ? <div className="flex flex-col gap-3 rounded-2xl border bg-background p-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="inline-flex items-center gap-2 text-sm font-semibold"><MapPin className="size-4 text-primary" aria-hidden="true" />{formatInjectionSite(value)}</p>
         {value ? <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}><RotateCcw className="size-4" aria-hidden="true" />Clear site</Button> : null}

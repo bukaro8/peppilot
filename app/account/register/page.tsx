@@ -22,8 +22,8 @@ export default async function RegistrationPage() {
 
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden px-5 py-12">
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_70%,oklch(0.9_0.06_155/.75),transparent_38%)]" />
-      <section className="w-full max-w-2xl rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_165/.4)] backdrop-blur sm:p-9">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_70%,oklch(0.86_0.08_292/.72),transparent_38%)]" />
+      <section className="w-full max-w-2xl rounded-[2rem] border bg-card/90 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_275/.4)] backdrop-blur sm:p-9">
         <Link href="/" className="inline-flex items-center gap-2.5">
           <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <FlaskConical className="size-5" aria-hidden="true" />

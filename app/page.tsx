@@ -16,7 +16,7 @@ const navigation = [
 export default function Home() {
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[38rem] bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_30%,oklch(0.9_0.06_155/.75),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[38rem] bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_30%,oklch(0.86_0.08_292/.72),transparent_38%)]" />
 
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
         <a
@@ -78,7 +78,7 @@ export default function Home() {
 
         <div className="relative mx-auto w-full max-w-sm lg:max-w-none" aria-hidden="true">
           <div className="absolute -inset-6 -z-10 rotate-3 rounded-[2.5rem] bg-secondary/70" />
-          <div className="rounded-[2rem] border border-white/80 bg-white/80 p-5 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_165/.4)] backdrop-blur sm:p-7">
+          <div className="rounded-[2rem] border bg-card/85 p-5 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_275/.4)] backdrop-blur sm:p-7">
             <div className="flex items-center justify-between border-b pb-5">
               <div>
                 <div className="h-2.5 w-20 rounded-full bg-secondary" />

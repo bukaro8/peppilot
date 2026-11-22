@@ -8,7 +8,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { authClient } from "@/lib/auth-client";
 
 type SignInFormProps = {
-  invalidLink?: boolean;
+  authError?: "invalid-link" | "unexpected";
 };
 
 type Feedback = {
@@ -16,12 +16,14 @@ type Feedback = {
   tone: "error" | "success";
 };
 
-export function SignInForm({ invalidLink = false }: SignInFormProps) {
+export function SignInForm({ authError }: SignInFormProps) {
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | undefined>(
-    invalidLink
-      ? { text: "That sign-in link is invalid or has expired. Request a fresh link below.", tone: "error" }
-      : undefined,
+    authError === "invalid-link"
+      ? { text: "This login link has expired or has already been used.", tone: "error" }
+      : authError === "unexpected"
+        ? { text: "We couldn’t complete sign-in. Request a new login link below.", tone: "error" }
+        : undefined,
   );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -42,6 +44,14 @@ export function SignInForm({ invalidLink = false }: SignInFormProps) {
       if (result.error?.status === 429) {
         setFeedback({
           text: "Too many requests. Please wait a minute before trying again.",
+          tone: "error",
+        });
+        return;
+      }
+
+      if (result.error) {
+        setFeedback({
+          text: "We couldn’t send a link right now. Please try again.",
           tone: "error",
         });
         return;

@@ -143,6 +143,114 @@
       "kind": "peptide",
       "description": "A cognitive catalogue entry for organising protocols and future tracking records.",
       "trackingFocus": "Cognitive"
+    },
+    {
+      "id": "catalogue-glow",
+      "slug": "glow",
+      "displayName": "GLOW",
+      "category": "healing_skin_recovery",
+      "kind": "blend",
+      "description": "A catalogue entry for the GHK-Cu, BPC-157 and TB-500 blend. Ingredient amounts and ratios vary by formulation.",
+      "trackingFocus": "Healing, skin and recovery"
+    },
+    {
+      "id": "catalogue-tesamorelin-ipamorelin",
+      "slug": "tesamorelin-ipamorelin",
+      "displayName": "Tesamorelin + Ipamorelin",
+      "category": "growth_body_composition",
+      "kind": "combination",
+      "description": "A catalogue entry for a Tesamorelin and Ipamorelin combination. Ingredient amounts and ratios vary by formulation.",
+      "trackingFocus": "Growth and body composition"
+    },
+    {
+      "id": "catalogue-ipamorelin",
+      "slug": "ipamorelin",
+      "displayName": "Ipamorelin",
+      "category": "growth_body_composition",
+      "kind": "peptide",
+      "description": "A standalone catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Growth and body composition"
+    },
+    {
+      "id": "catalogue-cjc-1295-no-dac",
+      "slug": "cjc-1295-no-dac",
+      "displayName": "CJC-1295 (No DAC)",
+      "category": "growth_body_composition",
+      "kind": "peptide",
+      "description": "A standalone catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Growth and body composition"
+    },
+    {
+      "id": "catalogue-kpv",
+      "slug": "kpv",
+      "displayName": "KPV",
+      "category": "healing_skin_recovery",
+      "kind": "peptide",
+      "description": "A standalone catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Healing and recovery"
+    },
+    {
+      "id": "catalogue-epitalon",
+      "slug": "epitalon",
+      "displayName": "Epitalon (Epithalon)",
+      "category": "metabolic_wellness",
+      "kind": "peptide",
+      "description": "A wellness catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Wellness"
+    },
+    {
+      "id": "catalogue-aod-9604",
+      "slug": "aod-9604",
+      "displayName": "AOD-9604",
+      "category": "weight_management",
+      "kind": "peptide",
+      "description": "A weight-management catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Weight management"
+    },
+    {
+      "id": "catalogue-pt-141",
+      "slug": "pt-141",
+      "displayName": "PT-141 (Bremelanotide)",
+      "category": "metabolic_wellness",
+      "kind": "peptide",
+      "description": "A wellness catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Wellness"
+    },
+    {
+      "id": "catalogue-dsip",
+      "slug": "dsip",
+      "displayName": "DSIP",
+      "category": "metabolic_wellness",
+      "kind": "peptide",
+      "description": "A wellness catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Wellness"
+    },
+    {
+      "id": "catalogue-thymosin-alpha-1",
+      "slug": "thymosin-alpha-1",
+      "displayName": "Thymosin Alpha-1 (TA1)",
+      "category": "healing_skin_recovery",
+      "kind": "peptide",
+      "description": "A recovery catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Recovery"
+    },
+    {
+      "id": "catalogue-kisspeptin-10",
+      "slug": "kisspeptin-10",
+      "displayName": "Kisspeptin-10",
+      "category": "metabolic_wellness",
+      "kind": "peptide",
+      "description": "A wellness catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Wellness"
+    },
+    {
+      "id": "catalogue-sermorelin",
+      "slug": "sermorelin",
+      "displayName": "Sermorelin",
+      "category": "growth_body_composition",
+      "kind": "peptide",
+      "description": "A standalone catalogue entry for organising protocols and tracking records.",
+      "trackingFocus": "Growth and body composition"
     }
   ],
   "ingredients": [
@@ -151,6 +259,7 @@
       "ingredientSlug": "ghk-cu",
       "displayName": "GHK-Cu",
       "linkedCatalogueEntryId": "catalogue-ghk-cu",
+      "composition": null,
       "position": 1
     },
     {
@@ -158,6 +267,7 @@
       "ingredientSlug": "bpc-157",
       "displayName": "BPC-157",
       "linkedCatalogueEntryId": "catalogue-bpc-157",
+      "composition": null,
       "position": 2
     },
     {
@@ -165,13 +275,15 @@
       "ingredientSlug": "tb-500",
       "displayName": "TB-500",
       "linkedCatalogueEntryId": "catalogue-tb-500",
+      "composition": null,
       "position": 3
     },
     {
       "catalogueEntryId": "catalogue-klow",
       "ingredientSlug": "kpv",
       "displayName": "KPV",
-      "linkedCatalogueEntryId": null,
+      "linkedCatalogueEntryId": "catalogue-kpv",
+      "composition": null,
       "position": 4
     },
     {
@@ -179,6 +291,7 @@
       "ingredientSlug": "bpc-157",
       "displayName": "BPC-157",
       "linkedCatalogueEntryId": "catalogue-bpc-157",
+      "composition": null,
       "position": 1
     },
     {
@@ -186,20 +299,63 @@
       "ingredientSlug": "tb-500",
       "displayName": "TB-500",
       "linkedCatalogueEntryId": "catalogue-tb-500",
+      "composition": null,
       "position": 2
     },
     {
       "catalogueEntryId": "catalogue-cjc-1295-no-dac-ipamorelin",
       "ingredientSlug": "cjc-1295-no-dac",
       "displayName": "CJC-1295 (no DAC)",
-      "linkedCatalogueEntryId": null,
+      "linkedCatalogueEntryId": "catalogue-cjc-1295-no-dac",
+      "composition": null,
       "position": 1
     },
     {
       "catalogueEntryId": "catalogue-cjc-1295-no-dac-ipamorelin",
       "ingredientSlug": "ipamorelin",
       "displayName": "Ipamorelin",
-      "linkedCatalogueEntryId": null,
+      "linkedCatalogueEntryId": "catalogue-ipamorelin",
+      "composition": null,
+      "position": 2
+    },
+    {
+      "catalogueEntryId": "catalogue-glow",
+      "ingredientSlug": "ghk-cu",
+      "displayName": "GHK-Cu",
+      "linkedCatalogueEntryId": "catalogue-ghk-cu",
+      "composition": null,
+      "position": 1
+    },
+    {
+      "catalogueEntryId": "catalogue-glow",
+      "ingredientSlug": "bpc-157",
+      "displayName": "BPC-157",
+      "linkedCatalogueEntryId": "catalogue-bpc-157",
+      "composition": null,
+      "position": 2
+    },
+    {
+      "catalogueEntryId": "catalogue-glow",
+      "ingredientSlug": "tb-500",
+      "displayName": "TB-500",
+      "linkedCatalogueEntryId": "catalogue-tb-500",
+      "composition": null,
+      "position": 3
+    },
+    {
+      "catalogueEntryId": "catalogue-tesamorelin-ipamorelin",
+      "ingredientSlug": "tesamorelin",
+      "displayName": "Tesamorelin",
+      "linkedCatalogueEntryId": "catalogue-tesamorelin",
+      "composition": null,
+      "position": 1
+    },
+    {
+      "catalogueEntryId": "catalogue-tesamorelin-ipamorelin",
+      "ingredientSlug": "ipamorelin",
+      "displayName": "Ipamorelin",
+      "linkedCatalogueEntryId": "catalogue-ipamorelin",
+      "composition": null,
       "position": 2
     }
   ]

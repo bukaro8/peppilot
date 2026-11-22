@@ -11,7 +11,8 @@ const historyItem = (
   injectionSiteId: InjectionSiteId,
   actualDate: string,
   actualTime = "08:00",
-): InjectionSiteHistoryItem => ({ actualDate, actualTime, injectionSiteId, recordId });
+  actualVolumeMl: string | null = null,
+): InjectionSiteHistoryItem => ({ actualDate, actualTime, actualVolumeMl, injectionSiteId, recordId });
 
 describe("injection-site rotation", () => {
   it("rotates deterministically after multiple injections on the same day", () => {
@@ -24,7 +25,7 @@ describe("injection-site rotation", () => {
       history: [historyItem("one", "abdomen_left_upper", "2026-11-02")],
     });
     expect(second.suggestedSiteId).toBe("abdomen_left_lower");
-    expect(second.activity.abdomen_left_upper).toBe("recent");
+    expect(second.activity.abdomen_left_upper).toBe("red");
     expect(second.activity.abdomen_left_lower).toBe("suggested");
   });
 
@@ -46,7 +47,7 @@ describe("injection-site rotation", () => {
     expect(result.reason).toContain("used 1 time");
   });
 
-  it("uses documented activity colours without implying safety", () => {
+  it("uses standard-volume calendar-day colours", () => {
     const result = calculateInjectionSiteRotation({
       asOfDate: "2026-11-10",
       candidateSiteIds: ["upper_buttock_right"],
@@ -58,11 +59,31 @@ describe("injection-site rotation", () => {
       ],
     });
     expect(result.activity).toMatchObject({
-      abdomen_left_upper: "recent",
-      abdomen_left_lower: "earlier",
-      abdomen_right_upper: "earlier",
-      abdomen_right_lower: "neutral",
+      abdomen_left_upper: "red",
+      abdomen_left_lower: "yellow",
+      abdomen_right_upper: "green",
+      abdomen_right_lower: "green",
       upper_buttock_right: "suggested",
+    });
+  });
+
+  it("extends rest colours above 0.8 mL and applies the most restrictive status", () => {
+    const result = calculateInjectionSiteRotation({
+      asOfDate: "2026-11-10",
+      candidateSiteIds: ["upper_buttock_right"],
+      history: [
+        historyItem("large-yesterday", "abdomen_left_upper", "2026-11-09", "08:00", "0.9"),
+        historyItem("small-two-days", "abdomen_left_lower", "2026-11-08", "08:00", "0.8"),
+        historyItem("large-two-days", "abdomen_right_upper", "2026-11-08", "08:00", "1.0"),
+        historyItem("old-small", "thigh_left_upper", "2026-11-07", "08:00", "0.5"),
+        historyItem("today-large", "thigh_left_upper", "2026-11-10", "09:00", "1.1"),
+      ],
+    });
+    expect(result.activity).toMatchObject({
+      abdomen_left_upper: "red",
+      abdomen_left_lower: "green",
+      abdomen_right_upper: "yellow",
+      thigh_left_upper: "red",
     });
   });
 

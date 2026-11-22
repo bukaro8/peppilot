@@ -19,6 +19,7 @@ export const catalogueCategoryLabels: Record<CatalogueCategory, string> = {
 export const catalogueKindLabels = {
   peptide: "Peptide",
   blend: "Blend",
+  combination: "Combination",
   tracked_compound: "Tracked compound",
 } as const;
 

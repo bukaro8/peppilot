@@ -23,11 +23,11 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_78%_4%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_3%_35%,oklch(0.9_0.06_155/.75),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_78%_4%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_3%_35%,oklch(0.86_0.08_292/.72),transparent_38%)]" />
       <TemplateHeader />
       <article className="mx-auto w-full max-w-4xl px-5 pb-16 pt-8 sm:px-8 sm:pt-16 lg:px-10">
         <Button variant="ghost" size="sm" asChild><Link href="/templates"><ArrowLeft className="size-4" aria-hidden="true" />Back to templates</Link></Button>
-        <div className="mt-6 rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_165/.4)] backdrop-blur sm:p-10">
+        <div className="mt-6 rounded-[2rem] border bg-card/90 p-6 shadow-[0_24px_70px_-32px_oklch(0.35_0.08_275/.4)] backdrop-blur sm:p-10">
           <div className="flex flex-wrap gap-2"><span className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">Published</span><span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold">Version {template.versionNumber}</span></div>
           <h1 className="mt-7 text-balance text-4xl font-bold tracking-[-0.05em] sm:text-6xl">{template.name}</h1>
           {template.description ? <p className="mt-5 text-lg leading-8 text-muted-foreground">{template.description}</p> : null}

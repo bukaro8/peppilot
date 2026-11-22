@@ -2,10 +2,18 @@ import { toNextJsHandler } from "better-auth/next-js";
 
 import { getAuth } from "@/lib/auth";
 
-export function GET(request: Request) {
-  return toNextJsHandler(getAuth()).GET(request);
+export async function GET(request: Request) {
+  try {
+    return await toNextJsHandler(getAuth()).GET(request);
+  } catch {
+    return Response.redirect(new URL("/sign-in?error=authentication-failed", request.url), 302);
+  }
 }
 
-export function POST(request: Request) {
-  return toNextJsHandler(getAuth()).POST(request);
+export async function POST(request: Request) {
+  try {
+    return await toNextJsHandler(getAuth()).POST(request);
+  } catch {
+    return Response.json({ message: "Authentication could not be completed." }, { status: 500 });
+  }
 }

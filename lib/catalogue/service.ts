@@ -77,6 +77,7 @@ export async function getCatalogueEntryBySlug(slug: string, includeInactive = fa
       slug: catalogueEntryIngredient.ingredientSlug,
       displayName: catalogueEntryIngredient.displayName,
       linkedCatalogueEntryId: catalogueEntryIngredient.linkedCatalogueEntryId,
+      composition: catalogueEntryIngredient.composition,
       position: catalogueEntryIngredient.position,
     })
     .from(catalogueEntryIngredient)

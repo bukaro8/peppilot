@@ -7,11 +7,12 @@ import {
 export type InjectionSiteHistoryItem = {
   actualDate: string;
   actualTime: string;
+  actualVolumeMl: string | null;
   injectionSiteId: InjectionSiteId;
   recordId: string;
 };
 
-export type InjectionSiteActivity = "earlier" | "neutral" | "recent" | "suggested";
+export type InjectionSiteActivity = "green" | "neutral" | "red" | "suggested" | "yellow";
 
 export type InjectionSiteRotation = {
   activity: Record<InjectionSiteId, InjectionSiteActivity>;
@@ -28,6 +29,23 @@ function dateValue(date: string) {
 export function calendarDaysSince(laterDate: string, earlierDate: string) {
   return Math.floor((dateValue(laterDate) - dateValue(earlierDate)) / 86_400_000);
 }
+
+function injectionActivity(
+  daysSince: number,
+  volumeMl: string | null,
+): Exclude<InjectionSiteActivity, "suggested"> {
+  const isLargeVolume = volumeMl !== null && Number(volumeMl) > 0.8;
+  if (daysSince === 0 || (isLargeVolume && daysSince === 1)) return "red";
+  if ((!isLargeVolume && daysSince === 1) || (isLargeVolume && daysSince === 2)) return "yellow";
+  return "green";
+}
+
+const activityPriority: Record<Exclude<InjectionSiteActivity, "suggested">, number> = {
+  neutral: 0,
+  green: 1,
+  yellow: 2,
+  red: 3,
+};
 
 export function calculateInjectionSiteRotation({
   asOfDate,
@@ -67,12 +85,19 @@ export function calculateInjectionSiteRotation({
   const suggestedSiteId = candidates[0] ?? null;
   const activity = Object.fromEntries(
     injectionSites.map((site) => {
-      const lastDate = usage.get(site.id)?.lastUsed.slice(0, 10);
-      const days = lastDate ? calendarDaysSince(asOfDate, lastDate) : null;
-      let state: InjectionSiteActivity = "neutral";
-      if (days === 0) state = "recent";
-      else if (days !== null && days >= 1 && days <= 2) state = "earlier";
-      if (site.id === suggestedSiteId) state = "suggested";
+      let baseState: Exclude<InjectionSiteActivity, "suggested"> = "neutral";
+      for (const item of history) {
+        if (item.injectionSiteId !== site.id) continue;
+        const days = calendarDaysSince(asOfDate, item.actualDate);
+        if (days < 0) continue;
+        const candidate = injectionActivity(days, item.actualVolumeMl);
+        if (activityPriority[candidate] > activityPriority[baseState]) {
+          baseState = candidate;
+        }
+      }
+      const state: InjectionSiteActivity = site.id === suggestedSiteId && baseState !== "red" && baseState !== "yellow"
+        ? "suggested"
+        : baseState;
       return [site.id, state];
     }),
   ) as Record<InjectionSiteId, InjectionSiteActivity>;
