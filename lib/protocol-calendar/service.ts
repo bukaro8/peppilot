@@ -84,7 +84,8 @@ function stepOccursOnDate(
   date: string,
 ) {
   const cycleDay = calendarDayDifference(cycleStartDate, date) + 1;
-  if (cycleDay < step.startDay || cycleDay > step.endDay) return false;
+  if (cycleDay < step.startDay || (step.endDay !== null && cycleDay > step.endDay)) return false;
+  if (step.frequency === "as_needed") return false;
   if (step.frequency === "daily") return true;
   if (step.frequency === "weekly") return step.daysOfWeek.includes(parseCalendarDate(date).getUTCDay());
   return step.intervalDays !== null && (cycleDay - step.startDay) % step.intervalDays === 0;
@@ -107,10 +108,8 @@ export function generateScheduledEvents(
   for (const cycle of snapshot.cycles) {
     const revisions = revisionsByCycle.get(cycle.id) ?? [];
     for (const date of dates) {
-      const cycleEndDate = cycle.endedOn && cycle.endedOn < cycle.plannedEndDate
-        ? cycle.endedOn
-        : cycle.plannedEndDate;
-      if (date < cycle.startDate || date > cycleEndDate) continue;
+      const cycleEndDate = cycle.endedOn ?? cycle.plannedEndDate;
+      if (date < cycle.startDate || (cycleEndDate !== null && date > cycleEndDate)) continue;
       if (isPausedOnDate(snapshot.pauses, cycle.id, date)) continue;
       const revision = revisions
         .filter((candidate) => candidate.effectiveFrom <= date)
@@ -118,19 +117,26 @@ export function generateScheduledEvents(
       if (!revision) continue;
       for (const step of revision.steps) {
         if (!stepOccursOnDate(step, cycle.startDate, date)) continue;
-        events.push({
-          catalogueEntryId: step.catalogueEntryId,
-          cycleId: cycle.id,
-          cycleName: cycle.name,
-          date,
-          doseAmount: step.doseAmount,
-          doseUnit: step.doseUnit,
-          id: `${revision.id}:${step.id}:${date}`,
-          peptideName: step.displayName,
-          revisionId: revision.id,
-          scheduleStepId: step.id,
-          timeOfDay: step.timeOfDay,
-        });
+        const administrations = step.administrationsPerDay ?? 1;
+        for (let administration = 0; administration < administrations; administration += 1) {
+          const labelledTime = step.timesOfDay?.[administration];
+          const timeOfDay = /^\d{2}:\d{2}$/.test(labelledTime ?? "") ? labelledTime : step.timeOfDay;
+          events.push({
+            catalogueEntryId: step.catalogueEntryId,
+            cycleId: cycle.id,
+            cycleName: cycle.name,
+            date,
+            doseAmount: step.doseAmount,
+            doseUnit: step.doseUnit,
+            id: administrations === 1
+              ? `${revision.id}:${step.id}:${date}`
+              : `${revision.id}:${step.id}:${administration + 1}:${date}`,
+            peptideName: step.displayName,
+            revisionId: revision.id,
+            scheduleStepId: step.id,
+            timeOfDay: timeOfDay ?? null,
+          });
+        }
       }
     }
   }

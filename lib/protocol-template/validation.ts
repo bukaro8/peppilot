@@ -1,4 +1,4 @@
-export const protocolTemplateFrequencies = ["daily", "weekly", "interval_days"] as const;
+export const protocolTemplateFrequencies = ["daily", "weekly", "interval_days", "as_needed"] as const;
 
 export type ProtocolTemplateFrequency = (typeof protocolTemplateFrequencies)[number];
 
@@ -7,11 +7,16 @@ export type ProtocolTemplateScheduleInput = {
   daysOfWeek: number[];
   doseAmount: string;
   doseUnit: string;
-  endDay: number;
+  endDay: number | null;
   frequency: ProtocolTemplateFrequency;
   intervalDays: number | null;
   startDay: number;
   timeOfDay: string | null;
+  administrationsPerDay?: number;
+  doseBasis?: string;
+  ingredientDoses?: unknown[];
+  route?: string | null;
+  timesOfDay?: string[];
 };
 
 export type ProtocolTemplateInput = {
@@ -80,7 +85,7 @@ export function validateProtocolTemplateInput(
     if (!integerInRange(schedule.startDay, 1, input.durationDays)) {
       return { success: false, error: `${label} start day must be within the template duration.` };
     }
-    if (!integerInRange(schedule.endDay, schedule.startDay, input.durationDays)) {
+    if (schedule.endDay === null || !integerInRange(schedule.endDay, schedule.startDay, input.durationDays)) {
       return { success: false, error: `${label} end day must follow its start day and remain within the duration.` };
     }
     if (schedule.timeOfDay && !timePattern.test(schedule.timeOfDay)) {

@@ -24,6 +24,7 @@ import {
   ProtocolCycleError,
 } from "@/lib/protocol-cycle/service";
 import { formatDoseAmount, formatTemplateFrequency } from "@/lib/protocol-template/presentation";
+import { calculateAdministration } from "@/lib/approved-protocol/calculations";
 
 export const metadata: Metadata = { title: "Protocol cycle" };
 
@@ -81,6 +82,17 @@ export default async function CyclePage({ params, searchParams }: CyclePageProps
     getInjectionRecordsForCycle(actor, cycle.id),
     getCycleGoals(actor, cycle.id),
   ]);
+  const preparationRows = cycle.preparation?.concentrationMgPerMl
+    ? (cycle.revisions.at(-1)?.steps ?? []).map((step) => ({
+        ...step,
+        calculation: calculateAdministration(
+          step.doseAmount,
+          step.doseUnit,
+          cycle.preparation!.concentrationMgPerMl!,
+          cycle.preparation!.syringeUnitsPerMl || undefined,
+        ),
+      }))
+    : [];
 
   return (
     <main className="min-h-screen bg-secondary/20">
@@ -89,8 +101,8 @@ export default async function CyclePage({ params, searchParams }: CyclePageProps
         <Button variant="ghost" size="sm" asChild><Link href="/cycles"><ArrowLeft className="size-4" aria-hidden="true" />Back to cycles</Link></Button>
         <div className="mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-10">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div><span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold capitalize"><Activity className="size-3.5" aria-hidden="true" />{cycle.status}</span><h1 className="mt-6 text-4xl font-bold tracking-[-0.05em] sm:text-5xl">{cycle.name}</h1><p className="mt-3 text-muted-foreground">{cycle.startDate} → {cycle.plannedEndDate}</p></div>
-            {cycle.status === "active" ? <Button asChild><Link href={`/cycles/${cycle.id}/schedule`}><PencilLine className="size-4" aria-hidden="true" />Revise schedule</Link></Button> : null}
+            <div><span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold capitalize"><Activity className="size-3.5" aria-hidden="true" />{cycle.status}</span><h1 className="mt-6 text-4xl font-bold tracking-[-0.05em] sm:text-5xl">{cycle.name}</h1><p className="mt-3 text-muted-foreground">{cycle.startDate} → {cycle.plannedEndDate ?? "Ongoing"}</p></div>
+            {cycle.status === "active" ? <div className="flex flex-wrap gap-2">{cycle.durationType === "as_needed" ? <Button asChild><Link href={`/injections/new/as-needed?cycleId=${cycle.id}`}><CheckCircle2 className="size-4" aria-hidden="true" />Record administration</Link></Button> : null}<Button variant={cycle.durationType === "as_needed" ? "outline" : "default"} asChild><Link href={`/cycles/${cycle.id}/schedule`}><PencilLine className="size-4" aria-hidden="true" />Revise schedule</Link></Button></div> : null}
           </div>
 
           {query.error ? <div className="mt-6"><FormMessage tone="error">{query.error}</FormMessage></div> : null}
@@ -102,9 +114,11 @@ export default async function CyclePage({ params, searchParams }: CyclePageProps
           {query.goals ? <div className="mt-6"><FormMessage tone="success">Cycle goals and baseline snapshots saved.</FormMessage></div> : null}
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <section className="rounded-2xl border bg-muted/30 p-5"><CalendarClock className="size-5 text-primary" aria-hidden="true" /><h2 className="mt-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Cycle dates</h2><p className="mt-2 font-semibold">Started {cycle.startDate}</p><p className="mt-1 text-sm text-muted-foreground">Planned end {cycle.plannedEndDate}</p>{cycle.endedOn ? <p className="mt-1 text-sm text-muted-foreground">Ended {cycle.endedOn}</p> : null}</section>
+            <section className="rounded-2xl border bg-muted/30 p-5"><CalendarClock className="size-5 text-primary" aria-hidden="true" /><h2 className="mt-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Cycle dates</h2><p className="mt-2 font-semibold">Started {cycle.startDate}</p><p className="mt-1 text-sm text-muted-foreground">{cycle.plannedEndDate ? `Expected completion ${cycle.plannedEndDate}` : "No automatic stopping date"}</p>{cycle.endedOn ? <p className="mt-1 text-sm text-muted-foreground">Ended {cycle.endedOn}</p> : null}</section>
             <section className="rounded-2xl border bg-muted/30 p-5"><History className="size-5 text-primary" aria-hidden="true" /><h2 className="mt-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Template provenance</h2>{cycle.sourceTemplateVersionId ? <><p className="mt-2 font-semibold">{cycle.sourceTemplateName}, version {cycle.sourceTemplateVersionNumber}</p><p className="mt-1 text-sm text-muted-foreground">{cycle.firstDeviatedOn ? `First changed ${cycle.firstDeviatedOn}; ${matchingWeeks} complete earlier matching week${matchingWeeks === 1 ? "" : "s"} preserved.` : "Schedule still matches the original template."}</p></> : <p className="mt-2 font-semibold">Custom protocol</p>}</section>
           </div>
+
+          {cycle.preparation ? <section className="mt-8 rounded-2xl border bg-muted/20 p-5" aria-labelledby="preparation-heading"><h2 id="preparation-heading" className="text-xl font-bold">Actual preparation</h2><p className="mt-2 text-sm text-muted-foreground">Saved for this cycle only; reference examples were not assumed.</p><div className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><p><span className="font-semibold">Vial strength:</span> {cycle.preparation.vialStrengthMg || "Not supplied"} mg</p><p><span className="font-semibold">Diluent:</span> {cycle.preparation.diluentVolumeMl || "Not supplied"} mL</p>{cycle.preparation.concentrationMgPerMl ? <p><span className="font-semibold">Calculated concentration:</span> {cycle.preparation.concentrationMgPerMl} mg/mL</p> : null}{cycle.preparation.ingredientProportions ? <p><span className="font-semibold">Ingredient proportions:</span> {cycle.preparation.ingredientProportions}</p> : null}</div>{preparationRows.length ? <div className="mt-5 space-y-2">{preparationRows.map((row) => <div key={row.id} className="rounded-xl border bg-background p-4 text-sm"><span className="font-semibold">{formatDoseAmount(row.doseAmount)} {row.doseUnit}</span> = {row.calculation.volumeMl} mL{row.calculation.syringeUnits ? ` · ${row.calculation.syringeUnits} syringe units` : ""}</div>)}</div> : null}</section> : null}
 
           <section className="mt-10 border-t pt-8" aria-labelledby="adherence-heading"><div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><h2 id="adherence-heading" className="text-2xl font-bold">Injection adherence</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Completed injections divided by due scheduled occurrences. Unresolved entries from prior dates count as overdue; today&apos;s entries count once explicitly resolved.</p></div><div className="rounded-2xl bg-secondary px-5 py-4 sm:text-right"><p className="text-3xl font-bold text-primary">{adherence.percentage === null ? "—" : `${adherence.percentage}%`}</p><p className="mt-1 text-xs text-muted-foreground">{adherence.completed} completed of {adherence.scheduled} due</p></div></div><div className="mt-5 grid grid-cols-3 gap-3 text-center"><div className="rounded-xl border bg-muted/25 p-3"><p className="text-xl font-bold">{adherence.skipped}</p><p className="text-xs text-muted-foreground">Skipped</p></div><div className="rounded-xl border bg-muted/25 p-3"><p className="text-xl font-bold">{adherence.missed}</p><p className="text-xs text-muted-foreground">Missed</p></div><div className="rounded-xl border bg-muted/25 p-3"><p className="text-xl font-bold">{adherence.overdue}</p><p className="text-xs text-muted-foreground">Overdue</p></div></div></section>
 

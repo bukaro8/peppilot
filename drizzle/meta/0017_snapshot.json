@@ -1,0 +1,3856 @@
+{
+  "id": "de1d9ed8-dcb8-4406-9b23-31e52dadaf1f",
+  "prevId": "7d8cca73-dbc1-4507-87ef-f40fd0f834b1",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.account": {
+      "name": "account",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_token": {
+          "name": "id_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token_expires_at": {
+          "name": "access_token_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token_expires_at": {
+          "name": "refresh_token_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "account_user_id_idx": {
+          "name": "account_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "account_user_id_user_id_fk": {
+          "name": "account_user_id_user_id_fk",
+          "tableFrom": "account",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.app_health": {
+      "name": "app_health",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "app_health_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.approved_protocol_preset": {
+      "name": "approved_protocol_preset",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "catalogue_entry_id": {
+          "name": "catalogue_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_type": {
+          "name": "duration_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "definition": {
+          "name": "definition",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "compound_context": {
+          "name": "compound_context",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_checksum": {
+          "name": "source_checksum",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "approved_protocol_preset_compound_category_unique": {
+          "name": "approved_protocol_preset_compound_category_unique",
+          "columns": [
+            {
+              "expression": "catalogue_entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "approved_protocol_preset_catalogue_idx": {
+          "name": "approved_protocol_preset_catalogue_idx",
+          "columns": [
+            {
+              "expression": "catalogue_entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "approved_protocol_preset_catalogue_entry_id_catalogue_entry_id_fk": {
+          "name": "approved_protocol_preset_catalogue_entry_id_catalogue_entry_id_fk",
+          "tableFrom": "approved_protocol_preset",
+          "tableTo": "catalogue_entry",
+          "columnsFrom": [
+            "catalogue_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "approved_protocol_preset_category_check": {
+          "name": "approved_protocol_preset_category_check",
+          "value": "\"approved_protocol_preset\".\"category\" in ('conservative', 'most_used', 'adventurous')"
+        },
+        "approved_protocol_preset_duration_type_check": {
+          "name": "approved_protocol_preset_duration_type_check",
+          "value": "\"approved_protocol_preset\".\"duration_type\" in ('fixed_cycle', 'open_ended', 'as_needed')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.catalogue_entry": {
+      "name": "catalogue_entry",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tracking_focus": {
+          "name": "tracking_focus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "catalogue_entry_category_idx": {
+          "name": "catalogue_entry_category_idx",
+          "columns": [
+            {
+              "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "catalogue_entry_slug_unique": {
+          "name": "catalogue_entry_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "catalogue_entry_category_check": {
+          "name": "catalogue_entry_category_check",
+          "value": "\"catalogue_entry\".\"category\" in ('weight_management', 'healing_skin_recovery', 'growth_body_composition', 'metabolic_wellness', 'cognitive')"
+        },
+        "catalogue_entry_kind_check": {
+          "name": "catalogue_entry_kind_check",
+          "value": "\"catalogue_entry\".\"kind\" in ('peptide', 'blend', 'combination', 'tracked_compound')"
+        },
+        "catalogue_entry_slug_check": {
+          "name": "catalogue_entry_slug_check",
+          "value": "\"catalogue_entry\".\"slug\" ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.catalogue_entry_ingredient": {
+      "name": "catalogue_entry_ingredient",
+      "schema": "",
+      "columns": {
+        "catalogue_entry_id": {
+          "name": "catalogue_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ingredient_slug": {
+          "name": "ingredient_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "linked_catalogue_entry_id": {
+          "name": "linked_catalogue_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "composition": {
+          "name": "composition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "catalogue_entry_ingredient_entry_idx": {
+          "name": "catalogue_entry_ingredient_entry_idx",
+          "columns": [
+            {
+              "expression": "catalogue_entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "catalogue_entry_ingredient_catalogue_entry_id_catalogue_entry_id_fk": {
+          "name": "catalogue_entry_ingredient_catalogue_entry_id_catalogue_entry_id_fk",
+          "tableFrom": "catalogue_entry_ingredient",
+          "tableTo": "catalogue_entry",
+          "columnsFrom": [
+            "catalogue_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "catalogue_entry_ingredient_linked_catalogue_entry_id_catalogue_entry_id_fk": {
+          "name": "catalogue_entry_ingredient_linked_catalogue_entry_id_catalogue_entry_id_fk",
+          "tableFrom": "catalogue_entry_ingredient",
+          "tableTo": "catalogue_entry",
+          "columnsFrom": [
+            "linked_catalogue_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "catalogue_entry_ingredient_catalogue_entry_id_ingredient_slug_pk": {
+          "name": "catalogue_entry_ingredient_catalogue_entry_id_ingredient_slug_pk",
+          "columns": [
+            "catalogue_entry_id",
+            "ingredient_slug"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "catalogue_entry_ingredient_position_check": {
+          "name": "catalogue_entry_ingredient_position_check",
+          "value": "\"catalogue_entry_ingredient\".\"position\" > 0"
+        },
+        "catalogue_entry_ingredient_slug_check": {
+          "name": "catalogue_entry_ingredient_slug_check",
+          "value": "\"catalogue_entry_ingredient\".\"ingredient_slug\" ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.check_in_question_preference": {
+      "name": "check_in_question_preference",
+      "schema": "",
+      "columns": {
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "question_id": {
+          "name": "question_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_enabled": {
+          "name": "is_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "check_in_question_preference_owner_user_id_user_id_fk": {
+          "name": "check_in_question_preference_owner_user_id_user_id_fk",
+          "tableFrom": "check_in_question_preference",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "check_in_question_preference_owner_user_id_question_id_pk": {
+          "name": "check_in_question_preference_owner_user_id_question_id_pk",
+          "columns": [
+            "owner_user_id",
+            "question_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "check_in_question_preference_question_check": {
+          "name": "check_in_question_preference_question_check",
+          "value": "\"check_in_question_preference\".\"question_id\" in ('appetite_control', 'waist_body_composition', 'pain_mobility', 'focus', 'stress')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.community_aggregate_invalidation": {
+      "name": "community_aggregate_invalidation",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "invalidated_at": {
+          "name": "invalidated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "community_aggregate_invalidation_user_id_user_id_fk": {
+          "name": "community_aggregate_invalidation_user_id_user_id_fk",
+          "tableFrom": "community_aggregate_invalidation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.daily_check_in": {
+      "name": "daily_check_in",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "check_in_date": {
+          "name": "check_in_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "symptom_status": {
+          "name": "symptom_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'not_answered'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "daily_check_in_owner_date_unique": {
+          "name": "daily_check_in_owner_date_unique",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "check_in_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "daily_check_in_owner_date_idx": {
+          "name": "daily_check_in_owner_date_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "check_in_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "daily_check_in_owner_user_id_user_id_fk": {
+          "name": "daily_check_in_owner_user_id_user_id_fk",
+          "tableFrom": "daily_check_in",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "daily_check_in_symptom_status_check": {
+          "name": "daily_check_in_symptom_status_check",
+          "value": "\"daily_check_in\".\"symptom_status\" in ('not_answered', 'no_symptoms', 'symptoms_recorded')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.daily_check_in_answer": {
+      "name": "daily_check_in_answer",
+      "schema": "",
+      "columns": {
+        "check_in_id": {
+          "name": "check_in_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "question_id": {
+          "name": "question_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "daily_check_in_answer_check_in_id_daily_check_in_id_fk": {
+          "name": "daily_check_in_answer_check_in_id_daily_check_in_id_fk",
+          "tableFrom": "daily_check_in_answer",
+          "tableTo": "daily_check_in",
+          "columnsFrom": [
+            "check_in_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "daily_check_in_answer_check_in_id_question_id_pk": {
+          "name": "daily_check_in_answer_check_in_id_question_id_pk",
+          "columns": [
+            "check_in_id",
+            "question_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "daily_check_in_answer_score_check": {
+          "name": "daily_check_in_answer_score_check",
+          "value": "\"daily_check_in_answer\".\"score\" between 1 and 10"
+        },
+        "daily_check_in_answer_question_check": {
+          "name": "daily_check_in_answer_question_check",
+          "value": "\"daily_check_in_answer\".\"question_id\" in ('sleep_quality', 'energy', 'recovery', 'appetite_control', 'waist_body_composition', 'pain_mobility', 'focus', 'stress')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.health_measurement": {
+      "name": "health_measurement",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metric_id": {
+          "name": "metric_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_on": {
+          "name": "observed_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canonical_value": {
+          "name": "canonical_value",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canonical_unit": {
+          "name": "canonical_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entered_value": {
+          "name": "entered_value",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entered_unit": {
+          "name": "entered_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "health_measurement_owner_date_idx": {
+          "name": "health_measurement_owner_date_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "observed_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "health_measurement_owner_metric_date_idx": {
+          "name": "health_measurement_owner_metric_date_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "metric_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "observed_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "health_measurement_owner_user_id_user_id_fk": {
+          "name": "health_measurement_owner_user_id_user_id_fk",
+          "tableFrom": "health_measurement",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "health_measurement_metric_check": {
+          "name": "health_measurement_metric_check",
+          "value": "\"health_measurement\".\"metric_id\" in ('weight', 'waist_circumference', 'body_fat_percentage', 'muscle_mass', 'hip_circumference', 'chest_circumference')"
+        },
+        "health_measurement_canonical_unit_check": {
+          "name": "health_measurement_canonical_unit_check",
+          "value": "\"health_measurement\".\"canonical_unit\" in ('kg', 'cm', 'percent')"
+        },
+        "health_measurement_entered_unit_check": {
+          "name": "health_measurement_entered_unit_check",
+          "value": "\"health_measurement\".\"entered_unit\" in ('kg', 'lb', 'cm', 'in', 'percent')"
+        },
+        "health_measurement_value_check": {
+          "name": "health_measurement_value_check",
+          "value": "\"health_measurement\".\"canonical_value\" > 0 and \"health_measurement\".\"entered_value\" > 0"
+        },
+        "health_measurement_source_check": {
+          "name": "health_measurement_source_check",
+          "value": "\"health_measurement\".\"source\" = 'manual'"
+        },
+        "health_measurement_notes_check": {
+          "name": "health_measurement_notes_check",
+          "value": "\"health_measurement\".\"notes\" is null or char_length(\"health_measurement\".\"notes\") <= 500"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.injection_record": {
+      "name": "injection_record",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cycle_id": {
+          "name": "cycle_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scheduled_occurrence_id": {
+          "name": "scheduled_occurrence_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schedule_revision_id": {
+          "name": "schedule_revision_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schedule_step_id": {
+          "name": "schedule_step_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "catalogue_entry_id": {
+          "name": "catalogue_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scheduled_date": {
+          "name": "scheduled_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scheduled_time": {
+          "name": "scheduled_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scheduled_dose_amount": {
+          "name": "scheduled_dose_amount",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scheduled_dose_unit": {
+          "name": "scheduled_dose_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actual_date": {
+          "name": "actual_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actual_time": {
+          "name": "actual_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actual_dose_amount": {
+          "name": "actual_dose_amount",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actual_dose_unit": {
+          "name": "actual_dose_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actual_volume_ml": {
+          "name": "actual_volume_ml",
+          "type": "numeric(8, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "injection_site_id": {
+          "name": "injection_site_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "injection_record_occurrence_unique": {
+          "name": "injection_record_occurrence_unique",
+          "columns": [
+            {
+              "expression": "scheduled_occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "injection_record_owner_date_idx": {
+          "name": "injection_record_owner_date_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "scheduled_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "injection_record_cycle_idx": {
+          "name": "injection_record_cycle_idx",
+          "columns": [
+            {
+              "expression": "cycle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "injection_record_owner_user_id_user_id_fk": {
+          "name": "injection_record_owner_user_id_user_id_fk",
+          "tableFrom": "injection_record",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "injection_record_cycle_id_protocol_cycle_id_fk": {
+          "name": "injection_record_cycle_id_protocol_cycle_id_fk",
+          "tableFrom": "injection_record",
+          "tableTo": "protocol_cycle",
+          "columnsFrom": [
+            "cycle_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "injection_record_schedule_revision_id_protocol_cycle_schedule_revision_id_fk": {
+          "name": "injection_record_schedule_revision_id_protocol_cycle_schedule_revision_id_fk",
+          "tableFrom": "injection_record",
+          "tableTo": "protocol_cycle_schedule_revision",
+          "columnsFrom": [
+            "schedule_revision_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "injection_record_schedule_step_id_protocol_cycle_schedule_step_id_fk": {
+          "name": "injection_record_schedule_step_id_protocol_cycle_schedule_step_id_fk",
+          "tableFrom": "injection_record",
+          "tableTo": "protocol_cycle_schedule_step",
+          "columnsFrom": [
+            "schedule_step_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "injection_record_catalogue_entry_id_catalogue_entry_id_fk": {
+          "name": "injection_record_catalogue_entry_id_catalogue_entry_id_fk",
+          "tableFrom": "injection_record",
+          "tableTo": "catalogue_entry",
+          "columnsFrom": [
+            "catalogue_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "injection_record_status_check": {
+          "name": "injection_record_status_check",
+          "value": "\"injection_record\".\"status\" in ('completed', 'skipped', 'missed')"
+        },
+        "injection_record_scheduled_unit_check": {
+          "name": "injection_record_scheduled_unit_check",
+          "value": "char_length(\"injection_record\".\"scheduled_dose_unit\") between 1 and 20"
+        },
+        "injection_record_scheduled_dose_check": {
+          "name": "injection_record_scheduled_dose_check",
+          "value": "\"injection_record\".\"scheduled_dose_amount\" > 0"
+        },
+        "injection_record_actual_volume_check": {
+          "name": "injection_record_actual_volume_check",
+          "value": "\"injection_record\".\"actual_volume_ml\" is null or \"injection_record\".\"actual_volume_ml\" > 0"
+        },
+        "injection_record_notes_check": {
+          "name": "injection_record_notes_check",
+          "value": "\"injection_record\".\"notes\" is null or char_length(\"injection_record\".\"notes\") <= 1000"
+        },
+        "injection_record_site_check": {
+          "name": "injection_record_site_check",
+          "value": "\"injection_record\".\"injection_site_id\" is null or \"injection_record\".\"injection_site_id\" in (\n        'abdomen_left_upper', 'abdomen_left_lower', 'abdomen_right_upper', 'abdomen_right_lower',\n        'love_handle_left', 'love_handle_right',\n        'thigh_left_upper', 'thigh_left_lower', 'thigh_right_upper', 'thigh_right_lower',\n        'upper_arm_left', 'upper_arm_right', 'upper_buttock_left', 'upper_buttock_right'\n      )"
+        },
+        "injection_record_actual_fields_check": {
+          "name": "injection_record_actual_fields_check",
+          "value": "(\n        \"injection_record\".\"status\" = 'completed'\n        and \"injection_record\".\"actual_date\" is not null\n        and \"injection_record\".\"actual_time\" is not null\n        and \"injection_record\".\"actual_dose_amount\" > 0\n        and char_length(\"injection_record\".\"actual_dose_unit\") between 1 and 20\n      ) or (\n        \"injection_record\".\"status\" in ('skipped', 'missed')\n        and \"injection_record\".\"actual_date\" is null\n        and \"injection_record\".\"actual_time\" is null\n        and \"injection_record\".\"actual_dose_amount\" is null\n        and \"injection_record\".\"actual_dose_unit\" is null\n        and \"injection_record\".\"actual_volume_ml\" is null\n        and \"injection_record\".\"injection_site_id\" is null\n      )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.injection_record_history": {
+      "name": "injection_record_history",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "injection_record_id": {
+          "name": "injection_record_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_status": {
+          "name": "previous_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_actual_date": {
+          "name": "previous_actual_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "previous_actual_time": {
+          "name": "previous_actual_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "previous_actual_dose_amount": {
+          "name": "previous_actual_dose_amount",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "previous_actual_dose_unit": {
+          "name": "previous_actual_dose_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "previous_actual_volume_ml": {
+          "name": "previous_actual_volume_ml",
+          "type": "numeric(8, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "previous_injection_site_id": {
+          "name": "previous_injection_site_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "previous_notes": {
+          "name": "previous_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "changed_at": {
+          "name": "changed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "injection_record_history_record_idx": {
+          "name": "injection_record_history_record_idx",
+          "columns": [
+            {
+              "expression": "injection_record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "injection_record_history_injection_record_id_injection_record_id_fk": {
+          "name": "injection_record_history_injection_record_id_injection_record_id_fk",
+          "tableFrom": "injection_record_history",
+          "tableTo": "injection_record",
+          "columnsFrom": [
+            "injection_record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.member_injection_site_preference": {
+      "name": "member_injection_site_preference",
+      "schema": "",
+      "columns": {
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "injection_site_id": {
+          "name": "injection_site_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "disabled_at": {
+          "name": "disabled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "member_injection_site_preference_owner_idx": {
+          "name": "member_injection_site_preference_owner_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "member_injection_site_preference_owner_user_id_user_id_fk": {
+          "name": "member_injection_site_preference_owner_user_id_user_id_fk",
+          "tableFrom": "member_injection_site_preference",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "member_injection_site_preference_owner_user_id_injection_site_id_pk": {
+          "name": "member_injection_site_preference_owner_user_id_injection_site_id_pk",
+          "columns": [
+            "owner_user_id",
+            "injection_site_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "member_injection_site_preference_site_check": {
+          "name": "member_injection_site_preference_site_check",
+          "value": "\"member_injection_site_preference\".\"injection_site_id\" in (\n        'abdomen_left_upper', 'abdomen_left_lower', 'abdomen_right_upper', 'abdomen_right_lower',\n        'love_handle_left', 'love_handle_right',\n        'thigh_left_upper', 'thigh_left_lower', 'thigh_right_upper', 'thigh_right_lower',\n        'upper_arm_left', 'upper_arm_right', 'upper_buttock_left', 'upper_buttock_right'\n      )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.member_protocol": {
+      "name": "member_protocol",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_days": {
+          "name": "duration_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_type": {
+          "name": "duration_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'fixed_cycle'"
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_template_id": {
+          "name": "source_template_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_template_version_id": {
+          "name": "source_template_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_approved_preset_id": {
+          "name": "source_approved_preset_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_definition": {
+          "name": "approved_definition",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "template_schedule_unchanged": {
+          "name": "template_schedule_unchanged",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "member_protocol_owner_idx": {
+          "name": "member_protocol_owner_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "member_protocol_source_version_idx": {
+          "name": "member_protocol_source_version_idx",
+          "columns": [
+            {
+              "expression": "source_template_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "member_protocol_source_approved_idx": {
+          "name": "member_protocol_source_approved_idx",
+          "columns": [
+            {
+              "expression": "source_approved_preset_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "member_protocol_owner_user_id_user_id_fk": {
+          "name": "member_protocol_owner_user_id_user_id_fk",
+          "tableFrom": "member_protocol",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "member_protocol_source_approved_preset_id_approved_protocol_preset_id_fk": {
+          "name": "member_protocol_source_approved_preset_id_approved_protocol_preset_id_fk",
+          "tableFrom": "member_protocol",
+          "tableTo": "approved_protocol_preset",
+          "columnsFrom": [
+            "source_approved_preset_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "member_protocol_source_version_fk": {
+          "name": "member_protocol_source_version_fk",
+          "tableFrom": "member_protocol",
+          "tableTo": "protocol_template_version",
+          "columnsFrom": [
+            "source_template_id",
+            "source_template_version_id"
+          ],
+          "columnsTo": [
+            "template_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "member_protocol_duration_check": {
+          "name": "member_protocol_duration_check",
+          "value": "(\"member_protocol\".\"duration_type\" = 'fixed_cycle' and \"member_protocol\".\"duration_days\" > 0) or (\"member_protocol\".\"duration_type\" in ('open_ended', 'as_needed') and \"member_protocol\".\"duration_days\" is null)"
+        },
+        "member_protocol_duration_type_check": {
+          "name": "member_protocol_duration_type_check",
+          "value": "\"member_protocol\".\"duration_type\" in ('fixed_cycle', 'open_ended', 'as_needed')"
+        },
+        "member_protocol_status_check": {
+          "name": "member_protocol_status_check",
+          "value": "\"member_protocol\".\"status\" = 'draft'"
+        },
+        "member_protocol_origin_check": {
+          "name": "member_protocol_origin_check",
+          "value": "\"member_protocol\".\"origin\" in ('custom', 'template', 'approved_preset')"
+        },
+        "member_protocol_provenance_check": {
+          "name": "member_protocol_provenance_check",
+          "value": "(\n        \"member_protocol\".\"origin\" = 'custom'\n        and \"member_protocol\".\"source_template_id\" is null\n        and \"member_protocol\".\"source_template_version_id\" is null\n        and \"member_protocol\".\"source_approved_preset_id\" is null\n        and \"member_protocol\".\"template_schedule_unchanged\" = false\n      ) or (\n        \"member_protocol\".\"origin\" = 'template'\n        and \"member_protocol\".\"source_template_id\" is not null\n        and \"member_protocol\".\"source_template_version_id\" is not null\n        and \"member_protocol\".\"source_approved_preset_id\" is null\n      ) or (\n        \"member_protocol\".\"origin\" = 'approved_preset'\n        and \"member_protocol\".\"source_template_id\" is null\n        and \"member_protocol\".\"source_template_version_id\" is null\n        and \"member_protocol\".\"source_approved_preset_id\" is not null\n      )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.member_protocol_entry": {
+      "name": "member_protocol_entry",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "protocol_id": {
+          "name": "protocol_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "catalogue_entry_id": {
+          "name": "catalogue_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "member_protocol_entry_catalogue_unique": {
+          "name": "member_protocol_entry_catalogue_unique",
+          "columns": [
+            {
+              "expression": "protocol_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "catalogue_entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "member_protocol_entry_protocol_idx": {
+          "name": "member_protocol_entry_protocol_idx",
+          "columns": [
+            {
+              "expression": "protocol_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "member_protocol_entry_protocol_id_member_protocol_id_fk": {
+          "name": "member_protocol_entry_protocol_id_member_protocol_id_fk",
+          "tableFrom": "member_protocol_entry",
+          "tableTo": "member_protocol",
+          "columnsFrom": [
+            "protocol_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "member_protocol_entry_catalogue_entry_id_catalogue_entry_id_fk": {
+          "name": "member_protocol_entry_catalogue_entry_id_catalogue_entry_id_fk",
+          "tableFrom": "member_protocol_entry",
+          "tableTo": "catalogue_entry",
+          "columnsFrom": [
+            "catalogue_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "member_protocol_entry_position_check": {
+          "name": "member_protocol_entry_position_check",
+          "value": "\"member_protocol_entry\".\"position\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.member_protocol_schedule_step": {
+      "name": "member_protocol_schedule_step",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "protocol_entry_id": {
+          "name": "protocol_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dose_amount": {
+          "name": "dose_amount",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dose_unit": {
+          "name": "dose_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frequency": {
+          "name": "frequency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "days_of_week": {
+          "name": "days_of_week",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::integer[]"
+        },
+        "interval_days": {
+          "name": "interval_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time_of_day": {
+          "name": "time_of_day",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "times_of_day": {
+          "name": "times_of_day",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "administrations_per_day": {
+          "name": "administrations_per_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "dose_basis": {
+          "name": "dose_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'single_compound_mass'"
+        },
+        "ingredient_doses": {
+          "name": "ingredient_doses",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "route": {
+          "name": "route",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_day": {
+          "name": "start_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "end_day": {
+          "name": "end_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "member_protocol_schedule_step_entry_idx": {
+          "name": "member_protocol_schedule_step_entry_idx",
+          "columns": [
+            {
+              "expression": "protocol_entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "member_protocol_schedule_step_protocol_entry_id_member_protocol_entry_id_fk": {
+          "name": "member_protocol_schedule_step_protocol_entry_id_member_protocol_entry_id_fk",
+          "tableFrom": "member_protocol_schedule_step",
+          "tableTo": "member_protocol_entry",
+          "columnsFrom": [
+            "protocol_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "member_protocol_schedule_step_dose_check": {
+          "name": "member_protocol_schedule_step_dose_check",
+          "value": "\"member_protocol_schedule_step\".\"dose_amount\" > 0"
+        },
+        "member_protocol_schedule_step_unit_check": {
+          "name": "member_protocol_schedule_step_unit_check",
+          "value": "char_length(\"member_protocol_schedule_step\".\"dose_unit\") between 1 and 20"
+        },
+        "member_protocol_schedule_step_frequency_check": {
+          "name": "member_protocol_schedule_step_frequency_check",
+          "value": "\"member_protocol_schedule_step\".\"frequency\" in ('daily', 'weekly', 'interval_days', 'as_needed')"
+        },
+        "member_protocol_schedule_step_start_check": {
+          "name": "member_protocol_schedule_step_start_check",
+          "value": "\"member_protocol_schedule_step\".\"start_day\" > 0"
+        },
+        "member_protocol_schedule_step_end_check": {
+          "name": "member_protocol_schedule_step_end_check",
+          "value": "\"member_protocol_schedule_step\".\"end_day\" is null or \"member_protocol_schedule_step\".\"end_day\" >= \"member_protocol_schedule_step\".\"start_day\""
+        },
+        "member_protocol_schedule_step_administrations_check": {
+          "name": "member_protocol_schedule_step_administrations_check",
+          "value": "\"member_protocol_schedule_step\".\"administrations_per_day\" > 0"
+        },
+        "member_protocol_schedule_step_position_check": {
+          "name": "member_protocol_schedule_step_position_check",
+          "value": "\"member_protocol_schedule_step\".\"position\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_cycle": {
+      "name": "protocol_cycle",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_protocol_id": {
+          "name": "source_protocol_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "planned_end_date": {
+          "name": "planned_end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_type": {
+          "name": "duration_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'fixed_cycle'"
+        },
+        "approved_definition": {
+          "name": "approved_definition",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preparation": {
+          "name": "preparation",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "source_template_id": {
+          "name": "source_template_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_template_version_id": {
+          "name": "source_template_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "template_initially_matching": {
+          "name": "template_initially_matching",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "first_deviated_on": {
+          "name": "first_deviated_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ended_on": {
+          "name": "ended_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "protocol_cycle_owner_idx": {
+          "name": "protocol_cycle_owner_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "protocol_cycle_status_idx": {
+          "name": "protocol_cycle_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "protocol_cycle_owner_user_id_user_id_fk": {
+          "name": "protocol_cycle_owner_user_id_user_id_fk",
+          "tableFrom": "protocol_cycle",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "protocol_cycle_source_protocol_id_member_protocol_id_fk": {
+          "name": "protocol_cycle_source_protocol_id_member_protocol_id_fk",
+          "tableFrom": "protocol_cycle",
+          "tableTo": "member_protocol",
+          "columnsFrom": [
+            "source_protocol_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "protocol_cycle_source_version_fk": {
+          "name": "protocol_cycle_source_version_fk",
+          "tableFrom": "protocol_cycle",
+          "tableTo": "protocol_template_version",
+          "columnsFrom": [
+            "source_template_id",
+            "source_template_version_id"
+          ],
+          "columnsTo": [
+            "template_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "protocol_cycle_dates_check": {
+          "name": "protocol_cycle_dates_check",
+          "value": "\"protocol_cycle\".\"planned_end_date\" is null or \"protocol_cycle\".\"planned_end_date\" >= \"protocol_cycle\".\"start_date\""
+        },
+        "protocol_cycle_duration_type_check": {
+          "name": "protocol_cycle_duration_type_check",
+          "value": "\"protocol_cycle\".\"duration_type\" in ('fixed_cycle', 'open_ended', 'as_needed')"
+        },
+        "protocol_cycle_status_check": {
+          "name": "protocol_cycle_status_check",
+          "value": "\"protocol_cycle\".\"status\" in ('active', 'paused', 'completed', 'cancelled')"
+        },
+        "protocol_cycle_template_reference_check": {
+          "name": "protocol_cycle_template_reference_check",
+          "value": "(\n        \"protocol_cycle\".\"source_template_id\" is null\n        and \"protocol_cycle\".\"source_template_version_id\" is null\n        and \"protocol_cycle\".\"template_initially_matching\" = false\n        and \"protocol_cycle\".\"first_deviated_on\" is null\n      ) or (\n        \"protocol_cycle\".\"source_template_id\" is not null\n        and \"protocol_cycle\".\"source_template_version_id\" is not null\n      )"
+        },
+        "protocol_cycle_terminal_date_check": {
+          "name": "protocol_cycle_terminal_date_check",
+          "value": "(\"protocol_cycle\".\"status\" in ('completed', 'cancelled')) = (\"protocol_cycle\".\"ended_on\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_cycle_goal": {
+      "name": "protocol_cycle_goal",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "cycle_id": {
+          "name": "cycle_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metric_id": {
+          "name": "metric_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_value": {
+          "name": "target_value",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_unit": {
+          "name": "target_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "baseline_status": {
+          "name": "baseline_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "baseline_source_type": {
+          "name": "baseline_source_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "baseline_source_id": {
+          "name": "baseline_source_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "baseline_value": {
+          "name": "baseline_value",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "baseline_unit": {
+          "name": "baseline_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "baseline_observed_on": {
+          "name": "baseline_observed_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "protocol_cycle_goal_cycle_metric_unique": {
+          "name": "protocol_cycle_goal_cycle_metric_unique",
+          "columns": [
+            {
+              "expression": "cycle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "metric_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "protocol_cycle_goal_cycle_idx": {
+          "name": "protocol_cycle_goal_cycle_idx",
+          "columns": [
+            {
+              "expression": "cycle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "protocol_cycle_goal_cycle_id_protocol_cycle_id_fk": {
+          "name": "protocol_cycle_goal_cycle_id_protocol_cycle_id_fk",
+          "tableFrom": "protocol_cycle_goal",
+          "tableTo": "protocol_cycle",
+          "columnsFrom": [
+            "cycle_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "protocol_cycle_goal_metric_check": {
+          "name": "protocol_cycle_goal_metric_check",
+          "value": "\"protocol_cycle_goal\".\"metric_id\" in (\n        'weight', 'waist_circumference', 'body_fat_percentage', 'muscle_mass',\n        'hip_circumference', 'chest_circumference', 'sleep_quality', 'energy',\n        'recovery', 'appetite_control', 'waist_body_composition', 'pain_mobility',\n        'focus', 'stress'\n      )"
+        },
+        "protocol_cycle_goal_unit_check": {
+          "name": "protocol_cycle_goal_unit_check",
+          "value": "\"protocol_cycle_goal\".\"target_unit\" in ('kg', 'cm', 'percent', 'score')"
+        },
+        "protocol_cycle_goal_target_check": {
+          "name": "protocol_cycle_goal_target_check",
+          "value": "\"protocol_cycle_goal\".\"target_value\" is null or \"protocol_cycle_goal\".\"target_value\" > 0"
+        },
+        "protocol_cycle_goal_baseline_status_check": {
+          "name": "protocol_cycle_goal_baseline_status_check",
+          "value": "\"protocol_cycle_goal\".\"baseline_status\" in ('valid', 'missing', 'unsuitable')"
+        },
+        "protocol_cycle_goal_baseline_source_check": {
+          "name": "protocol_cycle_goal_baseline_source_check",
+          "value": "\"protocol_cycle_goal\".\"baseline_source_type\" in ('measurement', 'check_in', 'none')"
+        },
+        "protocol_cycle_goal_baseline_snapshot_check": {
+          "name": "protocol_cycle_goal_baseline_snapshot_check",
+          "value": "(\n        \"protocol_cycle_goal\".\"baseline_status\" = 'missing'\n        and \"protocol_cycle_goal\".\"baseline_source_type\" = 'none'\n        and \"protocol_cycle_goal\".\"baseline_source_id\" is null\n        and \"protocol_cycle_goal\".\"baseline_value\" is null\n        and \"protocol_cycle_goal\".\"baseline_unit\" is null\n        and \"protocol_cycle_goal\".\"baseline_observed_on\" is null\n      ) or (\n        \"protocol_cycle_goal\".\"baseline_status\" in ('valid', 'unsuitable')\n        and \"protocol_cycle_goal\".\"baseline_source_type\" in ('measurement', 'check_in')\n        and \"protocol_cycle_goal\".\"baseline_source_id\" is not null\n        and \"protocol_cycle_goal\".\"baseline_value\" is not null\n        and \"protocol_cycle_goal\".\"baseline_unit\" is not null\n        and \"protocol_cycle_goal\".\"baseline_observed_on\" is not null\n      )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_cycle_pause": {
+      "name": "protocol_cycle_pause",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "cycle_id": {
+          "name": "cycle_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "paused_on": {
+          "name": "paused_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resumed_on": {
+          "name": "resumed_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "protocol_cycle_pause_cycle_idx": {
+          "name": "protocol_cycle_pause_cycle_idx",
+          "columns": [
+            {
+              "expression": "cycle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "protocol_cycle_one_open_pause_unique": {
+          "name": "protocol_cycle_one_open_pause_unique",
+          "columns": [
+            {
+              "expression": "cycle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"protocol_cycle_pause\".\"resumed_on\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "protocol_cycle_pause_cycle_id_protocol_cycle_id_fk": {
+          "name": "protocol_cycle_pause_cycle_id_protocol_cycle_id_fk",
+          "tableFrom": "protocol_cycle_pause",
+          "tableTo": "protocol_cycle",
+          "columnsFrom": [
+            "cycle_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "protocol_cycle_pause_dates_check": {
+          "name": "protocol_cycle_pause_dates_check",
+          "value": "\"protocol_cycle_pause\".\"resumed_on\" is null or \"protocol_cycle_pause\".\"resumed_on\" >= \"protocol_cycle_pause\".\"paused_on\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_cycle_schedule_entry": {
+      "name": "protocol_cycle_schedule_entry",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "revision_id": {
+          "name": "revision_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "catalogue_entry_id": {
+          "name": "catalogue_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "protocol_cycle_schedule_entry_catalogue_unique": {
+          "name": "protocol_cycle_schedule_entry_catalogue_unique",
+          "columns": [
+            {
+              "expression": "revision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "catalogue_entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "protocol_cycle_schedule_entry_revision_idx": {
+          "name": "protocol_cycle_schedule_entry_revision_idx",
+          "columns": [
+            {
+              "expression": "revision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "protocol_cycle_schedule_entry_revision_id_protocol_cycle_schedule_revision_id_fk": {
+          "name": "protocol_cycle_schedule_entry_revision_id_protocol_cycle_schedule_revision_id_fk",
+          "tableFrom": "protocol_cycle_schedule_entry",
+          "tableTo": "protocol_cycle_schedule_revision",
+          "columnsFrom": [
+            "revision_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "protocol_cycle_schedule_entry_catalogue_entry_id_catalogue_entry_id_fk": {
+          "name": "protocol_cycle_schedule_entry_catalogue_entry_id_catalogue_entry_id_fk",
+          "tableFrom": "protocol_cycle_schedule_entry",
+          "tableTo": "catalogue_entry",
+          "columnsFrom": [
+            "catalogue_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "protocol_cycle_schedule_entry_position_check": {
+          "name": "protocol_cycle_schedule_entry_position_check",
+          "value": "\"protocol_cycle_schedule_entry\".\"position\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_cycle_schedule_revision": {
+      "name": "protocol_cycle_schedule_revision",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "cycle_id": {
+          "name": "cycle_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision_number": {
+          "name": "revision_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "template_schedule_matches": {
+          "name": "template_schedule_matches",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "protocol_cycle_revision_number_unique": {
+          "name": "protocol_cycle_revision_number_unique",
+          "columns": [
+            {
+              "expression": "cycle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "revision_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "protocol_cycle_revision_effective_unique": {
+          "name": "protocol_cycle_revision_effective_unique",
+          "columns": [
+            {
+              "expression": "cycle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "effective_from",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "protocol_cycle_schedule_revision_cycle_id_protocol_cycle_id_fk": {
+          "name": "protocol_cycle_schedule_revision_cycle_id_protocol_cycle_id_fk",
+          "tableFrom": "protocol_cycle_schedule_revision",
+          "tableTo": "protocol_cycle",
+          "columnsFrom": [
+            "cycle_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "protocol_cycle_revision_number_check": {
+          "name": "protocol_cycle_revision_number_check",
+          "value": "\"protocol_cycle_schedule_revision\".\"revision_number\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_cycle_schedule_step": {
+      "name": "protocol_cycle_schedule_step",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "revision_entry_id": {
+          "name": "revision_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dose_amount": {
+          "name": "dose_amount",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dose_unit": {
+          "name": "dose_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frequency": {
+          "name": "frequency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "days_of_week": {
+          "name": "days_of_week",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::integer[]"
+        },
+        "interval_days": {
+          "name": "interval_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time_of_day": {
+          "name": "time_of_day",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "times_of_day": {
+          "name": "times_of_day",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "administrations_per_day": {
+          "name": "administrations_per_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "dose_basis": {
+          "name": "dose_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'single_compound_mass'"
+        },
+        "ingredient_doses": {
+          "name": "ingredient_doses",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "route": {
+          "name": "route",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_day": {
+          "name": "start_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "end_day": {
+          "name": "end_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "protocol_cycle_schedule_step_entry_idx": {
+          "name": "protocol_cycle_schedule_step_entry_idx",
+          "columns": [
+            {
+              "expression": "revision_entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "protocol_cycle_schedule_step_revision_entry_id_protocol_cycle_schedule_entry_id_fk": {
+          "name": "protocol_cycle_schedule_step_revision_entry_id_protocol_cycle_schedule_entry_id_fk",
+          "tableFrom": "protocol_cycle_schedule_step",
+          "tableTo": "protocol_cycle_schedule_entry",
+          "columnsFrom": [
+            "revision_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "protocol_cycle_schedule_step_dose_check": {
+          "name": "protocol_cycle_schedule_step_dose_check",
+          "value": "\"protocol_cycle_schedule_step\".\"dose_amount\" > 0"
+        },
+        "protocol_cycle_schedule_step_unit_check": {
+          "name": "protocol_cycle_schedule_step_unit_check",
+          "value": "char_length(\"protocol_cycle_schedule_step\".\"dose_unit\") between 1 and 20"
+        },
+        "protocol_cycle_schedule_step_frequency_check": {
+          "name": "protocol_cycle_schedule_step_frequency_check",
+          "value": "\"protocol_cycle_schedule_step\".\"frequency\" in ('daily', 'weekly', 'interval_days', 'as_needed')"
+        },
+        "protocol_cycle_schedule_step_start_check": {
+          "name": "protocol_cycle_schedule_step_start_check",
+          "value": "\"protocol_cycle_schedule_step\".\"start_day\" > 0"
+        },
+        "protocol_cycle_schedule_step_end_check": {
+          "name": "protocol_cycle_schedule_step_end_check",
+          "value": "\"protocol_cycle_schedule_step\".\"end_day\" is null or \"protocol_cycle_schedule_step\".\"end_day\" >= \"protocol_cycle_schedule_step\".\"start_day\""
+        },
+        "protocol_cycle_schedule_step_administrations_check": {
+          "name": "protocol_cycle_schedule_step_administrations_check",
+          "value": "\"protocol_cycle_schedule_step\".\"administrations_per_day\" > 0"
+        },
+        "protocol_cycle_schedule_step_position_check": {
+          "name": "protocol_cycle_schedule_step_position_check",
+          "value": "\"protocol_cycle_schedule_step\".\"position\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_template": {
+      "name": "protocol_template",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "protocol_template_created_by_user_id_user_id_fk": {
+          "name": "protocol_template_created_by_user_id_user_id_fk",
+          "tableFrom": "protocol_template",
+          "tableTo": "user",
+          "columnsFrom": [
+            "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "protocol_template_slug_unique": {
+          "name": "protocol_template_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "protocol_template_slug_check": {
+          "name": "protocol_template_slug_check",
+          "value": "\"protocol_template\".\"slug\" ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_template_schedule_step": {
+      "name": "protocol_template_schedule_step",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "version_entry_id": {
+          "name": "version_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dose_amount": {
+          "name": "dose_amount",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dose_unit": {
+          "name": "dose_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frequency": {
+          "name": "frequency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "days_of_week": {
+          "name": "days_of_week",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::integer[]"
+        },
+        "interval_days": {
+          "name": "interval_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time_of_day": {
+          "name": "time_of_day",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_day": {
+          "name": "start_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "end_day": {
+          "name": "end_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "protocol_template_schedule_step_entry_idx": {
+          "name": "protocol_template_schedule_step_entry_idx",
+          "columns": [
+            {
+              "expression": "version_entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "protocol_template_schedule_step_version_entry_id_protocol_template_version_entry_id_fk": {
+          "name": "protocol_template_schedule_step_version_entry_id_protocol_template_version_entry_id_fk",
+          "tableFrom": "protocol_template_schedule_step",
+          "tableTo": "protocol_template_version_entry",
+          "columnsFrom": [
+            "version_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "protocol_template_schedule_step_dose_check": {
+          "name": "protocol_template_schedule_step_dose_check",
+          "value": "\"protocol_template_schedule_step\".\"dose_amount\" > 0"
+        },
+        "protocol_template_schedule_step_unit_check": {
+          "name": "protocol_template_schedule_step_unit_check",
+          "value": "char_length(\"protocol_template_schedule_step\".\"dose_unit\") between 1 and 20"
+        },
+        "protocol_template_schedule_step_frequency_check": {
+          "name": "protocol_template_schedule_step_frequency_check",
+          "value": "\"protocol_template_schedule_step\".\"frequency\" in ('daily', 'weekly', 'interval_days')"
+        },
+        "protocol_template_schedule_step_start_check": {
+          "name": "protocol_template_schedule_step_start_check",
+          "value": "\"protocol_template_schedule_step\".\"start_day\" > 0"
+        },
+        "protocol_template_schedule_step_end_check": {
+          "name": "protocol_template_schedule_step_end_check",
+          "value": "\"protocol_template_schedule_step\".\"end_day\" >= \"protocol_template_schedule_step\".\"start_day\""
+        },
+        "protocol_template_schedule_step_position_check": {
+          "name": "protocol_template_schedule_step_position_check",
+          "value": "\"protocol_template_schedule_step\".\"position\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_template_version": {
+      "name": "protocol_template_version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "template_id": {
+          "name": "template_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_number": {
+          "name": "version_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_days": {
+          "name": "duration_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retired_at": {
+          "name": "retired_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "protocol_template_version_number_unique": {
+          "name": "protocol_template_version_number_unique",
+          "columns": [
+            {
+              "expression": "template_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "protocol_template_version_template_id_unique": {
+          "name": "protocol_template_version_template_id_unique",
+          "columns": [
+            {
+              "expression": "template_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "protocol_template_version_status_idx": {
+          "name": "protocol_template_version_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "protocol_template_version_template_id_protocol_template_id_fk": {
+          "name": "protocol_template_version_template_id_protocol_template_id_fk",
+          "tableFrom": "protocol_template_version",
+          "tableTo": "protocol_template",
+          "columnsFrom": [
+            "template_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "protocol_template_version_created_by_user_id_user_id_fk": {
+          "name": "protocol_template_version_created_by_user_id_user_id_fk",
+          "tableFrom": "protocol_template_version",
+          "tableTo": "user",
+          "columnsFrom": [
+            "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "protocol_template_version_number_check": {
+          "name": "protocol_template_version_number_check",
+          "value": "\"protocol_template_version\".\"version_number\" > 0"
+        },
+        "protocol_template_version_duration_check": {
+          "name": "protocol_template_version_duration_check",
+          "value": "\"protocol_template_version\".\"duration_days\" > 0"
+        },
+        "protocol_template_version_status_check": {
+          "name": "protocol_template_version_status_check",
+          "value": "\"protocol_template_version\".\"status\" in ('draft', 'published', 'retired')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.protocol_template_version_entry": {
+      "name": "protocol_template_version_entry",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "version_id": {
+          "name": "version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "catalogue_entry_id": {
+          "name": "catalogue_entry_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "protocol_template_version_entry_catalogue_unique": {
+          "name": "protocol_template_version_entry_catalogue_unique",
+          "columns": [
+            {
+              "expression": "version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "catalogue_entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "protocol_template_version_entry_version_idx": {
+          "name": "protocol_template_version_entry_version_idx",
+          "columns": [
+            {
+              "expression": "version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "protocol_template_version_entry_version_id_protocol_template_version_id_fk": {
+          "name": "protocol_template_version_entry_version_id_protocol_template_version_id_fk",
+          "tableFrom": "protocol_template_version_entry",
+          "tableTo": "protocol_template_version",
+          "columnsFrom": [
+            "version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "protocol_template_version_entry_catalogue_entry_id_catalogue_entry_id_fk": {
+          "name": "protocol_template_version_entry_catalogue_entry_id_catalogue_entry_id_fk",
+          "tableFrom": "protocol_template_version_entry",
+          "tableTo": "catalogue_entry",
+          "columnsFrom": [
+            "catalogue_entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "protocol_template_version_entry_position_check": {
+          "name": "protocol_template_version_entry_position_check",
+          "value": "\"protocol_template_version_entry\".\"position\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.session": {
+      "name": "session",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "session_user_id_idx": {
+          "name": "session_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "session_user_id_user_id_fk": {
+          "name": "session_user_id_user_id_fk",
+          "tableFrom": "session",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "session_token_unique": {
+          "name": "session_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.symptom_record": {
+      "name": "symptom_record",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "check_in_id": {
+          "name": "check_in_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "symptom_date": {
+          "name": "symptom_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "symptom_id": {
+          "name": "symptom_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "custom_description": {
+          "name": "custom_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "severity": {
+          "name": "severity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "symptom_record_owner_date_idx": {
+          "name": "symptom_record_owner_date_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "symptom_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "symptom_record_check_in_idx": {
+          "name": "symptom_record_check_in_idx",
+          "columns": [
+            {
+              "expression": "check_in_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "symptom_record_owner_user_id_user_id_fk": {
+          "name": "symptom_record_owner_user_id_user_id_fk",
+          "tableFrom": "symptom_record",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "symptom_record_check_in_id_daily_check_in_id_fk": {
+          "name": "symptom_record_check_in_id_daily_check_in_id_fk",
+          "tableFrom": "symptom_record",
+          "tableTo": "daily_check_in",
+          "columnsFrom": [
+            "check_in_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "symptom_record_symptom_check": {
+          "name": "symptom_record_symptom_check",
+          "value": "\"symptom_record\".\"symptom_id\" in ('headache', 'nausea', 'fatigue', 'dizziness', 'digestive_discomfort', 'injection_site_reaction', 'pain', 'sleep_disturbance', 'custom')"
+        },
+        "symptom_record_severity_check": {
+          "name": "symptom_record_severity_check",
+          "value": "\"symptom_record\".\"severity\" between 1 and 10"
+        },
+        "symptom_record_description_check": {
+          "name": "symptom_record_description_check",
+          "value": "(\"symptom_record\".\"symptom_id\" = 'custom' and char_length(\"symptom_record\".\"custom_description\") between 1 and 120) or (\"symptom_record\".\"symptom_id\" <> 'custom' and (\"symptom_record\".\"custom_description\" is null or char_length(\"symptom_record\".\"custom_description\") <= 120))"
+        },
+        "symptom_record_notes_check": {
+          "name": "symptom_record_notes_check",
+          "value": "\"symptom_record\".\"notes\" is null or char_length(\"symptom_record\".\"notes\") <= 1000"
+        },
+        "symptom_record_time_check": {
+          "name": "symptom_record_time_check",
+          "value": "\"symptom_record\".\"started_at\" is null or \"symptom_record\".\"ended_at\" is null or \"symptom_record\".\"ended_at\" >= \"symptom_record\".\"started_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bio": {
+          "name": "bio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "community_analytics_enabled": {
+          "name": "community_analytics_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "community_analytics_updated_at": {
+          "name": "community_analytics_updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'member'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "user_username_lower_unique": {
+          "name": "user_username_lower_unique",
+          "columns": [
+            {
+              "expression": "lower(\"username\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"user\".\"username\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "user_username_format_check": {
+          "name": "user_username_format_check",
+          "value": "\"user\".\"username\" is null or \"user\".\"username\" ~ '^[A-Za-z0-9_]{3,30}$'"
+        },
+        "user_display_name_length_check": {
+          "name": "user_display_name_length_check",
+          "value": "\"user\".\"display_name\" is null or char_length(\"user\".\"display_name\") between 1 and 60"
+        },
+        "user_bio_length_check": {
+          "name": "user_bio_length_check",
+          "value": "\"user\".\"bio\" is null or char_length(\"user\".\"bio\") <= 280"
+        },
+        "user_role_check": {
+          "name": "user_role_check",
+          "value": "\"user\".\"role\" in ('member', 'admin')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.verification": {
+      "name": "verification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "verification_identifier_idx": {
+          "name": "verification_identifier_idx",
+          "columns": [
+            {
+              "expression": "identifier",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

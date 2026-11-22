@@ -17,7 +17,7 @@ import {
   type ProtocolTemplateScheduleInput,
 } from "@/lib/protocol-template/validation";
 
-export type MemberProtocolOrigin = "custom" | "template";
+export type MemberProtocolOrigin = "approved_preset" | "custom" | "template";
 
 export class MemberProtocolError extends Error {
   constructor(
@@ -32,7 +32,8 @@ export class MemberProtocolError extends Error {
 type ProtocolRow = {
   createdAt: Date;
   description: string | null;
-  durationDays: number;
+  durationDays: number | null;
+  durationType: "fixed_cycle" | "open_ended" | "as_needed";
   id: string;
   name: string;
   origin: MemberProtocolOrigin;
@@ -41,6 +42,7 @@ type ProtocolRow = {
   sourceTemplateName: string | null;
   sourceTemplateVersionId: string | null;
   sourceTemplateVersionNumber: number | null;
+  sourceApprovedPresetId: string | null;
   status: "draft";
   templateScheduleUnchanged: boolean;
   updatedAt: Date;
@@ -59,14 +61,19 @@ type ProtocolScheduleRow = {
   daysOfWeek: number[];
   doseAmount: string;
   doseUnit: string;
-  endDay: number;
-  frequency: "daily" | "weekly" | "interval_days";
+  endDay: number | null;
+  frequency: "as_needed" | "daily" | "weekly" | "interval_days";
   id: string;
   intervalDays: number | null;
   position: number;
   protocolEntryId: string;
   startDay: number;
   timeOfDay: string | null;
+  timesOfDay: string[];
+  administrationsPerDay: number;
+  doseBasis: string;
+  ingredientDoses: unknown[];
+  route: string | null;
 };
 
 function protocolSelection() {
@@ -76,9 +83,11 @@ function protocolSelection() {
     protocol.name,
     protocol.description,
     protocol.duration_days as "durationDays",
+    protocol.duration_type as "durationType",
     protocol.origin,
     protocol.source_template_id as "sourceTemplateId",
     protocol.source_template_version_id as "sourceTemplateVersionId",
+    protocol.source_approved_preset_id as "sourceApprovedPresetId",
     protocol.template_schedule_unchanged as "templateScheduleUnchanged",
     protocol.status,
     protocol.created_at as "createdAt",
@@ -143,6 +152,11 @@ async function loadProtocolDetail(protocolId: string) {
       step.days_of_week as "daysOfWeek",
       step.interval_days as "intervalDays",
       to_char(step.time_of_day, 'HH24:MI') as "timeOfDay",
+      step.times_of_day as "timesOfDay",
+      step.administrations_per_day as "administrationsPerDay",
+      step.dose_basis as "doseBasis",
+      step.ingredient_doses as "ingredientDoses",
+      step.route,
       step.start_day as "startDay",
       step.end_day as "endDay",
       step.position
@@ -214,6 +228,11 @@ function scheduleFingerprint(schedule: ProtocolTemplateScheduleInput) {
     intervalDays: schedule.intervalDays,
     startDay: schedule.startDay,
     timeOfDay: schedule.timeOfDay,
+    administrationsPerDay: schedule.administrationsPerDay ?? 1,
+    doseBasis: schedule.doseBasis ?? "single_compound_mass",
+    ingredientDoses: schedule.ingredientDoses ?? [],
+    route: schedule.route ?? null,
+    timesOfDay: schedule.timesOfDay ?? [],
   });
 }
 

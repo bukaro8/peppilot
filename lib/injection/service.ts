@@ -247,6 +247,68 @@ export async function createInjectionRecord(
   return { recordId };
 }
 
+export async function getAsNeededInjectionOption(actor: AuthenticatedActor, cycleId: string) {
+  const sql = getPostgresClient();
+  const [option] = await sql<Array<{
+    catalogueEntryId: string;
+    cycleId: string;
+    cycleName: string;
+    doseAmount: string;
+    doseUnit: string;
+    peptideName: string;
+    revisionId: string;
+    scheduleStepId: string;
+  }>>`
+    select cycle.id as "cycleId", cycle.name as "cycleName", revision.id as "revisionId",
+      step.id as "scheduleStepId", entry.catalogue_entry_id as "catalogueEntryId",
+      catalogue.display_name as "peptideName", step.dose_amount::text as "doseAmount",
+      step.dose_unit as "doseUnit"
+    from protocol_cycle cycle
+    join lateral (
+      select * from protocol_cycle_schedule_revision candidate
+      where candidate.cycle_id = cycle.id order by candidate.revision_number desc limit 1
+    ) revision on true
+    join protocol_cycle_schedule_entry entry on entry.revision_id = revision.id
+    join protocol_cycle_schedule_step step on step.revision_entry_id = entry.id
+    join catalogue_entry catalogue on catalogue.id = entry.catalogue_entry_id
+    where cycle.id = ${cycleId} and cycle.owner_user_id = ${actor.userId}
+      and cycle.status in ('active', 'paused') and step.frequency = 'as_needed'
+    order by step.position limit 1
+  `;
+  return option ?? null;
+}
+
+export async function createAsNeededInjectionRecord(
+  actor: AuthenticatedActor,
+  cycleId: string,
+  input: InjectionRecordInput,
+) {
+  const option = await getAsNeededInjectionOption(actor, cycleId);
+  if (!option) throw new InjectionRecordError("As-needed injection option not found.", "not_found");
+  const value = normalizeInput(input);
+  if (value.status !== "completed" || !value.actualDate) {
+    throw new InjectionRecordError("As-needed administrations are recorded when completed.", "invalid");
+  }
+  const recordId = crypto.randomUUID();
+  const occurrenceId = `as-needed:${option.scheduleStepId}:${recordId}:${value.actualDate}`;
+  const sql = getPostgresClient();
+  await sql`
+    insert into injection_record (
+      id, owner_user_id, cycle_id, scheduled_occurrence_id, schedule_revision_id,
+      schedule_step_id, catalogue_entry_id, scheduled_date, scheduled_time,
+      scheduled_dose_amount, scheduled_dose_unit, status, actual_date, actual_time,
+      actual_dose_amount, actual_dose_unit, actual_volume_ml, injection_site_id, notes
+    ) values (
+      ${recordId}, ${actor.userId}, ${option.cycleId}, ${occurrenceId}, ${option.revisionId},
+      ${option.scheduleStepId}, ${option.catalogueEntryId}, ${value.actualDate}, null,
+      ${option.doseAmount}, ${option.doseUnit}, 'completed', ${value.actualDate},
+      ${value.actualTime}, ${value.actualDoseAmount}, ${value.actualDoseUnit},
+      ${value.actualVolumeMl}, ${value.injectionSiteId}, ${value.notes}
+    )
+  `;
+  return { recordId };
+}
+
 export async function getInjectionRecord(actor: AuthenticatedActor, recordId: string) {
   const sql = getPostgresClient();
   await assertRecordOwnership(sql, actor, recordId, "read");

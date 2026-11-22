@@ -24,7 +24,7 @@ function numberValue(value: FormDataEntryValue | null) {
 
 function parseTemplateForm(formData: FormData, includeSlug: true): CreateProtocolTemplateInput;
 function parseTemplateForm(formData: FormData, includeSlug: false): ProtocolTemplateInput;
-function parseTemplateForm(formData: FormData, includeSlug: boolean) {
+function parseTemplateForm(formData: FormData, includeSlug: boolean): CreateProtocolTemplateInput | ProtocolTemplateInput {
   const scheduleCount = numberValue(formData.get("scheduleCount"));
   const schedules = Array.from({ length: Number.isInteger(scheduleCount) ? scheduleCount : 0 }, (_, index) => {
     const prefix = `schedule.${index}`;

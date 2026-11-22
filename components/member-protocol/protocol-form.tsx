@@ -19,7 +19,7 @@ type InitialSchedule = {
   daysOfWeek: number[];
   doseAmount: string;
   doseUnit: string;
-  endDay: number;
+  endDay: number | null;
   frequency: ProtocolTemplateFrequency;
   intervalDays: number | null;
   startDay: number;
@@ -43,12 +43,13 @@ type ProtocolFormProps = {
   catalogue: CatalogueOption[];
   initial?: {
     description: string | null;
-    durationDays: number;
+    durationDays: number | null;
     name: string;
     protocolId?: string;
     schedules: InitialSchedule[];
   };
   onboarding?: boolean;
+  preferredCatalogueId?: string;
   source?: {
     name: string;
     versionId: string;
@@ -74,7 +75,7 @@ function editableSchedule(schedule: InitialSchedule, key: string): EditableSched
     daysOfWeek: schedule.daysOfWeek.join(","),
     doseAmount: schedule.doseAmount,
     doseUnit: schedule.doseUnit,
-    endDay: String(schedule.endDay),
+    endDay: schedule.endDay === null ? "" : String(schedule.endDay),
     frequency: schedule.frequency,
     intervalDays: schedule.intervalDays === null ? "" : String(schedule.intervalDays),
     key,
@@ -96,7 +97,7 @@ function frequencyLabel(row: EditableSchedule) {
   return "Frequency not set";
 }
 
-export function ProtocolForm({ catalogue, initial, onboarding = false, source }: ProtocolFormProps) {
+export function ProtocolForm({ catalogue, initial, onboarding = false, preferredCatalogueId, source }: ProtocolFormProps) {
   const action = initial?.protocolId
     ? updateMemberProtocolAction.bind(null, initial.protocolId)
     : createMemberProtocolAction.bind(null, source?.versionId ?? null, onboarding);
@@ -110,7 +111,7 @@ export function ProtocolForm({ catalogue, initial, onboarding = false, source }:
   const [rows, setRows] = useState<EditableSchedule[]>(
     initial?.schedules.length
       ? initial.schedules.map((schedule, index) => editableSchedule(schedule, `initial-${index}`))
-      : [{ ...blankSchedule, key: "new-0" }],
+      : [{ ...blankSchedule, catalogueEntryId: preferredCatalogueId ?? "", key: "new-0" }],
   );
   const [lastAddedKey, setLastAddedKey] = useState<string | null>(null);
   const catalogueNames = useMemo(

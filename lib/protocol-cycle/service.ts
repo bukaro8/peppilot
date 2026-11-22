@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth/policy";
 import { getPostgresClient } from "@/lib/db";
 import { schedulesMatchTemplate } from "@/lib/member-protocol/service";
+import { calculateAdministration, calculatePreparation } from "@/lib/approved-protocol/calculations";
 import {
   validateProtocolTemplateContent,
   type ProtocolTemplateScheduleInput,
@@ -33,7 +34,15 @@ type CycleRow = {
   id: string;
   name: string;
   ownerUserId: string;
-  plannedEndDate: string;
+  plannedEndDate: string | null;
+  durationType: "fixed_cycle" | "open_ended" | "as_needed";
+  preparation: {
+    concentrationMgPerMl?: string;
+    diluentVolumeMl: string;
+    ingredientProportions: string;
+    syringeUnitsPerMl: string;
+    vialStrengthMg: string;
+  } | null;
   sourceProtocolId: string | null;
   sourceTemplateId: string | null;
   sourceTemplateName: string | null;
@@ -77,7 +86,8 @@ export type CycleScheduleRangeSnapshot = {
     endedOn: string | null;
     id: string;
     name: string;
-    plannedEndDate: string;
+    plannedEndDate: string | null;
+    durationType?: "fixed_cycle" | "open_ended" | "as_needed";
     startDate: string;
     status: "active" | "paused" | "completed";
   }>;
@@ -129,6 +139,8 @@ function cycleSelection() {
     cycle.name,
     cycle.start_date::text as "startDate",
     cycle.planned_end_date::text as "plannedEndDate",
+    cycle.duration_type as "durationType",
+    cycle.preparation,
     cycle.status,
     cycle.source_template_id as "sourceTemplateId",
     cycle.source_template_version_id as "sourceTemplateVersionId",
@@ -222,11 +234,14 @@ async function insertRevisionContent(
     await sql`
       insert into protocol_cycle_schedule_step (
         id, revision_entry_id, dose_amount, dose_unit, frequency, days_of_week,
-        interval_days, time_of_day, start_day, end_day, position
+        interval_days, time_of_day, times_of_day, administrations_per_day,
+        dose_basis, ingredient_doses, route, start_day, end_day, position
       ) values (
         ${crypto.randomUUID()}, ${revisionEntryId}, ${schedule.doseAmount},
         ${schedule.doseUnit}, ${schedule.frequency}, ${schedule.daysOfWeek},
-        ${schedule.intervalDays}, ${schedule.timeOfDay}, ${schedule.startDay},
+        ${schedule.intervalDays}, ${schedule.timeOfDay}, ${schedule.timesOfDay ?? []},
+        ${schedule.administrationsPerDay ?? 1}, ${schedule.doseBasis ?? "single_compound_mass"},
+        ${JSON.stringify(schedule.ingredientDoses ?? [])}::jsonb, ${schedule.route ?? null}, ${schedule.startDay},
         ${schedule.endDay}, ${index + 1}
       )
     `;
@@ -259,7 +274,11 @@ async function loadRevisionDetail(revision: RevisionRow) {
       step.interval_days as "intervalDays",
       step.position,
       step.start_day as "startDay",
-      to_char(step.time_of_day, 'HH24:MI') as "timeOfDay"
+      to_char(step.time_of_day, 'HH24:MI') as "timeOfDay",
+      step.times_of_day as "timesOfDay",
+      step.administrations_per_day as "administrationsPerDay",
+      step.dose_basis as "doseBasis", step.ingredient_doses as "ingredientDoses",
+      step.route
     from protocol_cycle_schedule_step step
     join protocol_cycle_schedule_entry entry on entry.id = step.revision_entry_id
     where entry.revision_id = ${revision.id}
@@ -270,7 +289,16 @@ async function loadRevisionDetail(revision: RevisionRow) {
 
 export async function startProtocolCycle(
   actor: AuthenticatedActor,
-  input: { protocolId: string; startDate: string },
+  input: {
+    protocolId: string;
+    startDate: string;
+    preparation?: {
+      diluentVolumeMl: string;
+      ingredientProportions: string;
+      syringeUnitsPerMl: string;
+      vialStrengthMg: string;
+    };
+  },
 ) {
   parseDate(input.startDate, "Start date");
   const sql = getPostgresClient();
@@ -280,7 +308,9 @@ export async function startProtocolCycle(
   return sql.begin(async (transaction) => {
     const [protocol] = await transaction<{
       description: string | null;
-      durationDays: number;
+      durationDays: number | null;
+      durationType: "fixed_cycle" | "open_ended" | "as_needed";
+      approvedDefinition: unknown | null;
       name: string;
       ownerUserId: string;
       sourceTemplateId: string | null;
@@ -288,7 +318,8 @@ export async function startProtocolCycle(
       templateScheduleUnchanged: boolean;
     }[]>`
       select
-        name, description, duration_days as "durationDays",
+        name, description, duration_days as "durationDays", duration_type as "durationType",
+        approved_definition as "approvedDefinition",
         owner_user_id as "ownerUserId", source_template_id as "sourceTemplateId",
         source_template_version_id as "sourceTemplateVersionId",
         template_schedule_unchanged as "templateScheduleUnchanged"
@@ -307,33 +338,51 @@ export async function startProtocolCycle(
         step.frequency,
         step.interval_days as "intervalDays",
         step.start_day as "startDay",
-        to_char(step.time_of_day, 'HH24:MI') as "timeOfDay"
+        to_char(step.time_of_day, 'HH24:MI') as "timeOfDay",
+        step.times_of_day as "timesOfDay",
+        step.administrations_per_day as "administrationsPerDay",
+        step.dose_basis as "doseBasis", step.ingredient_doses as "ingredientDoses",
+        step.route
       from member_protocol_schedule_step step
       join member_protocol_entry entry on entry.id = step.protocol_entry_id
       where entry.protocol_id = ${input.protocolId}
       order by step.position
     `;
-    const validation = validateProtocolTemplateContent({
-      description: protocol.description,
-      durationDays: protocol.durationDays,
-      name: protocol.name,
-      schedules,
-    });
-    if (!validation.success) throw new ProtocolCycleError(validation.error, "invalid");
+    const validatedSchedules = protocol.durationType === "fixed_cycle"
+      ? validateProtocolTemplateContent({ description: protocol.description, durationDays: protocol.durationDays ?? 0, name: protocol.name, schedules })
+      : { success: true as const, value: { schedules } };
+    if (!validatedSchedules.success) throw new ProtocolCycleError(validatedSchedules.error, "invalid");
 
-    const plannedEndDate = addDays(input.startDate, protocol.durationDays - 1);
+    const plannedEndDate = protocol.durationDays === null ? null : addDays(input.startDate, protocol.durationDays - 1);
     const firstDeviatedOn =
       protocol.sourceTemplateVersionId && !protocol.templateScheduleUnchanged
         ? input.startDate
         : null;
+    let preparation: CycleRow["preparation"] = input.preparation && Object.values(input.preparation).some(Boolean)
+      ? { ...input.preparation }
+      : null;
+    if (preparation?.vialStrengthMg && preparation.diluentVolumeMl) {
+      try {
+        const calculated = calculatePreparation(preparation.vialStrengthMg, preparation.diluentVolumeMl);
+        preparation = { ...preparation, ...calculated };
+        if (preparation.syringeUnitsPerMl) {
+          calculateAdministration("1", "mg", calculated.concentrationMgPerMl, preparation.syringeUnitsPerMl);
+        }
+      } catch {
+        throw new ProtocolCycleError("Vial strength and diluent volume must be positive decimal values.", "invalid");
+      }
+    }
     await transaction`
       insert into protocol_cycle (
         id, owner_user_id, source_protocol_id, name, start_date, planned_end_date,
+        duration_type, approved_definition, preparation,
         status, source_template_id, source_template_version_id,
         template_initially_matching, first_deviated_on
       ) values (
         ${cycleId}, ${actor.userId}, ${input.protocolId}, ${protocol.name},
-        ${input.startDate}, ${plannedEndDate}, 'active', ${protocol.sourceTemplateId},
+        ${input.startDate}, ${plannedEndDate}, ${protocol.durationType}, ${protocol.approvedDefinition === null ? null : JSON.stringify(protocol.approvedDefinition)}::jsonb,
+        ${preparation === null ? null : JSON.stringify(preparation)}::jsonb,
+        'active', ${protocol.sourceTemplateId},
         ${protocol.sourceTemplateVersionId}, ${protocol.templateScheduleUnchanged},
         ${firstDeviatedOn}
       )
@@ -346,7 +395,7 @@ export async function startProtocolCycle(
         ${protocol.templateScheduleUnchanged}
       )
     `;
-    await insertRevisionContent(transaction, revisionId, validation.value.schedules);
+    await insertRevisionContent(transaction, revisionId, validatedSchedules.value.schedules);
     return { cycleId, plannedEndDate };
   });
 }
@@ -418,12 +467,13 @@ export async function getCycleScheduleDataForRange(
   const cycles = await sql<CycleScheduleRangeSnapshot["cycles"]>`
     select
       id, name, start_date::text as "startDate",
-      planned_end_date::text as "plannedEndDate", ended_on::text as "endedOn", status
+      planned_end_date::text as "plannedEndDate", duration_type as "durationType",
+      ended_on::text as "endedOn", status
     from protocol_cycle
     where owner_user_id = ${actor.userId}
       and (status in ('active', 'paused') or (${includeCompleted} and status = 'completed'))
       and start_date <= ${endDate}
-      and planned_end_date >= ${startDate}
+      and (planned_end_date is null or planned_end_date >= ${startDate})
     order by start_date, created_at
   `;
 
@@ -437,7 +487,7 @@ export async function getCycleScheduleDataForRange(
     where cycle.owner_user_id = ${actor.userId}
       and (cycle.status in ('active', 'paused') or (${includeCompleted} and cycle.status = 'completed'))
       and cycle.start_date <= ${endDate}
-      and cycle.planned_end_date >= ${startDate}
+      and (cycle.planned_end_date is null or cycle.planned_end_date >= ${startDate})
     order by pause.paused_on, pause.created_at
   `;
   const revisionRows = await sql<Array<{
@@ -454,7 +504,7 @@ export async function getCycleScheduleDataForRange(
     where cycle.owner_user_id = ${actor.userId}
       and (cycle.status in ('active', 'paused') or (${includeCompleted} and cycle.status = 'completed'))
       and cycle.start_date <= ${endDate}
-      and cycle.planned_end_date >= ${startDate}
+      and (cycle.planned_end_date is null or cycle.planned_end_date >= ${startDate})
       and revision.effective_from <= ${endDate}
     order by revision.cycle_id, revision.revision_number
   `;
@@ -469,7 +519,11 @@ export async function getCycleScheduleDataForRange(
       step.days_of_week as "daysOfWeek", step.dose_amount::text as "doseAmount",
       step.dose_unit as "doseUnit", step.end_day as "endDay",
       step.frequency, step.interval_days as "intervalDays",
-      step.start_day as "startDay", to_char(step.time_of_day, 'HH24:MI') as "timeOfDay"
+      step.start_day as "startDay", to_char(step.time_of_day, 'HH24:MI') as "timeOfDay",
+      step.times_of_day as "timesOfDay",
+      step.administrations_per_day as "administrationsPerDay",
+      step.dose_basis as "doseBasis", step.ingredient_doses as "ingredientDoses",
+      step.route
     from protocol_cycle_schedule_step step
     join protocol_cycle_schedule_entry entry on entry.id = step.revision_entry_id
     join protocol_cycle_schedule_revision revision on revision.id = entry.revision_id
@@ -478,7 +532,7 @@ export async function getCycleScheduleDataForRange(
     where cycle.owner_user_id = ${actor.userId}
       and (cycle.status in ('active', 'paused') or (${includeCompleted} and cycle.status = 'completed'))
       and cycle.start_date <= ${endDate}
-      and cycle.planned_end_date >= ${startDate}
+      and (cycle.planned_end_date is null or cycle.planned_end_date >= ${startDate})
       and revision.effective_from <= ${endDate}
     order by revision.cycle_id, revision.revision_number, step.position
   `;
@@ -536,7 +590,7 @@ export async function pauseProtocolCycle(
       throw new ProtocolCycleError("Only an active cycle can be paused.", "conflict");
     }
     validateLifecycleDate(cycle, pausedOn, "Pause date");
-    if (pausedOn > cycle.plannedEndDate) {
+    if (cycle.plannedEndDate && pausedOn > cycle.plannedEndDate) {
       throw new ProtocolCycleError("Pause date must be within the planned cycle.", "invalid");
     }
     const [lastPause] = await transaction<{ lastEventOn: string }[]>`
@@ -574,7 +628,7 @@ export async function resumeProtocolCycle(
       throw new ProtocolCycleError("Only a paused cycle can be resumed.", "conflict");
     }
     validateLifecycleDate(cycle, resumedOn, "Resume date");
-    if (resumedOn > cycle.plannedEndDate) {
+    if (cycle.plannedEndDate && resumedOn > cycle.plannedEndDate) {
       throw new ProtocolCycleError("Resume date must be within the planned cycle.", "invalid");
     }
     const [openPause] = await transaction<{ id: string; pausedOn: string }[]>`
@@ -657,20 +711,30 @@ export async function reviseProtocolCycleSchedule(
         "conflict",
       );
     }
-    if (effectiveFrom < cycle.startDate || effectiveFrom > cycle.plannedEndDate) {
+    if (effectiveFrom < cycle.startDate || (cycle.plannedEndDate && effectiveFrom > cycle.plannedEndDate)) {
       throw new ProtocolCycleError(
         "Effective date must be within the planned cycle.",
         "invalid",
       );
     }
-    const durationDays = differenceInDays(cycle.startDate, cycle.plannedEndDate) + 1;
+    const durationDays = cycle.plannedEndDate
+      ? differenceInDays(cycle.startDate, cycle.plannedEndDate) + 1
+      : 3650;
+    const submittedEndDays = schedules.map((schedule) => schedule.endDay);
     const validation = validateProtocolTemplateContent({
       description: null,
       durationDays,
       name: cycle.name,
-      schedules,
+      schedules: schedules.map((schedule) => ({
+        ...schedule,
+        endDay: schedule.endDay ?? durationDays,
+      })),
     });
     if (!validation.success) throw new ProtocolCycleError(validation.error, "invalid");
+    validation.value.schedules = validation.value.schedules.map((schedule, index) => ({
+      ...schedule,
+      endDay: submittedEndDays[index],
+    }));
 
     const [latest] = await transaction<{
       effectiveFrom: string;
@@ -712,7 +776,11 @@ export async function reviseProtocolCycleSchedule(
         step.frequency,
         step.interval_days as "intervalDays",
         step.start_day as "startDay",
-        to_char(step.time_of_day, 'HH24:MI') as "timeOfDay"
+        to_char(step.time_of_day, 'HH24:MI') as "timeOfDay",
+        step.times_of_day as "timesOfDay",
+        step.administrations_per_day as "administrationsPerDay",
+        step.dose_basis as "doseBasis", step.ingredient_doses as "ingredientDoses",
+        step.route
       from protocol_cycle_schedule_step step
       join protocol_cycle_schedule_entry entry on entry.id = step.revision_entry_id
       where entry.revision_id = ${latest.id}

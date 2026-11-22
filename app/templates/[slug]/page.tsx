@@ -4,19 +4,29 @@ import { ArrowLeft, CalendarDays, Clock3, Copy } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { TemplateHeader } from "@/components/protocol-template/template-header";
+import { ApprovedProtocolDetail } from "@/components/protocol-template/approved-protocol-detail";
 import { Button } from "@/components/ui/button";
 import { formatDoseAmount, formatTemplateFrequency } from "@/lib/protocol-template/presentation";
 import { getPublishedProtocolTemplateBySlug } from "@/lib/protocol-template/service";
+import { getApprovedProtocolsBySlug } from "@/lib/approved-protocol/service";
 
-type TemplateDetailPageProps = { params: Promise<{ slug: string }> };
+type TemplateDetailPageProps = { params: Promise<{ slug: string }>; searchParams: Promise<{ preset?: string }> };
 
 export async function generateMetadata({ params }: TemplateDetailPageProps): Promise<Metadata> {
-  const template = await getPublishedProtocolTemplateBySlug((await params).slug);
+  const slug = (await params).slug;
+  const approved = await getApprovedProtocolsBySlug(slug);
+  if (approved[0]) return { title: `${approved[0].displayName} protocols` };
+  const template = await getPublishedProtocolTemplateBySlug(slug);
   return template ? { title: template.name, description: template.description ?? `View ${template.name}.` } : { title: "Template not found" };
 }
 
-export default async function TemplateDetailPage({ params }: TemplateDetailPageProps) {
-  const template = await getPublishedProtocolTemplateBySlug((await params).slug);
+export default async function TemplateDetailPage({ params, searchParams }: TemplateDetailPageProps) {
+  const slug = (await params).slug;
+  const approved = await getApprovedProtocolsBySlug(slug);
+  if (approved.length === 3) {
+    return <main className="relative min-h-screen overflow-hidden"><TemplateHeader /><article className="mx-auto w-full max-w-5xl px-5 pb-20 pt-8 sm:px-8 sm:pt-14 lg:px-10"><Button variant="ghost" size="sm" asChild><Link href="/templates"><ArrowLeft className="size-4" aria-hidden="true" />All compounds</Link></Button><ApprovedProtocolDetail presets={approved} requested={(await searchParams).preset} /></article></main>;
+  }
+  const template = await getPublishedProtocolTemplateBySlug(slug);
   if (!template) notFound();
 
   const entryNames = new Map(template.entries.map((entry) => [entry.catalogueEntryId, entry.displayName]));

@@ -54,4 +54,26 @@ describe("protocol calendar projections", () => {
     const wednesday = generateScheduledEvents(snapshot, "2026-01-07", "2026-01-07");
     expect(wednesday.some((event) => event.peptideName === "Gamma")).toBe(true);
   });
+
+  it("continues open-ended final stages and creates distinct same-day administrations", () => {
+    const open: CycleScheduleRangeSnapshot = {
+      cycles: [{ endedOn: null, id: "open", name: "Open", plannedEndDate: null, startDate: "2026-01-01", status: "active" }],
+      pauses: [],
+      revisions: [{
+        cycleId: "open", effectiveFrom: "2026-01-01", id: "open-revision", revisionNumber: 1,
+        steps: [{ catalogueEntryId: "a", daysOfWeek: [], displayName: "Alpha", doseAmount: "100.0000", doseUnit: "mcg", endDay: null, frequency: "daily", id: "open-step", intervalDays: null, startDay: 29, timeOfDay: null, administrationsPerDay: 2, timesOfDay: ["morning", "evening"] }],
+      }],
+    };
+    expect(generateScheduledEvents(open, "2026-02-01", "2026-02-01")).toHaveLength(2);
+    expect(new Set(generateScheduledEvents(open, "2026-02-01", "2026-02-01").map((event) => event.id)).size).toBe(2);
+  });
+
+  it("does not invent recurring events for as-needed schedules", () => {
+    const asNeeded: CycleScheduleRangeSnapshot = {
+      cycles: [{ endedOn: null, id: "prn", name: "PRN", plannedEndDate: null, startDate: "2026-01-01", status: "active" }],
+      pauses: [],
+      revisions: [{ cycleId: "prn", effectiveFrom: "2026-01-01", id: "prn-r", revisionNumber: 1, steps: [{ catalogueEntryId: "pt", daysOfWeek: [], displayName: "PT-141", doseAmount: "1", doseUnit: "mg", endDay: null, frequency: "as_needed", id: "prn-s", intervalDays: null, startDay: 1, timeOfDay: null }] }],
+    };
+    expect(generateScheduledEvents(asNeeded, "2026-01-01", "2026-01-31")).toEqual([]);
+  });
 });

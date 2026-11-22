@@ -12,11 +12,11 @@ import { getPublishedProtocolTemplateVersionById } from "@/lib/protocol-template
 
 export const metadata: Metadata = { title: "New private protocol" };
 
-type NewProtocolPageProps = { searchParams: Promise<{ onboarding?: string; templateVersion?: string }> };
+type NewProtocolPageProps = { searchParams: Promise<{ catalogue?: string; onboarding?: string; templateVersion?: string }> };
 
 export default async function NewProtocolPage({ searchParams }: NewProtocolPageProps) {
   await requireActor();
-  const { onboarding, templateVersion } = await searchParams;
+  const { catalogue: preferredCatalogueId, onboarding, templateVersion } = await searchParams;
   const inOnboarding = onboarding === "1";
   const [catalogue, source] = await Promise.all([
     getCatalogueEntries(),
@@ -57,6 +57,7 @@ export default async function NewProtocolPage({ searchParams }: NewProtocolPageP
               catalogue={catalogue.map(({ id, displayName }) => ({ id, displayName }))}
               initial={initial}
               onboarding={inOnboarding}
+              preferredCatalogueId={preferredCatalogueId}
               source={source ? { name: source.name, versionId: source.id, versionNumber: source.versionNumber } : undefined}
             />
           </div>

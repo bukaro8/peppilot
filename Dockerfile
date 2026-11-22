@@ -23,7 +23,7 @@ ENV NODE_ENV=production
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY package.json package-lock.json ./
 COPY drizzle ./drizzle
-COPY scripts/migrate.mjs scripts/seed.mjs scripts/catalogue-reference.json ./scripts/
+COPY scripts/migrate.mjs scripts/seed.mjs scripts/catalogue-reference.json scripts/peptide-protocols-approved.json ./scripts/
 
 USER node
 

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireActor } from "@/lib/auth/session";
 import {
   createInjectionRecord,
+  createAsNeededInjectionRecord,
   InjectionRecordError,
   type InjectionRecordInput,
   type InjectionStatus,
@@ -25,6 +26,22 @@ function inputFromForm(formData: FormData): InjectionRecordInput {
     notes: String(formData.get("notes") ?? ""),
     status: String(formData.get("status") ?? "") as InjectionStatus,
   };
+}
+
+export async function createAsNeededInjectionRecordAction(
+  cycleId: string,
+  _previous: InjectionActionState,
+  formData: FormData,
+): Promise<InjectionActionState> {
+  const actor = await requireActor();
+  try {
+    const result = await createAsNeededInjectionRecord(actor, cycleId, inputFromForm(formData));
+    revalidatePath(`/cycles/${cycleId}`);
+    revalidatePath("/injections");
+    redirect(`/injections/${result.recordId}?created=1`);
+  } catch (error) {
+    return actionError(error);
+  }
 }
 
 function actionError(error: unknown): InjectionActionState {

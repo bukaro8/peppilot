@@ -6,6 +6,7 @@ import {
   foreignKey,
   index,
   integer,
+  jsonb,
   numeric,
   primaryKey,
   pgTable,
@@ -69,6 +70,40 @@ export const catalogueEntryIngredient = pgTable(
     check(
       "catalogue_entry_ingredient_slug_check",
       sql`${table.ingredientSlug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`,
+    ),
+  ],
+);
+
+export const approvedProtocolPreset = pgTable(
+  "approved_protocol_preset",
+  {
+    id: text("id").primaryKey(),
+    catalogueEntryId: text("catalogue_entry_id")
+      .notNull()
+      .references(() => catalogueEntry.id),
+    category: text("category").notNull(),
+    schemaVersion: text("schema_version").notNull(),
+    durationType: text("duration_type").notNull(),
+    definition: jsonb("definition").notNull(),
+    compoundContext: jsonb("compound_context").notNull(),
+    sourceChecksum: text("source_checksum").notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("approved_protocol_preset_compound_category_unique").on(
+      table.catalogueEntryId,
+      table.category,
+    ),
+    index("approved_protocol_preset_catalogue_idx").on(table.catalogueEntryId),
+    check(
+      "approved_protocol_preset_category_check",
+      sql`${table.category} in ('conservative', 'most_used', 'adventurous')`,
+    ),
+    check(
+      "approved_protocol_preset_duration_type_check",
+      sql`${table.durationType} in ('fixed_cycle', 'open_ended', 'as_needed')`,
     ),
   ],
 );
@@ -188,10 +223,15 @@ export const memberProtocol = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     description: text("description"),
-    durationDays: integer("duration_days").notNull(),
+    durationDays: integer("duration_days"),
+    durationType: text("duration_type").default("fixed_cycle").notNull(),
     origin: text("origin").notNull(),
     sourceTemplateId: text("source_template_id"),
     sourceTemplateVersionId: text("source_template_version_id"),
+    sourceApprovedPresetId: text("source_approved_preset_id").references(
+      () => approvedProtocolPreset.id,
+    ),
+    approvedDefinition: jsonb("approved_definition"),
     templateScheduleUnchanged: boolean("template_schedule_unchanged").default(false).notNull(),
     status: text("status").default("draft").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -200,25 +240,40 @@ export const memberProtocol = pgTable(
   (table) => [
     index("member_protocol_owner_idx").on(table.ownerUserId),
     index("member_protocol_source_version_idx").on(table.sourceTemplateVersionId),
+    index("member_protocol_source_approved_idx").on(table.sourceApprovedPresetId),
     foreignKey({
       columns: [table.sourceTemplateId, table.sourceTemplateVersionId],
       foreignColumns: [protocolTemplateVersion.templateId, protocolTemplateVersion.id],
       name: "member_protocol_source_version_fk",
     }),
-    check("member_protocol_duration_check", sql`${table.durationDays} > 0`),
+    check(
+      "member_protocol_duration_check",
+      sql`(${table.durationType} = 'fixed_cycle' and ${table.durationDays} > 0) or (${table.durationType} in ('open_ended', 'as_needed') and ${table.durationDays} is null)`,
+    ),
+    check(
+      "member_protocol_duration_type_check",
+      sql`${table.durationType} in ('fixed_cycle', 'open_ended', 'as_needed')`,
+    ),
     check("member_protocol_status_check", sql`${table.status} = 'draft'`),
-    check("member_protocol_origin_check", sql`${table.origin} in ('custom', 'template')`),
+    check("member_protocol_origin_check", sql`${table.origin} in ('custom', 'template', 'approved_preset')`),
     check(
       "member_protocol_provenance_check",
       sql`(
         ${table.origin} = 'custom'
         and ${table.sourceTemplateId} is null
         and ${table.sourceTemplateVersionId} is null
+        and ${table.sourceApprovedPresetId} is null
         and ${table.templateScheduleUnchanged} = false
       ) or (
         ${table.origin} = 'template'
         and ${table.sourceTemplateId} is not null
         and ${table.sourceTemplateVersionId} is not null
+        and ${table.sourceApprovedPresetId} is null
+      ) or (
+        ${table.origin} = 'approved_preset'
+        and ${table.sourceTemplateId} is null
+        and ${table.sourceTemplateVersionId} is null
+        and ${table.sourceApprovedPresetId} is not null
       )`,
     ),
   ],
@@ -259,8 +314,13 @@ export const memberProtocolScheduleStep = pgTable(
     daysOfWeek: integer("days_of_week").array().default(sql`'{}'::integer[]`).notNull(),
     intervalDays: integer("interval_days"),
     timeOfDay: time("time_of_day"),
+    timesOfDay: text("times_of_day").array().default(sql`'{}'::text[]`).notNull(),
+    administrationsPerDay: integer("administrations_per_day").default(1).notNull(),
+    doseBasis: text("dose_basis").default("single_compound_mass").notNull(),
+    ingredientDoses: jsonb("ingredient_doses").default(sql`'[]'::jsonb`).notNull(),
+    route: text("route"),
     startDay: integer("start_day").default(1).notNull(),
-    endDay: integer("end_day").notNull(),
+    endDay: integer("end_day"),
     position: integer("position").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -273,13 +333,14 @@ export const memberProtocolScheduleStep = pgTable(
     ),
     check(
       "member_protocol_schedule_step_frequency_check",
-      sql`${table.frequency} in ('daily', 'weekly', 'interval_days')`,
+      sql`${table.frequency} in ('daily', 'weekly', 'interval_days', 'as_needed')`,
     ),
     check("member_protocol_schedule_step_start_check", sql`${table.startDay} > 0`),
     check(
       "member_protocol_schedule_step_end_check",
-      sql`${table.endDay} >= ${table.startDay}`,
+      sql`${table.endDay} is null or ${table.endDay} >= ${table.startDay}`,
     ),
+    check("member_protocol_schedule_step_administrations_check", sql`${table.administrationsPerDay} > 0`),
     check("member_protocol_schedule_step_position_check", sql`${table.position} > 0`),
   ],
 );
@@ -296,7 +357,10 @@ export const protocolCycle = pgTable(
     }),
     name: text("name").notNull(),
     startDate: date("start_date", { mode: "string" }).notNull(),
-    plannedEndDate: date("planned_end_date", { mode: "string" }).notNull(),
+    plannedEndDate: date("planned_end_date", { mode: "string" }),
+    durationType: text("duration_type").default("fixed_cycle").notNull(),
+    approvedDefinition: jsonb("approved_definition"),
+    preparation: jsonb("preparation"),
     status: text("status").default("active").notNull(),
     sourceTemplateId: text("source_template_id"),
     sourceTemplateVersionId: text("source_template_version_id"),
@@ -314,7 +378,11 @@ export const protocolCycle = pgTable(
       foreignColumns: [protocolTemplateVersion.templateId, protocolTemplateVersion.id],
       name: "protocol_cycle_source_version_fk",
     }),
-    check("protocol_cycle_dates_check", sql`${table.plannedEndDate} >= ${table.startDate}`),
+    check("protocol_cycle_dates_check", sql`${table.plannedEndDate} is null or ${table.plannedEndDate} >= ${table.startDate}`),
+    check(
+      "protocol_cycle_duration_type_check",
+      sql`${table.durationType} in ('fixed_cycle', 'open_ended', 'as_needed')`,
+    ),
     check(
       "protocol_cycle_status_check",
       sql`${table.status} in ('active', 'paused', 'completed', 'cancelled')`,
@@ -421,8 +489,13 @@ export const protocolCycleScheduleStep = pgTable(
     daysOfWeek: integer("days_of_week").array().default(sql`'{}'::integer[]`).notNull(),
     intervalDays: integer("interval_days"),
     timeOfDay: time("time_of_day"),
+    timesOfDay: text("times_of_day").array().default(sql`'{}'::text[]`).notNull(),
+    administrationsPerDay: integer("administrations_per_day").default(1).notNull(),
+    doseBasis: text("dose_basis").default("single_compound_mass").notNull(),
+    ingredientDoses: jsonb("ingredient_doses").default(sql`'[]'::jsonb`).notNull(),
+    route: text("route"),
     startDay: integer("start_day").default(1).notNull(),
-    endDay: integer("end_day").notNull(),
+    endDay: integer("end_day"),
     position: integer("position").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -435,13 +508,14 @@ export const protocolCycleScheduleStep = pgTable(
     ),
     check(
       "protocol_cycle_schedule_step_frequency_check",
-      sql`${table.frequency} in ('daily', 'weekly', 'interval_days')`,
+      sql`${table.frequency} in ('daily', 'weekly', 'interval_days', 'as_needed')`,
     ),
     check("protocol_cycle_schedule_step_start_check", sql`${table.startDay} > 0`),
     check(
       "protocol_cycle_schedule_step_end_check",
-      sql`${table.endDay} >= ${table.startDay}`,
+      sql`${table.endDay} is null or ${table.endDay} >= ${table.startDay}`,
     ),
+    check("protocol_cycle_schedule_step_administrations_check", sql`${table.administrationsPerDay} > 0`),
     check("protocol_cycle_schedule_step_position_check", sql`${table.position} > 0`),
   ],
 );

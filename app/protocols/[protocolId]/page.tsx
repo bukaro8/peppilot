@@ -47,7 +47,7 @@ export default async function ProtocolPage({ params, searchParams }: ProtocolPag
               <h1 className="mt-6 text-4xl font-bold tracking-[-0.05em] sm:text-5xl">{protocol.name}</h1>
               {protocol.description ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{protocol.description}</p> : null}
             </div>
-            <div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link href={`/protocols/${protocol.id}/edit`}><Pencil className="size-4" aria-hidden="true" />Edit draft</Link></Button><Button asChild><Link href={`/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />Start cycle</Link></Button></div>
+            <div className="flex flex-wrap gap-2">{protocol.origin !== "approved_preset" ? <Button variant="outline" asChild><Link href={`/protocols/${protocol.id}/edit`}><Pencil className="size-4" aria-hidden="true" />Edit draft</Link></Button> : null}<Button asChild><Link href={`/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />Start cycle</Link></Button></div>
           </div>
 
           {query.created ? <div className="mt-6 space-y-4"><FormMessage tone="success">Private protocol draft created. Start its first cycle or add another protocol.</FormMessage><div className="flex flex-col gap-2 sm:flex-row"><Button asChild><Link href={`/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />Start cycle</Link></Button><Button variant="outline" asChild><Link href="/protocols/new"><Plus className="size-4" aria-hidden="true" />Add another protocol</Link></Button></div></div> : null}
@@ -60,14 +60,16 @@ export default async function ProtocolPage({ params, searchParams }: ProtocolPag
             </div>
           ) : null}
 
-          <div className="mt-8 inline-flex items-center gap-2 rounded-xl border bg-muted/40 px-4 py-3 font-semibold"><CalendarDays className="size-5 text-primary" aria-hidden="true" />{protocol.durationDays} days</div>
+          {protocol.origin === "approved_preset" ? <div className="mt-7 rounded-2xl border border-primary/20 bg-secondary/45 p-4 text-sm leading-6"><p className="font-semibold">Source: approved protocol preset</p><p className="mt-1 text-muted-foreground">This is an independent private snapshot. Later reference-data imports cannot change it or any cycle started from it.</p></div> : null}
+
+          <div className="mt-8 inline-flex items-center gap-2 rounded-xl border bg-muted/40 px-4 py-3 font-semibold"><CalendarDays className="size-5 text-primary" aria-hidden="true" />{protocol.durationType === "fixed_cycle" ? `${protocol.durationDays} days` : protocol.durationType === "open_ended" ? "Open-ended" : "As needed"}</div>
 
           <section className="mt-10 border-t pt-8" aria-labelledby="private-schedule-heading">
             <h2 id="private-schedule-heading" className="text-2xl font-bold">Planned schedule</h2>
             <div className="mt-5 space-y-4">
               {protocol.steps.map((step) => (
                 <div key={step.id} className="grid gap-4 rounded-2xl border bg-muted/30 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
-                  <div><p className="text-lg font-bold">{entryNames.get(step.catalogueEntryId)}</p><p className="mt-1 text-sm text-muted-foreground">{formatTemplateFrequency(step.frequency, step.daysOfWeek, step.intervalDays)} · Days {step.startDay}–{step.endDay}</p></div>
+                  <div><p className="text-lg font-bold">{entryNames.get(step.catalogueEntryId)}</p><p className="mt-1 text-sm text-muted-foreground">{formatTemplateFrequency(step.frequency, step.daysOfWeek, step.intervalDays)} · {step.endDay === null ? `Day ${step.startDay} onward` : `Days ${step.startDay}–${step.endDay}`}{step.administrationsPerDay > 1 ? ` · ${step.administrationsPerDay} daily` : ""}</p></div>
                   <div className="sm:text-right"><p className="font-semibold">{formatDoseAmount(step.doseAmount)} {step.doseUnit}</p>{step.timeOfDay ? <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground"><Clock3 className="size-3.5" aria-hidden="true" />{step.timeOfDay}</p> : null}</div>
                 </div>
               ))}

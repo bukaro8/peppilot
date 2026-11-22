@@ -33,7 +33,7 @@ export default async function CyclesPage() {
                 <Link key={cycle.id} href={`/cycles/${cycle.id}`} className="group flex min-h-60 flex-col rounded-[1.75rem] border bg-background p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
                   <div className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold capitalize"><Icon className="size-3.5" aria-hidden="true" />{cycle.status}</span>{cycle.sourceTemplateVersionId ? <span className="text-xs font-semibold text-primary">Template v{cycle.sourceTemplateVersionNumber}</span> : null}</div>
                   <h2 className="mt-6 text-2xl font-bold tracking-[-0.035em]">{cycle.name}</h2>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{cycle.startDate} → {cycle.plannedEndDate}</p>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{cycle.startDate} → {cycle.plannedEndDate ?? "Ongoing"}</p>
                   <p className="mt-2 text-sm text-muted-foreground">{cycle.firstDeviatedOn ? `Template changed from ${cycle.firstDeviatedOn}` : cycle.templateInitiallyMatching ? "Original template schedule" : "Custom schedule"}</p>
                   <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold">View cycle <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" /></span>
                 </Link>

@@ -113,6 +113,20 @@
       "when": 1795356299162,
       "tag": "0015_same_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795382298214,
+      "tag": "0016_fair_steel_serpent",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795382376823,
+      "tag": "0017_mature_legion",
+      "breakpoints": true
     }
   ]
 }

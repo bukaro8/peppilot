@@ -29,6 +29,7 @@ function parseSchedules(formData: FormData): ProtocolTemplateScheduleInput[] {
       const prefix = `schedule.${index}`;
       const intervalValue = String(formData.get(`${prefix}.intervalDays`) ?? "").trim();
       const timeValue = String(formData.get(`${prefix}.timeOfDay`) ?? "").trim();
+      const endValue = String(formData.get(`${prefix}.endDay`) ?? "").trim();
       return {
         catalogueEntryId: String(formData.get(`${prefix}.catalogueEntryId`) ?? ""),
         daysOfWeek: String(formData.get(`${prefix}.daysOfWeek`) ?? "")
@@ -38,13 +39,18 @@ function parseSchedules(formData: FormData): ProtocolTemplateScheduleInput[] {
           .map(Number),
         doseAmount: String(formData.get(`${prefix}.doseAmount`) ?? ""),
         doseUnit: String(formData.get(`${prefix}.doseUnit`) ?? ""),
-        endDay: numberValue(formData.get(`${prefix}.endDay`)),
+        endDay: endValue ? Number(endValue) : null,
         frequency: String(
           formData.get(`${prefix}.frequency`) ?? "",
         ) as ProtocolTemplateFrequency,
         intervalDays: intervalValue ? Number(intervalValue) : null,
         startDay: numberValue(formData.get(`${prefix}.startDay`)),
         timeOfDay: timeValue || null,
+        administrationsPerDay: numberValue(formData.get(`${prefix}.administrationsPerDay`)) || 1,
+        doseBasis: String(formData.get(`${prefix}.doseBasis`) ?? "single_compound_mass"),
+        ingredientDoses: JSON.parse(String(formData.get(`${prefix}.ingredientDoses`) ?? "[]")) as unknown[],
+        route: String(formData.get(`${prefix}.route`) ?? "") || null,
+        timesOfDay: JSON.parse(String(formData.get(`${prefix}.timesOfDay`) ?? "[]")) as string[],
       };
     },
   );
@@ -62,7 +68,16 @@ export async function startProtocolCycleAction(formData: FormData) {
   const onboarding = formData.get("onboarding") === "1";
   let result;
   try {
-    result = await startProtocolCycle(actor, { protocolId, startDate });
+    result = await startProtocolCycle(actor, {
+      protocolId,
+      startDate,
+      preparation: {
+        vialStrengthMg: String(formData.get("vialStrengthMg") ?? "").trim(),
+        diluentVolumeMl: String(formData.get("diluentVolumeMl") ?? "").trim(),
+        syringeUnitsPerMl: String(formData.get("syringeUnitsPerMl") ?? "").trim(),
+        ingredientProportions: String(formData.get("ingredientProportions") ?? "").trim(),
+      },
+    });
   } catch (error) {
     redirect(`/cycles/new?protocolId=${encodeURIComponent(protocolId)}${onboarding ? "&onboarding=1" : ""}&error=${encodeURIComponent(errorMessage(error))}`);
   }
