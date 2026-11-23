@@ -206,12 +206,15 @@ async function insertProtocolContent(
     await sql`
       insert into member_protocol_schedule_step (
         id, protocol_entry_id, dose_amount, dose_unit, frequency, days_of_week,
-        interval_days, time_of_day, start_day, end_day, position
+        interval_days, time_of_day, times_of_day, administrations_per_day,
+        dose_basis, ingredient_doses, route, start_day, end_day, position
       ) values (
         ${crypto.randomUUID()}, ${protocolEntryId}, ${schedule.doseAmount},
         ${schedule.doseUnit}, ${schedule.frequency}, ${schedule.daysOfWeek},
-        ${schedule.intervalDays}, ${schedule.timeOfDay}, ${schedule.startDay},
-        ${schedule.endDay}, ${index + 1}
+        ${schedule.intervalDays}, ${schedule.timeOfDay}, ${schedule.timesOfDay ?? []},
+        ${schedule.administrationsPerDay ?? 1}, ${schedule.doseBasis ?? "single_compound_mass"},
+        ${JSON.stringify(schedule.ingredientDoses ?? [])}::jsonb, ${schedule.route ?? null},
+        ${schedule.startDay}, ${schedule.endDay}, ${index + 1}
       )
     `;
   }

@@ -55,6 +55,11 @@ export default async function EditProtocolPage({ params }: EditProtocolPageProps
                   intervalDays: step.intervalDays,
                   startDay: step.startDay,
                   timeOfDay: step.timeOfDay,
+                  administrationsPerDay: step.administrationsPerDay,
+                  doseBasis: step.doseBasis,
+                  ingredientDoses: step.ingredientDoses,
+                  route: step.route,
+                  timesOfDay: step.timesOfDay,
                 })),
               }}
               source={protocol.origin === "template" && protocol.sourceTemplateVersionId ? {

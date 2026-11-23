@@ -29,6 +29,12 @@ function parseProtocolForm(formData: FormData): ProtocolTemplateInput {
       const prefix = `schedule.${index}`;
       const intervalValue = String(formData.get(`${prefix}.intervalDays`) ?? "").trim();
       const timeValue = String(formData.get(`${prefix}.timeOfDay`) ?? "").trim();
+      const parseJsonArray = (name: string) => {
+        try {
+          const value = JSON.parse(String(formData.get(`${prefix}.${name}`) ?? "[]"));
+          return Array.isArray(value) ? value : [];
+        } catch { return []; }
+      };
       return {
         catalogueEntryId: String(formData.get(`${prefix}.catalogueEntryId`) ?? ""),
         daysOfWeek: String(formData.get(`${prefix}.daysOfWeek`) ?? "")
@@ -45,6 +51,11 @@ function parseProtocolForm(formData: FormData): ProtocolTemplateInput {
         intervalDays: intervalValue ? Number(intervalValue) : null,
         startDay: numberValue(formData.get(`${prefix}.startDay`)),
         timeOfDay: timeValue || null,
+        administrationsPerDay: numberValue(formData.get(`${prefix}.administrationsPerDay`)) || 1,
+        doseBasis: String(formData.get(`${prefix}.doseBasis`) ?? "single_compound_mass"),
+        ingredientDoses: parseJsonArray("ingredientDoses"),
+        route: String(formData.get(`${prefix}.route`) ?? "") || null,
+        timesOfDay: parseJsonArray("timesOfDay") as string[],
       };
     },
   );

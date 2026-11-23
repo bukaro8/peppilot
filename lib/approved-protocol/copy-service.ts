@@ -28,6 +28,7 @@ export type ApprovedStageCopyInput = {
   ingredientDoses: ApprovedIngredientDoseInput[];
   intervalDays: number | null;
   route: string;
+  sourceIndex?: number;
   startWeek: number;
   weekdays: string[];
 };
@@ -49,6 +50,10 @@ function divideDecimal(value: string, divisor: number) {
   return `${quotient / factor}.${String(quotient % factor).padStart(scale, "0")}`.replace(/\.?0+$/, "");
 }
 
+function isWholeDay(value: number) {
+  return Number.isFinite(value) && Math.abs(value - Math.round(value)) < 1e-8;
+}
+
 type ValidatedStage = Omit<ApprovedStageCopyInput, "ingredientDoses"> & {
   ingredientDoses: ApprovedIngredientDose[];
   originalIndex: number;
@@ -57,21 +62,26 @@ type ValidatedStage = Omit<ApprovedStageCopyInput, "ingredientDoses"> & {
 function validateInput(input: ApprovedProtocolCopyInput, definition: ApprovedProtocolDefinition) {
   const name = input.name.trim();
   if (name.length < 3 || name.length > 100) throw new ApprovedProtocolError("Protocol name must be 3–100 characters.");
-  if (input.stages.length !== definition.schedule.length) throw new ApprovedProtocolError("The approved schedule could not be matched.");
+  if (input.stages.length < 1 || input.stages.length > 100) throw new ApprovedProtocolError("Add between 1 and 100 titration stages.");
   if (definition.duration_type === "fixed_cycle" && (!input.durationDays || !Number.isInteger(input.durationDays) || input.durationDays < 1 || input.durationDays > 3650)) throw new ApprovedProtocolError("Choose a fixed duration between 1 and 3,650 days.");
   const included = input.stages
-    .map((stage, originalIndex) => ({ ...stage, originalIndex }))
+    .map((stage, originalIndex) => ({ ...stage, originalIndex: stage.sourceIndex ?? originalIndex }))
     .filter((stage) => stage.include);
   if (!included.length) throw new ApprovedProtocolError("Keep at least one schedule stage.");
   const validatedStages: ValidatedStage[] = [];
   for (const [index, stage] of included.entries()) {
     const source = definition.schedule[stage.originalIndex];
+    if (!source) throw new ApprovedProtocolError(`Stage ${index + 1} could not be matched to the approved source.`);
     const parentDose = parseApprovedDecimal(stage.doseAmount);
     if (parentDose === null || parentDose <= 0) throw new ApprovedProtocolError(`Stage ${index + 1} needs a positive dose with up to four decimal places.`);
     if (stage.doseUnit !== "mg" && stage.doseUnit !== "mcg") throw new ApprovedProtocolError(`Stage ${index + 1} has an invalid dose unit.`);
-    if (!Number.isInteger(stage.startWeek) || stage.startWeek < 1 || (stage.endWeek !== null && (!Number.isFinite(stage.endWeek) || stage.endWeek < stage.startWeek))) throw new ApprovedProtocolError(`Stage ${index + 1} has an invalid week range.`);
+    if (!["daily", "days_per_week", "times_per_week", "interval", "as_needed"].includes(stage.frequencyType)) throw new ApprovedProtocolError(`Stage ${index + 1} has an invalid frequency.`);
+    const startDay = (stage.startWeek - 1) * 7 + 1;
+    const endDay = stage.endWeek === null ? null : stage.endWeek * 7;
+    if (!Number.isFinite(stage.startWeek) || stage.startWeek < 1 || !isWholeDay(startDay) || (endDay !== null && (!isWholeDay(endDay) || endDay < startDay))) throw new ApprovedProtocolError(`Stage ${index + 1} has an invalid day range.`);
     if (!stage.route || stage.route === "not_reported" || stage.route === "injection_unspecified") throw new ApprovedProtocolError(`Choose a route for stage ${index + 1}.`);
     if (stage.frequencyType === "daily" && (!stage.administrationsPerDay || stage.administrationsPerDay < 1 || stage.administrationsPerDay > 12)) throw new ApprovedProtocolError(`Choose daily administrations for stage ${index + 1}.`);
+    if (source.dose_basis === "combined_daily_mass" && (!stage.administrationsPerDay || stage.administrationsPerDay < 1 || stage.administrationsPerDay > 12)) throw new ApprovedProtocolError(`Choose daily administrations for stage ${index + 1}.`);
     if ((stage.frequencyType === "days_per_week" || stage.frequencyType === "times_per_week") && !stage.weekdays.length) throw new ApprovedProtocolError(`Choose administration days for stage ${index + 1}.`);
     const expectedWeekdays = (stage.frequencyType === "days_per_week" || stage.frequencyType === "times_per_week") && stage.frequencyType === source.frequency.type
       ? source.frequency.days_per_week ?? source.frequency.administrations_per_week
@@ -111,12 +121,12 @@ async function insertContent(sql: TransactionSql, protocolId: string, catalogueE
   const entryId = crypto.randomUUID();
   await sql`insert into member_protocol_entry (id, protocol_id, catalogue_entry_id, position) values (${entryId}, ${protocolId}, ${catalogueEntryId}, 1)`;
   for (const [index, stage] of stages.entries()) {
-    const source = definition.schedule[index];
+    const source = definition.schedule[stage.originalIndex];
     const administrations = stage.administrationsPerDay ?? source.frequency.administrations_per_day ?? 1;
     const eventDose = source.dose_basis === "combined_daily_mass" ? divideDecimal(stage.doseAmount, administrations) : stage.doseAmount;
     const frequency = stage.frequencyType === "interval" ? "interval_days" : stage.frequencyType === "as_needed" ? "as_needed" : stage.frequencyType === "daily" ? "daily" : "weekly";
     const days = stage.weekdays.map((day) => weekdayMap[day]).filter((day) => day !== undefined);
-    const startDay = (stage.startWeek - 1) * 7 + 1;
+    const startDay = Math.round((stage.startWeek - 1) * 7) + 1;
     const endDay = stage.endWeek === null
       ? durationDays
       : Math.min(Math.round(stage.endWeek * 7), durationDays ?? Math.round(stage.endWeek * 7));

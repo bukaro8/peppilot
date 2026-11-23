@@ -85,6 +85,23 @@ describe("approved protocol private copies", () => {
     expect(cycle.plannedEndDate).toBe("2026-11-10");
   });
 
+  it("saves added exact-day titration stages without rounding them to weeks", async () => {
+    const preset = (await approved.getApprovedProtocolsBySlug("epitalon")).find((entry) => entry.category === "most_used")!;
+    const source = stagesFor(preset)[0];
+    const copy = await copies.createApprovedProtocolCopy(owner, {
+      description: null,
+      durationDays: 15,
+      name: "Epitalon exact-day stages",
+      presetId: preset.id,
+      stages: [
+        { ...structuredClone(source), sourceIndex: 0, startWeek: 1, endWeek: 5 / 7 },
+        { ...structuredClone(source), sourceIndex: 0, startWeek: 12 / 7, endWeek: 15 / 7 },
+      ],
+    });
+    const saved = await protocols.getMemberProtocol(owner, copy.protocolId);
+    expect(saved?.steps.map((step) => [step.startDay, step.endDay])).toEqual([[1, 5], [6, 15]]);
+  });
+
   it("continues open-ended phases without materialising infinite records", async () => {
     const preset = (await approved.getApprovedProtocolsBySlug("retatrutide"))[0];
     const copy = await copies.createApprovedProtocolCopy(owner, { description: null, durationDays: null, name: "Open private", presetId: preset.id, stages: stagesFor(preset) });

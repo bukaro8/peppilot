@@ -1,45 +1,77 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
-import { Eye, LoaderCircle, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  LoaderCircle,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
 import {
   createMemberProtocolAction,
   updateMemberProtocolAction,
 } from "@/app/protocols/actions";
+import {
+  TitrationStage,
+  TitrationTimeline,
+} from "@/components/protocol-titration/timeline";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
 import { initialMemberProtocolActionState } from "@/lib/member-protocol/action-state";
+import {
+  calculateTimelineRanges,
+  convertMassUnit,
+  formatTimelineRange,
+  moveTimelineStage,
+  scaleBlendIngredients,
+} from "@/lib/protocol-titration/timeline";
 import type { ProtocolTemplateFrequency } from "@/lib/protocol-template/validation";
 
 type CatalogueOption = { displayName: string; id: string };
-
 type InitialSchedule = {
+  administrationsPerDay?: number;
   catalogueEntryId: string;
   daysOfWeek: number[];
   doseAmount: string;
+  doseBasis?: string;
   doseUnit: string;
   endDay: number | null;
   frequency: ProtocolTemplateFrequency;
+  ingredientDoses?: unknown[];
   intervalDays: number | null;
+  route?: string | null;
   startDay: number;
   timeOfDay: string | null;
+  timesOfDay?: string[];
 };
-
-type EditableSchedule = {
+type Row = {
+  administrationsPerDay: string;
   catalogueEntryId: string;
-  daysOfWeek: string;
+  daysOfWeek: number[];
   doseAmount: string;
+  doseBasis: string;
   doseUnit: string;
-  endDay: string;
-  frequency: ProtocolTemplateFrequency | "";
+  duration: string;
+  frequency: ProtocolTemplateFrequency;
+  ingredientDoses: string;
+  ingredientsEdited: boolean;
   intervalDays: string;
   key: string;
-  startDay: string;
+  originalEndDay: number | null;
+  originalStartDay: number;
+  route: string;
   timeOfDay: string;
+  timesOfDay: string;
 };
-
-type ProtocolFormProps = {
+type StoredIngredient = {
+  dose_amount: number | string;
+  dose_unit: "mg" | "mcg";
+  name: string;
+};
+type Props = {
   catalogue: CatalogueOption[];
   initial?: {
     description: string | null;
@@ -50,243 +82,616 @@ type ProtocolFormProps = {
   };
   onboarding?: boolean;
   preferredCatalogueId?: string;
-  source?: {
-    name: string;
-    versionId: string;
-    versionNumber: number;
-  };
+  source?: { name: string; versionId: string; versionNumber: number };
 };
 
-const blankSchedule: Omit<EditableSchedule, "key"> = {
-  catalogueEntryId: "",
-  daysOfWeek: "",
-  doseAmount: "",
-  doseUnit: "mg",
-  endDay: "",
-  frequency: "",
-  intervalDays: "",
-  startDay: "",
-  timeOfDay: "",
-};
-
-function editableSchedule(schedule: InitialSchedule, key: string): EditableSchedule {
+const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+function fromInitial(stage: InitialSchedule, index: number): Row {
   return {
-    catalogueEntryId: schedule.catalogueEntryId,
-    daysOfWeek: schedule.daysOfWeek.join(","),
-    doseAmount: schedule.doseAmount,
-    doseUnit: schedule.doseUnit,
-    endDay: schedule.endDay === null ? "" : String(schedule.endDay),
-    frequency: schedule.frequency,
-    intervalDays: schedule.intervalDays === null ? "" : String(schedule.intervalDays),
+    administrationsPerDay: String(stage.administrationsPerDay ?? 1),
+    catalogueEntryId: stage.catalogueEntryId,
+    daysOfWeek: stage.daysOfWeek,
+    doseAmount: stage.doseAmount,
+    doseBasis: stage.doseBasis ?? "single_compound_mass",
+    doseUnit: stage.doseUnit,
+    duration: String(
+      Math.max(1, (stage.endDay ?? stage.startDay) - stage.startDay + 1),
+    ),
+    frequency: stage.frequency,
+    ingredientDoses: JSON.stringify(stage.ingredientDoses ?? []),
+    ingredientsEdited: false,
+    intervalDays: stage.intervalDays?.toString() ?? "",
+    key: `initial-${index}`,
+    originalEndDay: stage.endDay,
+    originalStartDay: stage.startDay,
+    route: stage.route ?? "",
+    timeOfDay: stage.timeOfDay ?? "",
+    timesOfDay: JSON.stringify(stage.timesOfDay ?? []),
+  };
+}
+function blank(catalogueEntryId = "", key = "new-0"): Row {
+  return {
+    administrationsPerDay: "1",
+    catalogueEntryId,
+    daysOfWeek: [],
+    doseAmount: "",
+    doseBasis: "single_compound_mass",
+    doseUnit: "mg",
+    duration: "7",
+    frequency: "daily",
+    ingredientDoses: "[]",
+    ingredientsEdited: false,
+    intervalDays: "",
     key,
-    startDay: String(schedule.startDay),
-    timeOfDay: schedule.timeOfDay ?? "",
+    originalEndDay: null,
+    originalStartDay: 1,
+    route: "",
+    timeOfDay: "",
+    timesOfDay: "[]",
   };
 }
 
-function frequencyLabel(row: EditableSchedule) {
-  if (row.frequency === "daily") return "Daily";
-  if (row.frequency === "weekly") {
-    const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const selected = row.daysOfWeek.split(",").filter(Boolean).map(Number).map((day) => weekdayNames[day]);
-    return selected.length ? `Weekly on ${selected.join(", ")}` : "Weekly days not set";
+function storedIngredients(value: string): StoredIngredient[] {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is StoredIngredient =>
+        Boolean(
+          item &&
+            typeof item === "object" &&
+            "name" in item &&
+            "dose_amount" in item &&
+            "dose_unit" in item &&
+            (item.dose_unit === "mg" || item.dose_unit === "mcg"),
+        ),
+    );
+  } catch {
+    return [];
   }
-  if (row.frequency === "interval_days") {
-    return row.intervalDays ? `Every ${row.intervalDays} days` : "Interval not set";
-  }
-  return "Frequency not set";
 }
 
-export function ProtocolForm({ catalogue, initial, onboarding = false, preferredCatalogueId, source }: ProtocolFormProps) {
+export function ProtocolForm({
+  catalogue,
+  initial,
+  onboarding = false,
+  preferredCatalogueId,
+  source,
+}: Props) {
   const action = initial?.protocolId
     ? updateMemberProtocolAction.bind(null, initial.protocolId)
-    : createMemberProtocolAction.bind(null, source?.versionId ?? null, onboarding);
-  const [state, formAction, pending] = useActionState(action, initialMemberProtocolActionState);
+    : createMemberProtocolAction.bind(
+        null,
+        source?.versionId ?? null,
+        onboarding,
+      );
+  const [state, formAction, pending] = useActionState(
+    action,
+    initialMemberProtocolActionState,
+  );
   const [name, setName] = useState(initial?.name ?? source?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [durationDays, setDurationDays] = useState(
-    initial?.durationDays ? String(initial.durationDays) : "",
-  );
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [rows, setRows] = useState<EditableSchedule[]>(
+  const [rows, setRows] = useState<Row[]>(
     initial?.schedules.length
-      ? initial.schedules.map((schedule, index) => editableSchedule(schedule, `initial-${index}`))
-      : [{ ...blankSchedule, catalogueEntryId: preferredCatalogueId ?? "", key: "new-0" }],
+      ? initial.schedules.map(fromInitial)
+      : [blank(preferredCatalogueId)],
   );
-  const [lastAddedKey, setLastAddedKey] = useState<string | null>(null);
-  const catalogueNames = useMemo(
-    () => new Map(catalogue.map((entry) => [entry.id, entry.displayName])),
-    [catalogue],
+  const [timelineEdited, setTimelineEdited] = useState(!initial?.schedules.length);
+  const [lastAdded, setLastAdded] = useState<string | null>(null);
+  const ranges = useMemo(
+    () =>
+      calculateTimelineRanges(
+        rows.map((row) => ({
+          duration: Math.max(1, Number(row.duration) || 1),
+          unit: "days",
+        })),
+      ),
+    [rows],
   );
+  const durationDays = timelineEdited
+    ? (ranges.at(-1)?.endDay ?? 1)
+    : (initial?.durationDays ?? ranges.at(-1)?.endDay ?? 1);
 
   useEffect(() => {
-    if (!lastAddedKey) return;
-    document.getElementById(`schedule-${lastAddedKey}`)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, [lastAddedKey, rows.length]);
-
-  function addRow() {
-    const key = crypto.randomUUID();
-    setRows((current) => [...current, { ...blankSchedule, key }]);
-    setLastAddedKey(key);
-  }
-
-  function toggleWeekday(key: string, day: number) {
-    const row = rows.find((item) => item.key === key);
-    if (!row) return;
-    const selected = new Set(row.daysOfWeek.split(",").filter(Boolean).map(Number));
-    if (selected.has(day)) selected.delete(day);
-    else selected.add(day);
-    updateRow(key, "daysOfWeek", [...selected].sort((left, right) => left - right).join(","));
-  }
-
-  function removeRow(key: string) {
-    setRows((current) => current.filter((row) => row.key !== key));
-  }
-
-  function updateRow(key: string, field: keyof Omit<EditableSchedule, "key">, value: string) {
-    setRows((current) =>
-      current.map((row) => (row.key === key ? { ...row, [field]: value } : row)),
+    if (lastAdded)
+      document
+        .getElementById(`stage-${lastAdded}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [lastAdded, rows.length]);
+  function update(key: string, patch: Partial<Row>, affectsTimeline = false) {
+    setRows((value) =>
+      value.map((row) => {
+        if (row.key !== key) return row;
+        const next = { ...row, ...patch };
+        if (
+          patch.doseUnit &&
+          patch.doseUnit !== row.doseUnit &&
+          (patch.doseUnit === "mg" || patch.doseUnit === "mcg") &&
+          (row.doseUnit === "mg" || row.doseUnit === "mcg")
+        )
+          next.doseAmount = convertMassUnit(
+            row.doseAmount,
+            row.doseUnit,
+            patch.doseUnit,
+          );
+        const ingredients = storedIngredients(row.ingredientDoses);
+        if (
+          !row.ingredientsEdited &&
+          ingredients.length &&
+          (patch.doseAmount !== undefined || patch.doseUnit !== undefined) &&
+          (next.doseUnit === "mg" || next.doseUnit === "mcg")
+        ) {
+          const scaled = scaleBlendIngredients(
+            next.doseAmount,
+            next.doseUnit,
+            ingredients.map((ingredient) => ({
+              doseAmount: String(ingredient.dose_amount),
+              doseUnit: ingredient.dose_unit,
+              name: ingredient.name,
+            })),
+          );
+          if (scaled) {
+            next.ingredientDoses = JSON.stringify(
+              scaled.map((ingredient) => ({
+                dose_amount: ingredient.doseAmount,
+                dose_unit: ingredient.doseUnit,
+                name: ingredient.name,
+              })),
+            );
+          }
+        }
+        return next;
+      }),
     );
+    if (affectsTimeline) setTimelineEdited(true);
+  }
+  function addStage() {
+    const key = crypto.randomUUID();
+    const previous = rows.at(-1);
+    setRows((value) => [
+      ...value,
+      {
+        ...blank(previous?.catalogueEntryId, key),
+        doseUnit: previous?.doseUnit ?? "mg",
+        frequency: previous?.frequency ?? "daily",
+      },
+    ]);
+    setTimelineEdited(true);
+    setLastAdded(key);
+  }
+  function move(index: number, direction: -1 | 1) {
+    setRows((value) => moveTimelineStage(value, index, index + direction));
+    setTimelineEdited(true);
+  }
+  function remove(key: string) {
+    setRows((value) => value.filter((row) => row.key !== key));
+    setTimelineEdited(true);
+  }
+  function toggleDay(key: string, day: number) {
+    const row = rows.find((candidate) => candidate.key === key);
+    if (!row) return;
+    const days = row.daysOfWeek.includes(day)
+      ? row.daysOfWeek.filter((value) => value !== day)
+      : [...row.daysOfWeek, day].sort();
+    update(key, { daysOfWeek: days });
+  }
+  function updateIngredient(key: string, ingredientIndex: number, doseAmount: string) {
+    const row = rows.find((candidate) => candidate.key === key);
+    if (!row) return;
+    const ingredients = storedIngredients(row.ingredientDoses).map((ingredient, index) =>
+      index === ingredientIndex ? { ...ingredient, dose_amount: doseAmount } : ingredient,
+    );
+    update(key, { ingredientDoses: JSON.stringify(ingredients), ingredientsEdited: true });
   }
 
   return (
-    <form action={formAction} className="space-y-8" aria-busy={pending}>
+    <form action={formAction} className="space-y-7" aria-busy={pending}>
       <input type="hidden" name="scheduleCount" value={rows.length} />
-
+      <input type="hidden" name="durationDays" value={durationDays} />
       {source ? (
-        <div className="rounded-2xl border border-primary/20 bg-secondary/55 p-4 text-sm leading-6">
-          <p className="font-semibold">Copied from {source.name}, version {source.versionNumber}</p>
-          <p className="mt-1 text-muted-foreground">The source reference is preserved. Any schedule changes apply only to this private draft.</p>
+        <div className="rounded-2xl border border-primary/20 bg-secondary/55 p-4 text-sm">
+          <p className="font-semibold">
+            Copied from {source.name}, version {source.versionNumber}
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            Your changes affect only this private draft.
+          </p>
         </div>
       ) : null}
-
-      <fieldset className="grid gap-5 sm:grid-cols-2" disabled={pending}>
-        <legend className="sr-only">Protocol details</legend>
-        <div className="space-y-2 sm:col-span-2">
-          <label className="text-sm font-semibold" htmlFor="protocol-name">Protocol name</label>
-          <input id="protocol-name" name="name" required minLength={3} maxLength={100} value={name} onChange={(event) => setName(event.target.value)} className="h-12 w-full rounded-xl border bg-background px-4 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-semibold" htmlFor="protocol-duration">Duration in days</label>
-          <input id="protocol-duration" name="durationDays" type="number" min={1} max={3650} required value={durationDays} onChange={(event) => setDurationDays(event.target.value)} className="h-12 w-full rounded-xl border bg-background px-4 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
-        </div>
-        <div className="space-y-2 sm:col-span-2">
-          <label className="text-sm font-semibold" htmlFor="protocol-description">Notes <span className="font-normal text-muted-foreground">(optional)</span></label>
-          <textarea id="protocol-description" name="description" rows={4} maxLength={1000} value={description} onChange={(event) => setDescription(event.target.value)} className="w-full resize-y rounded-xl border bg-background px-4 py-3 text-base leading-7 outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
-        </div>
+      <fieldset className="grid gap-4" disabled={pending}>
+        <label className="space-y-2">
+          <span className="text-sm font-semibold">Protocol name</span>
+          <input
+            name="name"
+            required
+            minLength={3}
+            maxLength={100}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            className="h-12 w-full rounded-xl border bg-background px-4"
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-sm font-semibold">
+            Notes{" "}
+            <span className="font-normal text-muted-foreground">
+              (optional)
+            </span>
+          </span>
+          <textarea
+            name="description"
+            rows={3}
+            maxLength={1000}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            className="w-full rounded-xl border bg-background px-4 py-3"
+          />
+        </label>
       </fieldset>
-
-      <section aria-labelledby="member-schedule-heading">
-        <div>
-          <h2 id="member-schedule-heading" className="text-xl font-bold">Planned schedule</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">Enter only what you intend to follow. PepPilot does not supply dose or timing defaults.</p>
+      <section aria-labelledby="titration-heading">
+        <div className="mb-5">
+          <h2 id="titration-heading" className="text-xl font-bold">
+            Titration timeline
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            Set each dose and how long it lasts. Later ranges update
+            automatically.
+          </p>
         </div>
-
-        <div className="mt-5 space-y-4">
+        <TitrationTimeline>
           {rows.map((row, index) => {
             const prefix = `schedule.${index}`;
+            const range = timelineEdited
+              ? ranges[index]
+              : { startDay: row.originalStartDay, endDay: row.originalEndDay };
             return (
-              <fieldset id={`schedule-${row.key}`} key={row.key} className="scroll-mt-5 rounded-2xl border bg-muted/25 p-4 sm:p-5" disabled={pending}>
-                <legend className="px-2 text-sm font-semibold">Schedule {index + 1}</legend>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="space-y-2 sm:col-span-2">
-                    <label className="text-sm font-medium" htmlFor={`${prefix}.catalogueEntryId`}>Catalogue entry</label>
-                    <select id={`${prefix}.catalogueEntryId`} name={`${prefix}.catalogueEntryId`} required value={row.catalogueEntryId} onChange={(event) => updateRow(row.key, "catalogueEntryId", event.target.value)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
-                      <option value="">Select an entry</option>
-                      {catalogue.map((entry) => <option key={entry.id} value={entry.id}>{entry.displayName}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor={`${prefix}.doseAmount`}>Compound dose</label>
-                    <input id={`${prefix}.doseAmount`} name={`${prefix}.doseAmount`} inputMode="decimal" required value={row.doseAmount} onChange={(event) => updateRow(row.key, "doseAmount", event.target.value)} placeholder="Enter amount" className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor={`${prefix}.doseUnit`}>Mass unit</label>
-                    <select id={`${prefix}.doseUnit`} name={`${prefix}.doseUnit`} required value={row.doseUnit} onChange={(event) => updateRow(row.key, "doseUnit", event.target.value)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
-                      {!['mg', 'mcg'].includes(row.doseUnit) && row.doseUnit ? <option value={row.doseUnit}>{row.doseUnit} (existing)</option> : null}
-                      <option value="mg">mg</option>
-                      <option value="mcg">mcg</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor={`${prefix}.frequency`}>Frequency</label>
-                    <select id={`${prefix}.frequency`} name={`${prefix}.frequency`} required value={row.frequency} onChange={(event) => updateRow(row.key, "frequency", event.target.value)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
-                      <option value="">Select frequency</option>
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly (choose days)</option>
-                      <option value="interval_days">Custom (every N days)</option>
-                    </select>
-                  </div>
-                  {row.frequency === "weekly" ? (
-                    <div className="space-y-2 sm:col-span-2">
-                      <span className="text-sm font-medium">Days of week</span>
-                      <input type="hidden" id={`${prefix}.daysOfWeek`} name={`${prefix}.daysOfWeek`} value={row.daysOfWeek} />
-                      <div className="grid grid-cols-7 gap-1" role="group" aria-label={`Schedule ${index + 1} days of week`}>
-                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label, day) => {
-                          const selected = row.daysOfWeek.split(",").filter(Boolean).map(Number).includes(day);
-                          return <button key={label} type="button" aria-pressed={selected} onClick={() => toggleWeekday(row.key, day)} className={`min-h-11 rounded-lg border px-1 text-xs font-semibold transition ${selected ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}>{label}</button>;
-                        })}
+              <div
+                id={`stage-${row.key}`}
+                key={row.key}
+                className="scroll-mt-6"
+              >
+                <TitrationStage
+                  index={index}
+                  range={formatTimelineRange(
+                    range.startDay,
+                    range.endDay,
+                    "days",
+                  )}
+                >
+                  <input
+                    type="hidden"
+                    name={`${prefix}.startDay`}
+                    value={range.startDay}
+                  />
+                  <input
+                    type="hidden"
+                    name={`${prefix}.endDay`}
+                    value={range.endDay ?? durationDays}
+                  />
+                  <input
+                    type="hidden"
+                    name={`${prefix}.daysOfWeek`}
+                    value={
+                      row.frequency === "weekly" ? row.daysOfWeek.join(",") : ""
+                    }
+                  />
+                  <input
+                    type="hidden"
+                    name={`${prefix}.intervalDays`}
+                    value={
+                      row.frequency === "interval_days" ? row.intervalDays : ""
+                    }
+                  />
+                  <input
+                    type="hidden"
+                    name={`${prefix}.administrationsPerDay`}
+                    value={row.administrationsPerDay}
+                  />
+                  <input
+                    type="hidden"
+                    name={`${prefix}.doseBasis`}
+                    value={row.doseBasis}
+                  />
+                  <input
+                    type="hidden"
+                    name={`${prefix}.ingredientDoses`}
+                    value={row.ingredientDoses}
+                  />
+                  <input
+                    type="hidden"
+                    name={`${prefix}.route`}
+                    value={row.route}
+                  />
+                  <input
+                    type="hidden"
+                    name={`${prefix}.timesOfDay`}
+                    value={row.timesOfDay}
+                  />
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <label className="space-y-2 sm:col-span-2">
+                      <span className="text-sm font-medium">Compound</span>
+                      <select
+                        name={`${prefix}.catalogueEntryId`}
+                        required
+                        value={row.catalogueEntryId}
+                        onChange={(event) =>
+                          update(row.key, {
+                            catalogueEntryId: event.target.value,
+                          })
+                        }
+                        className="h-11 w-full rounded-xl border bg-background px-3"
+                      >
+                        <option value="">Select a compound</option>
+                        {catalogue.map((entry) => (
+                          <option key={entry.id} value={entry.id}>
+                            {entry.displayName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium">Dose</span>
+                      <input
+                        name={`${prefix}.doseAmount`}
+                        inputMode="decimal"
+                        required
+                        value={row.doseAmount}
+                        onChange={(event) =>
+                          update(row.key, { doseAmount: event.target.value })
+                        }
+                        className="h-11 w-full rounded-xl border bg-background px-3"
+                      />
+                    </label>
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium">Unit</span>
+                      <select
+                        name={`${prefix}.doseUnit`}
+                        value={row.doseUnit}
+                        onChange={(event) =>
+                          update(row.key, { doseUnit: event.target.value })
+                        }
+                        className="h-11 w-full rounded-xl border bg-background px-3"
+                      >
+                        <option value="mg">mg</option>
+                        <option value="mcg">mcg</option>
+                      </select>
+                    </label>
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium">Stage length</span>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min={1}
+                          max={3650}
+                          value={row.duration}
+                          onChange={(event) =>
+                            update(
+                              row.key,
+                              { duration: event.target.value },
+                              true,
+                            )
+                          }
+                          className="h-11 w-full rounded-xl border bg-background px-3 pr-14"
+                        />
+                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+                          days
+                        </span>
                       </div>
+                    </label>
+                    <label className="space-y-2 sm:col-span-2">
+                      <span className="text-sm font-medium">
+                        Administration frequency
+                      </span>
+                      <select
+                        name={`${prefix}.frequency`}
+                        value={row.frequency}
+                        onChange={(event) =>
+                          update(row.key, {
+                            frequency: event.target
+                              .value as ProtocolTemplateFrequency,
+                            daysOfWeek:
+                              event.target.value === "weekly"
+                                ? row.daysOfWeek
+                                : [],
+                            intervalDays:
+                              event.target.value === "interval_days"
+                                ? row.intervalDays
+                                : "",
+                          })
+                        }
+                        className="h-11 w-full rounded-xl border bg-background px-3"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly — choose days</option>
+                        <option value="interval_days">Every N days</option>
+                        <option value="as_needed">As needed</option>
+                      </select>
+                    </label>
+                    {row.frequency === "interval_days" ? (
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium">
+                          Every how many days?
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={3650}
+                          value={row.intervalDays}
+                          onChange={(event) =>
+                            update(row.key, {
+                              intervalDays: event.target.value,
+                            })
+                          }
+                          className="h-11 w-full rounded-xl border bg-background px-3"
+                        />
+                      </label>
+                    ) : null}
+                    {row.frequency === "weekly" ? (
+                      <div className="space-y-2 sm:col-span-2 lg:col-span-4">
+                        <span className="text-sm font-medium">
+                          Choose weekdays
+                        </span>
+                        <div className="grid grid-cols-7 gap-1">
+                          {weekdayNames.map((day, value) => (
+                            <button
+                              key={day}
+                              type="button"
+                              aria-pressed={row.daysOfWeek.includes(value)}
+                              onClick={() => toggleDay(row.key, value)}
+                              className={`min-h-11 rounded-lg border text-xs font-semibold ${row.daysOfWeek.includes(value) ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}
+                            >
+                              {day}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                  <details className="mt-4 rounded-xl border bg-muted/20">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold">
+                      Advanced settings
+                      {storedIngredients(row.ingredientDoses).length
+                        ? " & ingredients"
+                        : ""}
+                      <ChevronDown className="size-4" />
+                    </summary>
+                    <div className="grid gap-4 border-t p-4 sm:grid-cols-2">
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium">
+                          Administrations per day
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={12}
+                          value={row.administrationsPerDay}
+                          onChange={(event) =>
+                            update(row.key, {
+                              administrationsPerDay: event.target.value,
+                            })
+                          }
+                          className="h-11 w-full rounded-xl border bg-background px-3"
+                        />
+                      </label>
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium">
+                          Time{" "}
+                          <span className="font-normal text-muted-foreground">
+                            (optional)
+                          </span>
+                        </span>
+                        <input
+                          name={`${prefix}.timeOfDay`}
+                          type="time"
+                          value={row.timeOfDay}
+                          onChange={(event) =>
+                            update(row.key, { timeOfDay: event.target.value })
+                          }
+                          className="h-11 w-full rounded-xl border bg-background px-3"
+                        />
+                      </label>
+                      <label className="space-y-2 sm:col-span-2">
+                        <span className="text-sm font-medium">
+                          Administration route{" "}
+                          <span className="font-normal text-muted-foreground">
+                            (optional)
+                          </span>
+                        </span>
+                        <input
+                          value={row.route}
+                          onChange={(event) =>
+                            update(row.key, { route: event.target.value })
+                          }
+                          className="h-11 w-full rounded-xl border bg-background px-3"
+                        />
+                      </label>
+                      {storedIngredients(row.ingredientDoses).map(
+                        (ingredient, ingredientIndex) => (
+                          <label
+                            className="space-y-2"
+                            key={`${ingredient.name}-${ingredientIndex}`}
+                          >
+                            <span className="text-sm font-medium">
+                              {ingredient.name} ({ingredient.dose_unit})
+                            </span>
+                            <input
+                              inputMode="decimal"
+                              value={String(ingredient.dose_amount)}
+                              onChange={(event) =>
+                                updateIngredient(
+                                  row.key,
+                                  ingredientIndex,
+                                  event.target.value,
+                                )
+                              }
+                              className="h-11 w-full rounded-xl border bg-background px-3"
+                            />
+                          </label>
+                        ),
+                      )}
                     </div>
-                  ) : null}
-                  {row.frequency === "interval_days" ? (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium" htmlFor={`${prefix}.intervalDays`}>Interval days</label>
-                      <input id={`${prefix}.intervalDays`} name={`${prefix}.intervalDays`} type="number" min={1} max={3650} required value={row.intervalDays} onChange={(event) => updateRow(row.key, "intervalDays", event.target.value)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
-                    </div>
-                  ) : null}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor={`${prefix}.timeOfDay`}>Time <span className="font-normal text-muted-foreground">(optional)</span></label>
-                    <input id={`${prefix}.timeOfDay`} name={`${prefix}.timeOfDay`} type="time" value={row.timeOfDay} onChange={(event) => updateRow(row.key, "timeOfDay", event.target.value)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
+                  </details>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => move(index, -1)}
+                      disabled={index === 0}
+                    >
+                      <ArrowUp className="size-4" />
+                      Earlier
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => move(index, 1)}
+                      disabled={index === rows.length - 1}
+                    >
+                      <ArrowDown className="size-4" />
+                      Later
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => remove(row.key)}
+                      disabled={rows.length === 1}
+                    >
+                      <Trash2 className="size-4" />
+                      Remove
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor={`${prefix}.startDay`}>Start day</label>
-                    <input id={`${prefix}.startDay`} name={`${prefix}.startDay`} type="number" min={1} required value={row.startDay} onChange={(event) => updateRow(row.key, "startDay", event.target.value)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor={`${prefix}.endDay`}>End day</label>
-                    <input id={`${prefix}.endDay`} name={`${prefix}.endDay`} type="number" min={1} required value={row.endDay} onChange={(event) => updateRow(row.key, "endDay", event.target.value)} className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40" />
-                  </div>
-                  <div className="flex items-end">
-                    <Button className="w-full" type="button" variant="ghost" onClick={() => removeRow(row.key)} disabled={pending || rows.length === 1}><Trash2 className="size-4" aria-hidden="true" />Remove</Button>
-                  </div>
-                </div>
-              </fieldset>
+                </TitrationStage>
+              </div>
             );
           })}
-        </div>
-        <p className="mt-4 text-xs leading-5 text-muted-foreground">mg and mcg describe compound mass. Injection liquid volume and syringe markings are recorded separately when logging an injection.</p>
-        <Button className="mt-5 w-full sm:w-auto" type="button" variant="outline" onClick={addRow} disabled={pending || rows.length >= 100}><Plus className="size-4" aria-hidden="true" />Add another schedule</Button>
+        </TitrationTimeline>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-5 w-full sm:w-auto"
+          onClick={addStage}
+          disabled={rows.length >= 100}
+        >
+          <Plus className="size-4" />
+          Add titration stage
+        </Button>
       </section>
-
-      <section className="rounded-2xl border bg-secondary/30 p-5" aria-labelledby="protocol-preview-heading">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div><h2 id="protocol-preview-heading" className="font-bold">Review before saving</h2><p className="mt-1 text-sm text-muted-foreground">Preview the private draft exactly as entered.</p></div>
-          <Button type="button" variant="outline" onClick={() => setPreviewOpen((open) => !open)}><Eye className="size-4" aria-hidden="true" />{previewOpen ? "Hide preview" : "Preview schedule"}</Button>
-        </div>
-        {previewOpen ? (
-          <div className="mt-5 space-y-3" aria-live="polite">
-            <div className="rounded-xl bg-background p-4"><p className="font-bold">{name || "Untitled protocol"}</p><p className="mt-1 text-sm text-muted-foreground">{durationDays ? `${durationDays} days` : "Duration not set"}</p></div>
-            {rows.map((row, index) => (
-              <div key={row.key} className="grid gap-2 rounded-xl border bg-background p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-                <div><p className="font-semibold">{catalogueNames.get(row.catalogueEntryId) ?? `Schedule ${index + 1}`}</p><p className="mt-1 text-sm text-muted-foreground">{frequencyLabel(row)} · Days {row.startDay || "?"}–{row.endDay || "?"}{row.timeOfDay ? ` · ${row.timeOfDay}` : ""}</p></div>
-                <p className="font-semibold sm:text-right">{row.doseAmount || "?"} {row.doseUnit || ""}</p>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </section>
-
-      {state.status === "error" && state.message ? <FormMessage tone="error">{state.message}</FormMessage> : null}
+      {state.message ? (
+        <FormMessage tone={state.status === "error" ? "error" : "success"}>
+          {state.message}
+        </FormMessage>
+      ) : null}
       <div className="flex flex-col gap-3 border-t pt-6 sm:flex-row sm:items-center">
         <Button type="submit" size="lg" disabled={pending}>
-          {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : null}
-          {pending ? "Saving…" : initial?.protocolId ? "Save draft" : "Create private draft"}
+          {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
+          {initial?.protocolId ? "Save changes" : "Save private protocol"}
         </Button>
-        <p className="text-sm text-muted-foreground">Private to your account.</p>
+        <p className="text-sm text-muted-foreground">
+          {durationDays} day{durationDays === 1 ? "" : "s"} total
+        </p>
       </div>
     </form>
   );
