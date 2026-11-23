@@ -29,8 +29,9 @@ export async function createApprovedProtocolAction(formData: FormData) {
     route: String(formData.get(`stage.${index}.route`) ?? ""),
     weekdays: weekdays.filter((day) => formData.get(`stage.${index}.weekday.${day}`) === "1"),
     ingredientDoses: source.ingredient_doses.map((ingredient, ingredientIndex) => ({
-      ...ingredient,
-      dose_amount: Number(formData.get(`stage.${index}.ingredient.${ingredientIndex}`)),
+      name: ingredient.name,
+      doseAmount: String(formData.get(`stage.${index}.ingredient.${ingredientIndex}`) ?? ""),
+      doseUnit: ingredient.dose_unit,
     })),
   }));
   try {

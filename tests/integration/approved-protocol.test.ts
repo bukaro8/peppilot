@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { AuthenticatedActor } from "@/lib/auth/policy";
-import type { ApprovedProtocolPreset } from "@/lib/approved-protocol/types";
+import { formatApprovedDecimal } from "@/lib/approved-protocol/decimal";
+import type { ApprovedProtocolDefinition, ApprovedProtocolPreset } from "@/lib/approved-protocol/types";
 
 const prefix = `approved-test-${Date.now()}`;
 const ownerId = `${prefix}-owner`;
@@ -16,19 +17,32 @@ let cycles: typeof import("@/lib/protocol-cycle/service");
 let protocols: typeof import("@/lib/member-protocol/service");
 let calendar: typeof import("@/lib/protocol-calendar/service");
 
-function stagesFor(preset: ApprovedProtocolPreset, administrationOverride?: number) {
+const weekdayNames = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+function exactDurationDays(preset: ApprovedProtocolPreset) {
+  if (preset.durationType !== "fixed_cycle") return null;
+  return preset.definition.duration_days ?? Math.round((preset.definition.duration_weeks ?? 0) * 7);
+}
+
+function stagesFor(preset: ApprovedProtocolPreset, options: { administrationOverride?: number; completeUnspecified?: boolean } = {}) {
   return preset.definition.schedule.map((stage) => ({
-    administrationsPerDay: administrationOverride ?? stage.frequency.administrations_per_day,
-    doseAmount: String(stage.dose_amount),
+    administrationsPerDay: options.administrationOverride ?? stage.frequency.administrations_per_day ?? (options.completeUnspecified && stage.dose_basis === "combined_daily_mass" ? 1 : null),
+    doseAmount: formatApprovedDecimal(stage.dose_amount),
     doseUnit: stage.dose_unit,
     endWeek: stage.end_week,
     frequencyType: stage.frequency.type,
     include: true,
-    ingredientDoses: stage.ingredient_doses,
+    ingredientDoses: stage.ingredient_doses.map((ingredient) => ({
+      doseAmount: formatApprovedDecimal(ingredient.dose_amount),
+      doseUnit: ingredient.dose_unit,
+      name: ingredient.name,
+    })),
     intervalDays: stage.frequency.interval_days,
-    route: stage.route,
+    route: options.completeUnspecified && (stage.route === "not_reported" || stage.route === "injection_unspecified") ? "subcutaneous" : stage.route,
     startWeek: stage.start_week,
-    weekdays: stage.frequency.weekdays,
+    weekdays: stage.frequency.weekdays.length || !options.completeUnspecified
+      ? stage.frequency.weekdays
+      : weekdayNames.slice(0, stage.frequency.days_per_week ?? stage.frequency.administrations_per_week ?? 0),
   }));
 }
 
@@ -79,10 +93,112 @@ describe("approved protocol private copies", () => {
 
   it("splits combined daily mass into distinct configured administrations", async () => {
     const preset = (await approved.getApprovedProtocolsBySlug("cjc-1295-no-dac-ipamorelin"))[0];
-    const copy = await copies.createApprovedProtocolCopy(owner, { description: null, durationDays: 56, name: "Daily total private", presetId: preset.id, stages: stagesFor(preset, 2) });
+    const copy = await copies.createApprovedProtocolCopy(owner, { description: null, durationDays: 56, name: "Daily total private", presetId: preset.id, stages: stagesFor(preset, { administrationOverride: 2 }) });
     await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-05-01" });
     const events = (await calendar.getScheduledEvents(owner, "2026-05-01", "2026-05-01")).filter((event) => event.cycleName === "Daily total private");
     expect(events).toHaveLength(2);
     expect(events.map((event) => event.doseAmount)).toEqual(["100.0000", "100.0000"]);
   });
+
+  it("saves GLOW Most Used unchanged and keeps exact 56-day duration", async () => {
+    const preset = (await approved.getApprovedProtocolsBySlug("glow")).find((entry) => entry.category === "most_used")!;
+    const copy = await copies.createApprovedProtocolCopy(owner, {
+      description: null,
+      durationDays: exactDurationDays(preset),
+      name: "GLOW Most Used unchanged",
+      presetId: preset.id,
+      stages: stagesFor(preset),
+    });
+    const saved = await protocols.getMemberProtocol(owner, copy.protocolId);
+    expect(saved).toMatchObject({ durationDays: 56, durationType: "fixed_cycle", origin: "approved_preset" });
+    expect(saved?.steps[0]).toMatchObject({ doseAmount: "2.8000", doseUnit: "mg" });
+    expect(saved?.steps[0].ingredientDoses).toEqual([
+      { name: "GHK-Cu", dose_amount: 2, dose_unit: "mg" },
+      { name: "BPC-157", dose_amount: 0.4, dose_unit: "mg" },
+      { name: "TB-500", dose_amount: 0.4, dose_unit: "mg" },
+    ]);
+    const cycle = await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-03-01" });
+    expect(cycle.plannedEndDate).toBe("2026-04-25");
+  });
+
+  it("accepts equivalent mixed-unit blend masses and still rejects real mismatches", async () => {
+    const preset = (await approved.getApprovedProtocolsBySlug("wolverine-blend"))[0];
+    const input = {
+      description: null,
+      durationDays: exactDurationDays(preset),
+      name: "Wolverine mixed units",
+      presetId: preset.id,
+      stages: stagesFor(preset),
+    };
+    await expect(copies.createApprovedProtocolCopy(owner, input)).resolves.toHaveProperty("protocolId");
+    const mismatched = structuredClone(input);
+    mismatched.name = "Wolverine mismatch";
+    mismatched.stages[0].ingredientDoses[0].doseAmount = "0.1249";
+    await expect(copies.createApprovedProtocolCopy(owner, mismatched)).rejects.toThrow("ingredient doses must equal the combined dose");
+  });
+
+  it("saves all 84 approved presets without changing supplied doses or durations", async () => {
+    const catalogue = await approved.getApprovedProtocolCatalogue();
+    expect(catalogue).toHaveLength(28);
+    const passed: string[] = [];
+    const failures: string[] = [];
+
+    for (const compound of catalogue) {
+      const presets = await approved.getApprovedProtocolsBySlug(compound.slug);
+      expect(presets).toHaveLength(3);
+      for (const preset of presets) {
+        const key = `${preset.catalogueSlug}:${preset.category}`;
+        try {
+          const durationDays = exactDurationDays(preset);
+          const copy = await copies.createApprovedProtocolCopy(owner, {
+            description: "84-preset unchanged-copy audit",
+            durationDays,
+            name: `Audit ${key}`,
+            presetId: preset.id,
+            // These choices exist only where the approved source explicitly asks the member
+            // to choose a route, weekdays, or administrations per day.
+            stages: stagesFor(preset, { completeUnspecified: true }),
+          });
+          const saved = await protocols.getMemberProtocol(owner, copy.protocolId);
+          if (!saved) throw new Error("saved protocol is missing");
+          if (saved.steps.length !== preset.definition.schedule.length) throw new Error(`saved ${saved.steps.length} of ${preset.definition.schedule.length} stages`);
+          if (saved.durationDays !== durationDays) throw new Error(`duration changed from ${durationDays} to ${saved.durationDays}`);
+          const [snapshot] = await sql<{ approvedDefinition: ApprovedProtocolDefinition }[]>`
+            select approved_definition as "approvedDefinition"
+            from member_protocol where id = ${copy.protocolId}
+          `;
+          if (!snapshot) throw new Error("saved approved snapshot is missing");
+          for (const [index, sourceStage] of preset.definition.schedule.entries()) {
+            const savedStage = snapshot.approvedDefinition.schedule[index];
+            const scheduleStep = saved.steps[index];
+            if (!savedStage || !scheduleStep) throw new Error(`stage ${index + 1} is missing`);
+            if (formatApprovedDecimal(savedStage.dose_amount) !== formatApprovedDecimal(sourceStage.dose_amount) || savedStage.dose_unit !== sourceStage.dose_unit) throw new Error(`stage ${index + 1} dose changed`);
+            if (savedStage.ingredient_doses.length !== sourceStage.ingredient_doses.length) throw new Error(`stage ${index + 1} ingredient count changed`);
+            for (const [ingredientIndex, sourceIngredient] of sourceStage.ingredient_doses.entries()) {
+              const savedIngredient = savedStage.ingredient_doses[ingredientIndex];
+              if (!savedIngredient || savedIngredient.name !== sourceIngredient.name || savedIngredient.dose_unit !== sourceIngredient.dose_unit || formatApprovedDecimal(savedIngredient.dose_amount) !== formatApprovedDecimal(sourceIngredient.dose_amount)) throw new Error(`stage ${index + 1} ingredient ${sourceIngredient.name} changed`);
+            }
+            if (sourceStage.dose_basis !== "combined_daily_mass" && formatApprovedDecimal(Number(scheduleStep.doseAmount)) !== formatApprovedDecimal(sourceStage.dose_amount)) throw new Error(`stage ${index + 1} persisted dose changed`);
+            if (scheduleStep.doseBasis !== sourceStage.dose_basis) throw new Error(`stage ${index + 1} dose basis changed`);
+          }
+          if (preset.durationType === "as_needed") {
+            const cycle = await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-01-01" });
+            const events = (await calendar.getScheduledEvents(owner, "2026-01-01", "2026-02-28")).filter((event) => event.cycleId === cycle.cycleId);
+            if (events.length) throw new Error(`as-needed cycle generated ${events.length} automatic dates`);
+          }
+          passed.push(key);
+        } catch (error) {
+          failures.push(`${key}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+    }
+
+    expect(failures).toEqual([]);
+    expect(passed).toHaveLength(84);
+    for (const slug of ["glow", "klow", "wolverine-blend", "cjc-1295-no-dac-ipamorelin", "tesamorelin-ipamorelin"]) {
+      expect(passed.filter((key) => key.startsWith(`${slug}:`))).toHaveLength(3);
+    }
+    const glowMostUsed = await approved.getApprovedProtocolPreset("approved:glow:most_used");
+    expect(exactDurationDays(glowMostUsed!)).toBe(56);
+  }, 30_000);
 });

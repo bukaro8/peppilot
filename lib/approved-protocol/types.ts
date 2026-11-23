@@ -9,7 +9,7 @@ export type ApprovedDoseBasis =
 export type ApprovedIngredientDose = {
   name: string;
   dose_amount: number;
-  dose_unit: string;
+  dose_unit: "mg" | "mcg";
 };
 
 export type ApprovedFrequency = {

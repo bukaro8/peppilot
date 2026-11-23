@@ -4,13 +4,19 @@ import type { TransactionSql } from "postgres";
 
 import type { AuthenticatedActor } from "@/lib/auth/policy";
 import { getPostgresClient } from "@/lib/db";
+import { massInScaledMicrograms, parseApprovedDecimal } from "./decimal";
 import { getApprovedProtocolPreset } from "./service";
-import type { ApprovedProtocolDefinition, ApprovedScheduleStage } from "./types";
+import type { ApprovedIngredientDose, ApprovedProtocolDefinition, ApprovedScheduleStage } from "./types";
 
 export class ApprovedProtocolError extends Error {}
 
-const decimalPattern = /^\d{1,8}(?:\.\d{1,4})?$/;
 const weekdayMap: Record<string, number> = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+
+type ApprovedIngredientDoseInput = {
+  doseAmount: string;
+  doseUnit: "mg" | "mcg";
+  name: string;
+};
 
 export type ApprovedStageCopyInput = {
   administrationsPerDay: number | null;
@@ -19,7 +25,7 @@ export type ApprovedStageCopyInput = {
   endWeek: number | null;
   frequencyType: ApprovedScheduleStage["frequency"]["type"];
   include: boolean;
-  ingredientDoses: ApprovedScheduleStage["ingredient_doses"];
+  ingredientDoses: ApprovedIngredientDoseInput[];
   intervalDays: number | null;
   route: string;
   startWeek: number;
@@ -43,10 +49,10 @@ function divideDecimal(value: string, divisor: number) {
   return `${quotient / factor}.${String(quotient % factor).padStart(scale, "0")}`.replace(/\.?0+$/, "");
 }
 
-function scaledDecimal(value: string | number) {
-  const [whole, fraction = ""] = String(value).split(".");
-  return BigInt(whole) * BigInt(10_000) + BigInt(fraction.padEnd(4, "0").slice(0, 4));
-}
+type ValidatedStage = Omit<ApprovedStageCopyInput, "ingredientDoses"> & {
+  ingredientDoses: ApprovedIngredientDose[];
+  originalIndex: number;
+};
 
 function validateInput(input: ApprovedProtocolCopyInput, definition: ApprovedProtocolDefinition) {
   const name = input.name.trim();
@@ -57,9 +63,12 @@ function validateInput(input: ApprovedProtocolCopyInput, definition: ApprovedPro
     .map((stage, originalIndex) => ({ ...stage, originalIndex }))
     .filter((stage) => stage.include);
   if (!included.length) throw new ApprovedProtocolError("Keep at least one schedule stage.");
+  const validatedStages: ValidatedStage[] = [];
   for (const [index, stage] of included.entries()) {
     const source = definition.schedule[stage.originalIndex];
-    if (!decimalPattern.test(stage.doseAmount) || Number(stage.doseAmount) <= 0) throw new ApprovedProtocolError(`Stage ${index + 1} needs a positive dose with up to four decimal places.`);
+    const parentDose = parseApprovedDecimal(stage.doseAmount);
+    if (parentDose === null || parentDose <= 0) throw new ApprovedProtocolError(`Stage ${index + 1} needs a positive dose with up to four decimal places.`);
+    if (stage.doseUnit !== "mg" && stage.doseUnit !== "mcg") throw new ApprovedProtocolError(`Stage ${index + 1} has an invalid dose unit.`);
     if (!Number.isInteger(stage.startWeek) || stage.startWeek < 1 || (stage.endWeek !== null && (!Number.isFinite(stage.endWeek) || stage.endWeek < stage.startWeek))) throw new ApprovedProtocolError(`Stage ${index + 1} has an invalid week range.`);
     if (!stage.route || stage.route === "not_reported" || stage.route === "injection_unspecified") throw new ApprovedProtocolError(`Choose a route for stage ${index + 1}.`);
     if (stage.frequencyType === "daily" && (!stage.administrationsPerDay || stage.administrationsPerDay < 1 || stage.administrationsPerDay > 12)) throw new ApprovedProtocolError(`Choose daily administrations for stage ${index + 1}.`);
@@ -69,16 +78,29 @@ function validateInput(input: ApprovedProtocolCopyInput, definition: ApprovedPro
       : null;
     if (expectedWeekdays && stage.weekdays.length !== expectedWeekdays) throw new ApprovedProtocolError(`Stage ${index + 1} requires ${expectedWeekdays} selected administration days.`);
     if (stage.frequencyType === "interval" && (!stage.intervalDays || stage.intervalDays < 1)) throw new ApprovedProtocolError(`Choose an interval for stage ${index + 1}.`);
-    if (stage.ingredientDoses.some((ingredient) => !Number.isFinite(ingredient.dose_amount) || ingredient.dose_amount <= 0)) throw new ApprovedProtocolError(`Stage ${index + 1} has an invalid ingredient dose.`);
-    if (source.dose_basis !== "single_compound_mass" && stage.ingredientDoses.length) {
-      const ingredientTotal = stage.ingredientDoses.reduce((total, ingredient) => total + scaledDecimal(ingredient.dose_amount), BigInt(0));
-      if (ingredientTotal !== scaledDecimal(stage.doseAmount)) throw new ApprovedProtocolError(`Stage ${index + 1} ingredient doses must equal the combined dose.`);
+    if (stage.ingredientDoses.length !== source.ingredient_doses.length) throw new ApprovedProtocolError(`Stage ${index + 1} ingredient doses could not be matched to the approved source.`);
+    const ingredientDoses = stage.ingredientDoses.map((ingredient, ingredientIndex) => {
+      const sourceIngredient = source.ingredient_doses[ingredientIndex];
+      const parsed = parseApprovedDecimal(ingredient.doseAmount);
+      if (!sourceIngredient || parsed === null || parsed <= 0 || ingredient.name !== sourceIngredient.name || ingredient.doseUnit !== sourceIngredient.dose_unit) {
+        throw new ApprovedProtocolError(`Stage ${index + 1} has an invalid ingredient dose.`);
+      }
+      return { ...sourceIngredient, dose_amount: Number(ingredient.doseAmount) };
+    });
+    if (source.dose_basis !== "single_compound_mass" && ingredientDoses.length) {
+      const combinedMass = massInScaledMicrograms(stage.doseAmount, stage.doseUnit);
+      const ingredientTotal = stage.ingredientDoses.reduce((total, ingredient) => {
+        const mass = massInScaledMicrograms(ingredient.doseAmount, ingredient.doseUnit);
+        return total + (mass ?? BigInt(0));
+      }, BigInt(0));
+      if (combinedMass === null || ingredientTotal !== combinedMass) throw new ApprovedProtocolError(`Stage ${index + 1} ingredient doses must equal the combined dose.`);
     }
+    validatedStages.push({ ...stage, ingredientDoses, originalIndex: stage.originalIndex });
   }
-  return { ...input, description: input.description?.trim() || null, name, stages: included };
+  return { ...input, description: input.description?.trim() || null, name, stages: validatedStages };
 }
 
-async function insertContent(sql: TransactionSql, protocolId: string, catalogueEntryId: string, definition: ApprovedProtocolDefinition, stages: Array<ApprovedStageCopyInput & { originalIndex: number }>, durationDays: number | null) {
+async function insertContent(sql: TransactionSql, protocolId: string, catalogueEntryId: string, definition: ApprovedProtocolDefinition, stages: ValidatedStage[], durationDays: number | null) {
   const entryId = crypto.randomUUID();
   await sql`insert into member_protocol_entry (id, protocol_id, catalogue_entry_id, position) values (${entryId}, ${protocolId}, ${catalogueEntryId}, 1)`;
   for (const [index, stage] of stages.entries()) {
