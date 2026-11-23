@@ -514,7 +514,7 @@ export async function getCycleScheduleDataForRange(
       and (cycle.status in ('active', 'paused') or (${includeCompleted} and cycle.status = 'completed'))
       and cycle.start_date <= ${endDate}
       and (cycle.planned_end_date is null or cycle.planned_end_date >= ${startDate})
-      and revision.effective_from <= ${endDate}
+      and (revision.revision_number = 1 or revision.effective_from <= ${endDate})
     order by revision.cycle_id, revision.revision_number
   `;
   const stepRows = await sql<Array<ProtocolTemplateScheduleInput & {
@@ -542,7 +542,7 @@ export async function getCycleScheduleDataForRange(
       and (cycle.status in ('active', 'paused') or (${includeCompleted} and cycle.status = 'completed'))
       and cycle.start_date <= ${endDate}
       and (cycle.planned_end_date is null or cycle.planned_end_date >= ${startDate})
-      and revision.effective_from <= ${endDate}
+      and (revision.revision_number = 1 or revision.effective_from <= ${endDate})
     order by revision.cycle_id, revision.revision_number, step.position
   `;
   const stepsByRevision = new Map<string, CycleScheduleRangeSnapshot["revisions"][number]["steps"]>();

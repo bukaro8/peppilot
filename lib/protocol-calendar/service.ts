@@ -113,7 +113,7 @@ export function generateScheduledEvents(
       if (isPausedOnDate(snapshot.pauses, cycle.id, date)) continue;
       const revision = revisions
         .filter((candidate) => candidate.effectiveFrom <= date)
-        .at(-1);
+        .at(-1) ?? revisions.find((candidate) => candidate.revisionNumber === 1);
       if (!revision) continue;
       for (const step of revision.steps) {
         if (!stepOccursOnDate(step, cycle.startDate, date)) continue;

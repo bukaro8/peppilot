@@ -49,6 +49,21 @@ describe("protocol calendar projections", () => {
     expect(calendarMonthRange("2026-02-18")).toEqual({ start: "2026-02-01", end: "2026-02-28" });
   });
 
+  it("anchors the initial schedule revision to a backdated cycle start", () => {
+    const backdated: CycleScheduleRangeSnapshot = {
+      cycles: [{ endedOn: null, id: "backdated", name: "Backdated", plannedEndDate: "2027-01-10", startDate: "2026-11-16", status: "active" }],
+      pauses: [],
+      revisions: [{
+        cycleId: "backdated", effectiveFrom: "2026-11-23", id: "backdated-r1", revisionNumber: 1,
+        steps: [{ catalogueEntryId: "glow", daysOfWeek: [], displayName: "GLOW", doseAmount: "2.8", doseUnit: "mg", endDay: 56, frequency: "daily", id: "backdated-s1", intervalDays: null, startDay: 1, timeOfDay: null }],
+      }],
+    };
+
+    expect(generateScheduledEvents(backdated, "2026-11-16", "2026-11-22").map((event) => event.date)).toEqual([
+      "2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22",
+    ]);
+  });
+
   it("uses UTC date arithmetic so local timezone offsets cannot move schedule days", () => {
     expect(startOfCalendarWeek("2026-01-01")).toBe("2025-12-29");
     const wednesday = generateScheduledEvents(snapshot, "2026-01-07", "2026-01-07");

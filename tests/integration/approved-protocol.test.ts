@@ -16,6 +16,7 @@ let copies: typeof import("@/lib/approved-protocol/copy-service");
 let cycles: typeof import("@/lib/protocol-cycle/service");
 let protocols: typeof import("@/lib/member-protocol/service");
 let calendar: typeof import("@/lib/protocol-calendar/service");
+let injections: typeof import("@/lib/injection/service");
 
 const weekdayNames = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
@@ -55,6 +56,7 @@ beforeAll(async () => {
   cycles = await import("@/lib/protocol-cycle/service");
   protocols = await import("@/lib/member-protocol/service");
   calendar = await import("@/lib/protocol-calendar/service");
+  injections = await import("@/lib/injection/service");
   await sql`insert into "user" (id, name, email, email_verified, role) values
     (${ownerId}, 'Approved owner', ${`${prefix}-owner@example.test`}, true, 'member'),
     (${otherId}, 'Approved other', ${`${prefix}-other@example.test`}, true, 'member')`;
@@ -128,8 +130,10 @@ describe("approved protocol private copies", () => {
       from member_protocol_entry entry
       where step.protocol_entry_id = entry.id and entry.protocol_id = ${copy.protocolId}
     `;
-    const cycle = await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-03-01" });
-    expect(cycle.plannedEndDate).toBe("2026-04-25");
+    const cycle = await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-11-16" });
+    expect(cycle.plannedEndDate).toBe("2027-01-10");
+    // Reproduce legacy data where the first revision was stamped on the creation date.
+    await sql`update protocol_cycle_schedule_revision set effective_from = '2026-11-23' where cycle_id = ${cycle.cycleId} and revision_number = 1`;
     const [cycleStep] = await sql<{ daysOfWeek: number[]; frequency: string; intervalDays: number | null }[]>`
       select step.days_of_week as "daysOfWeek", step.frequency, step.interval_days as "intervalDays"
       from protocol_cycle_schedule_step step
@@ -139,6 +143,20 @@ describe("approved protocol private copies", () => {
       limit 1
     `;
     expect(cycleStep).toEqual({ daysOfWeek: [], frequency: "daily", intervalDays: null });
+    const week = await calendar.getWeeklySchedule(owner, "2026-11-16");
+    expect(week.filter((event) => event.cycleId === cycle.cycleId).map((event) => event.date)).toEqual([
+      "2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22",
+    ]);
+    const month = (await calendar.getMonthlySchedule(owner, "2026-11-16")).filter((event) => event.cycleId === cycle.cycleId);
+    expect(month).toHaveLength(15);
+    expect(month.at(0)?.date).toBe("2026-11-16");
+    expect(month.at(-1)?.date).toBe("2026-11-30");
+    const actions = (await injections.getCalendarInjectionActions(owner, "2026-11-16", "2026-11-30", "2026-11-23"))
+      .filter((action) => action.event.cycleId === cycle.cycleId);
+    expect(actions.filter((action) => action.state === "overdue").map((action) => action.event.date)).toEqual([
+      "2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22",
+    ]);
+    expect(actions.find((action) => action.event.date === "2026-11-23")?.state).toBe("pending");
   });
 
   it("accepts equivalent mixed-unit blend masses and still rejects real mismatches", async () => {
