@@ -102,12 +102,16 @@ describe("approved protocol private copies", () => {
 
   it("saves GLOW Most Used unchanged and keeps exact 56-day duration", async () => {
     const preset = (await approved.getApprovedProtocolsBySlug("glow")).find((entry) => entry.category === "most_used")!;
+    const glowStages = stagesFor(preset);
+    // Simulate stale hidden/form values: daily schedules must serialize without them.
+    glowStages[0].weekdays = ["monday"];
+    glowStages[0].intervalDays = 3;
     const copy = await copies.createApprovedProtocolCopy(owner, {
       description: null,
       durationDays: exactDurationDays(preset),
       name: "GLOW Most Used unchanged",
       presetId: preset.id,
-      stages: stagesFor(preset),
+      stages: glowStages,
     });
     const saved = await protocols.getMemberProtocol(owner, copy.protocolId);
     expect(saved).toMatchObject({ durationDays: 56, durationType: "fixed_cycle", origin: "approved_preset" });
@@ -117,8 +121,24 @@ describe("approved protocol private copies", () => {
       { name: "BPC-157", dose_amount: 0.4, dose_unit: "mg" },
       { name: "TB-500", dose_amount: 0.4, dose_unit: "mg" },
     ]);
+    expect(saved?.steps[0]).toMatchObject({ daysOfWeek: [], frequency: "daily", intervalDays: null });
+    // Legacy rows may contain stale values; cycle creation must also canonicalize them.
+    await sql`
+      update member_protocol_schedule_step step set days_of_week = array[1, 3], interval_days = 4
+      from member_protocol_entry entry
+      where step.protocol_entry_id = entry.id and entry.protocol_id = ${copy.protocolId}
+    `;
     const cycle = await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-03-01" });
     expect(cycle.plannedEndDate).toBe("2026-04-25");
+    const [cycleStep] = await sql<{ daysOfWeek: number[]; frequency: string; intervalDays: number | null }[]>`
+      select step.days_of_week as "daysOfWeek", step.frequency, step.interval_days as "intervalDays"
+      from protocol_cycle_schedule_step step
+      join protocol_cycle_schedule_entry entry on entry.id = step.revision_entry_id
+      join protocol_cycle_schedule_revision revision on revision.id = entry.revision_id
+      where revision.cycle_id = ${cycle.cycleId}
+      limit 1
+    `;
+    expect(cycleStep).toEqual({ daysOfWeek: [], frequency: "daily", intervalDays: null });
   });
 
   it("accepts equivalent mixed-unit blend masses and still rejects real mismatches", async () => {
@@ -181,8 +201,10 @@ describe("approved protocol private copies", () => {
             if (sourceStage.dose_basis !== "combined_daily_mass" && formatApprovedDecimal(Number(scheduleStep.doseAmount)) !== formatApprovedDecimal(sourceStage.dose_amount)) throw new Error(`stage ${index + 1} persisted dose changed`);
             if (scheduleStep.doseBasis !== sourceStage.dose_basis) throw new Error(`stage ${index + 1} dose basis changed`);
           }
+          const cycle = await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-01-01" });
+          const expectedEndDate = durationDays === null ? null : new Date(Date.UTC(2026, 0, durationDays)).toISOString().slice(0, 10);
+          if (cycle.plannedEndDate !== expectedEndDate) throw new Error(`cycle duration changed from ${expectedEndDate} to ${cycle.plannedEndDate}`);
           if (preset.durationType === "as_needed") {
-            const cycle = await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-01-01" });
             const events = (await calendar.getScheduledEvents(owner, "2026-01-01", "2026-02-28")).filter((event) => event.cycleId === cycle.cycleId);
             if (events.length) throw new Error(`as-needed cycle generated ${events.length} automatic dates`);
           }

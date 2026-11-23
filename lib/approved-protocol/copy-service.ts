@@ -95,7 +95,14 @@ function validateInput(input: ApprovedProtocolCopyInput, definition: ApprovedPro
       }, BigInt(0));
       if (combinedMass === null || ingredientTotal !== combinedMass) throw new ApprovedProtocolError(`Stage ${index + 1} ingredient doses must equal the combined dose.`);
     }
-    validatedStages.push({ ...stage, ingredientDoses, originalIndex: stage.originalIndex });
+    const usesWeekdays = stage.frequencyType === "days_per_week" || stage.frequencyType === "times_per_week";
+    validatedStages.push({
+      ...stage,
+      ingredientDoses,
+      intervalDays: stage.frequencyType === "interval" ? stage.intervalDays : null,
+      originalIndex: stage.originalIndex,
+      weekdays: usesWeekdays ? stage.weekdays : [],
+    });
   }
   return { ...input, description: input.description?.trim() || null, name, stages: validatedStages };
 }

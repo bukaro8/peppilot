@@ -110,6 +110,14 @@ export type CycleScheduleRangeSnapshot = {
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
+export function canonicalizeScheduleFrequencyFields(schedule: ProtocolTemplateScheduleInput): ProtocolTemplateScheduleInput {
+  return {
+    ...schedule,
+    daysOfWeek: schedule.frequency === "weekly" ? schedule.daysOfWeek : [],
+    intervalDays: schedule.frequency === "interval_days" ? schedule.intervalDays : null,
+  };
+}
+
 function parseDate(value: string, label: string) {
   if (!isoDatePattern.test(value)) {
     throw new ProtocolCycleError(`${label} must use YYYY-MM-DD format.`, "invalid");
@@ -348,9 +356,10 @@ export async function startProtocolCycle(
       where entry.protocol_id = ${input.protocolId}
       order by step.position
     `;
+    const canonicalSchedules = schedules.map(canonicalizeScheduleFrequencyFields);
     const validatedSchedules = protocol.durationType === "fixed_cycle"
-      ? validateProtocolTemplateContent({ description: protocol.description, durationDays: protocol.durationDays ?? 0, name: protocol.name, schedules })
-      : { success: true as const, value: { schedules } };
+      ? validateProtocolTemplateContent({ description: protocol.description, durationDays: protocol.durationDays ?? 0, name: protocol.name, schedules: canonicalSchedules })
+      : { success: true as const, value: { schedules: canonicalSchedules } };
     if (!validatedSchedules.success) throw new ProtocolCycleError(validatedSchedules.error, "invalid");
 
     const plannedEndDate = protocol.durationDays === null ? null : addDays(input.startDate, protocol.durationDays - 1);
