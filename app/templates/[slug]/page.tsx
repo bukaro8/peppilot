@@ -10,7 +10,7 @@ import { formatDoseAmount, formatTemplateFrequency } from "@/lib/protocol-templa
 import { getPublishedProtocolTemplateBySlug } from "@/lib/protocol-template/service";
 import { getApprovedProtocolsBySlug } from "@/lib/approved-protocol/service";
 
-type TemplateDetailPageProps = { params: Promise<{ slug: string }>; searchParams: Promise<{ preset?: string }> };
+type TemplateDetailPageProps = { params: Promise<{ slug: string }>; searchParams: Promise<{ onboarding?: string; preset?: string }> };
 
 export async function generateMetadata({ params }: TemplateDetailPageProps): Promise<Metadata> {
   const slug = (await params).slug;
@@ -22,9 +22,11 @@ export async function generateMetadata({ params }: TemplateDetailPageProps): Pro
 
 export default async function TemplateDetailPage({ params, searchParams }: TemplateDetailPageProps) {
   const slug = (await params).slug;
+  const query = await searchParams;
+  const onboarding = query.onboarding === "1";
   const approved = await getApprovedProtocolsBySlug(slug);
   if (approved.length === 3) {
-    return <main className="relative min-h-screen overflow-hidden"><TemplateHeader /><article className="mx-auto w-full max-w-5xl px-5 pb-20 pt-8 sm:px-8 sm:pt-14 lg:px-10"><Button variant="ghost" size="sm" asChild><Link href="/templates"><ArrowLeft className="size-4" aria-hidden="true" />All compounds</Link></Button><ApprovedProtocolDetail presets={approved} requested={(await searchParams).preset} /></article></main>;
+    return <main className="relative min-h-screen overflow-hidden"><TemplateHeader onboarding={onboarding} /><article className="mx-auto w-full max-w-5xl px-5 pb-20 pt-8 sm:px-8 sm:pt-14 lg:px-10"><Button variant="ghost" size="sm" asChild><Link href={`/templates${onboarding ? "?onboarding=1" : ""}`}><ArrowLeft className="size-4" aria-hidden="true" />All compounds</Link></Button><ApprovedProtocolDetail presets={approved} requested={query.preset} onboarding={onboarding} /></article></main>;
   }
   const template = await getPublishedProtocolTemplateBySlug(slug);
   if (!template) notFound();

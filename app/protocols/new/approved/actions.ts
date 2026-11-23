@@ -14,6 +14,7 @@ const numberOrNull = (value: FormDataEntryValue | null) => String(value ?? "").t
 export async function createApprovedProtocolAction(formData: FormData) {
   const actor = await requireActor();
   const presetId = String(formData.get("presetId") ?? "");
+  const onboarding = formData.get("onboarding") === "1";
   const preset = await getApprovedProtocolPreset(presetId);
   if (!preset) redirect("/templates");
   const stages = preset.definition.schedule.map((source, index) => ({
@@ -41,9 +42,10 @@ export async function createApprovedProtocolAction(formData: FormData) {
       stages,
     });
     revalidatePath("/protocols");
+    if (onboarding) redirect("/onboarding/protocols?created=1");
     redirect(`/protocols/${result.protocolId}?created=1`);
   } catch (error) {
     if (!(error instanceof ApprovedProtocolError)) throw error;
-    redirect(`/protocols/new/approved?preset=${encodeURIComponent(presetId)}&error=${encodeURIComponent(error.message)}`);
+    redirect(`/protocols/new/approved?preset=${encodeURIComponent(presetId)}${onboarding ? "&onboarding=1" : ""}&error=${encodeURIComponent(error.message)}`);
   }
 }

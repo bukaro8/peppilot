@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FlaskConical, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 
+import { AppBrand } from "@/components/brand/app-brand";
 import { Button } from "@/components/ui/button";
 import { getPublicProfileByUsername } from "@/lib/profile/service";
 
@@ -39,12 +40,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_30%,oklch(0.86_0.08_292/.72),transparent_38%)]" />
       <div className="mx-auto max-w-3xl">
         <header className="flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <FlaskConical className="size-5" aria-hidden="true" />
-            </span>
-            <span className="text-xl font-bold tracking-[-0.03em]">PepPilot</span>
-          </Link>
+          <AppBrand compact />
           <Button variant="outline" asChild>
             <Link href="/sign-in">Sign in</Link>
           </Button>

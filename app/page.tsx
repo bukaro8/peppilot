@@ -1,7 +1,9 @@
-import { ArrowRight, Compass, FlaskConical, Menu } from "lucide-react";
+import { ArrowRight, Compass, Menu } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { AppBrand } from "@/components/brand/app-brand";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const navigation = [
   { label: "Home", href: "#main-content" },
@@ -19,16 +21,7 @@ export default function Home() {
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[38rem] bg-[radial-gradient(circle_at_75%_5%,oklch(0.91_0.07_83/.65),transparent_34%),radial-gradient(circle_at_5%_30%,oklch(0.86_0.08_292/.72),transparent_38%)]" />
 
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
-        <a
-          href="#main-content"
-          className="flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-          aria-label="PepPilot home"
-        >
-          <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <FlaskConical className="size-5" aria-hidden="true" />
-          </span>
-          <span className="text-xl font-bold tracking-[-0.03em]">PepPilot</span>
-        </a>
+        <AppBrand compact href="#main-content" />
 
         <nav className="hidden items-center gap-1 sm:flex" aria-label="Primary navigation">
           {navigation.map((item) => (
@@ -38,6 +31,7 @@ export default function Home() {
               </Link>
             </Button>
           ))}
+          <ThemeToggle />
           <Button variant="outline" size="sm" asChild>
             <Link href="/sign-in">Sign in</Link>
           </Button>

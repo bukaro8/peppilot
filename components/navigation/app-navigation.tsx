@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, HeartPulse, Home, Menu, Syringe } from "lucide-react";
+import { BookOpen, CalendarDays, CalendarRange, ChevronRight, HeartPulse, Home, Menu, Settings, Syringe, UserRound, Workflow } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import { AppBrand } from "@/components/brand/app-brand";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/utils";
 
-const items = [
+const mobileItems = [
   { href: "/dashboard", icon: Home, label: "Home", matches: ["/dashboard"] },
   { href: "/calendar/week", icon: CalendarDays, label: "Calendar", matches: ["/calendar"] },
   { href: "/injections", icon: Syringe, label: "Injections", matches: ["/injections"] },
@@ -14,16 +16,35 @@ const items = [
   { href: "/more", icon: Menu, label: "More", matches: ["/more", "/protocols", "/cycles", "/catalogue", "/account"] },
 ];
 
+const desktopItems = [
+  { href: "/dashboard", icon: Home, label: "Home", matches: ["/dashboard"] },
+  { href: "/calendar/week", icon: CalendarDays, label: "Calendar", matches: ["/calendar"] },
+  { href: "/injections", icon: Syringe, label: "Injections", matches: ["/injections"] },
+  { href: "/journal", icon: HeartPulse, label: "Journal", matches: ["/journal"] },
+  { href: "/protocols", icon: Workflow, label: "Protocols", matches: ["/protocols", "/templates"] },
+  { href: "/cycles", icon: CalendarRange, label: "Cycles", matches: ["/cycles"] },
+  { href: "/catalogue", icon: BookOpen, label: "Library", matches: ["/catalogue"] },
+  { href: "/account", icon: UserRound, label: "Profile", matches: ["/account"] },
+  { href: "/account#settings", icon: Settings, label: "Settings", matches: ["/account/settings"] },
+];
+
 export function AppNavigation() {
   const pathname = usePathname();
   const active = (matches: string[]) => matches.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
   return (
     <>
-      <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
-        {items.map((item) => <Link key={item.href} href={item.href} aria-current={active(item.matches) ? "page" : undefined} className={cn("rounded-full px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40", active(item.matches) ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>{item.label}</Link>)}
-      </nav>
-      <nav data-mobile-nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t bg-background/95 px-2 pb-[max(env(safe-area-inset-bottom),0.35rem)] pt-1.5 shadow-[0_-8px_24px_-20px_oklch(0.25_0.03_166/.5)] backdrop-blur md:hidden" aria-label="Main navigation">
-        {items.map((item) => { const Icon = item.icon; const selected = active(item.matches); return <Link key={item.href} href={item.href} aria-current={selected ? "page" : undefined} className={cn("flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40", selected ? "bg-secondary/70 text-primary" : "text-muted-foreground")}><Icon className="size-5" aria-hidden="true" />{item.label}</Link>; })}
+      <aside data-app-sidebar className="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col overflow-y-auto bg-[#20284b] px-5 py-6 text-white shadow-[16px_0_50px_-28px_rgba(25,31,67,.7)] lg:flex">
+        <div className="px-2"><AppBrand href="/dashboard" inverse /></div>
+        <nav className="mt-10 space-y-1" aria-label="Main navigation">
+          {desktopItems.map((item) => { const Icon = item.icon; const selected = active(item.matches); return <Link key={item.href} href={item.href} aria-current={selected ? "page" : undefined} className={cn("flex min-h-12 items-center gap-3 rounded-xl px-4 text-[0.95rem] font-semibold text-indigo-100/80 transition focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-violet-300/60", selected ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg shadow-violet-950/25" : "hover:bg-white/10 hover:text-white")}><Icon className="size-5" aria-hidden="true" />{item.label}</Link>; })}
+        </nav>
+        <div className="mt-auto space-y-3 pt-8">
+          <Link href="/cycles" className="block rounded-2xl border border-white/15 bg-white/[0.07] p-4 transition hover:bg-white/10"><div className="flex items-center justify-between"><CalendarRange className="size-5 text-violet-300" aria-hidden="true" /><ChevronRight className="size-4 text-indigo-200" aria-hidden="true" /></div><p className="mt-3 text-xs font-semibold uppercase tracking-wider text-indigo-200/70">Your journey</p><p className="mt-1 font-bold">View active cycles</p></Link>
+          <ThemeToggle inverse />
+        </div>
+      </aside>
+      <nav data-mobile-nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t border-violet-200/70 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.35rem)] pt-1.5 shadow-[0_-12px_30px_-22px_rgba(53,45,110,.5)] backdrop-blur lg:hidden dark:border-white/10 dark:bg-[#252c52]/95" aria-label="Main navigation">
+        {mobileItems.map((item) => { const Icon = item.icon; const selected = active(item.matches); return <Link key={item.href} href={item.href} aria-current={selected ? "page" : undefined} className={cn("flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40", selected ? "bg-violet-100 text-violet-700 dark:bg-violet-400/15 dark:text-violet-200" : "text-muted-foreground")}><Icon className="size-5" aria-hidden="true" />{item.label}</Link>; })}
       </nav>
     </>
   );

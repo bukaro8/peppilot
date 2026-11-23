@@ -13,17 +13,19 @@ import { getApprovedProtocolPreset } from "@/lib/approved-protocol/service";
 export const metadata: Metadata = { title: "Customise approved protocol" };
 const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
-export default async function ApprovedProtocolCopyPage({ searchParams }: { searchParams: Promise<{ preset?: string; error?: string }> }) {
+export default async function ApprovedProtocolCopyPage({ searchParams }: { searchParams: Promise<{ preset?: string; error?: string; onboarding?: string }> }) {
   await requireActor();
   const query = await searchParams;
   const preset = query.preset ? await getApprovedProtocolPreset(query.preset) : null;
+  const onboarding = query.onboarding === "1";
   if (!preset) notFound();
   const durationDays = preset.definition.duration_days ?? (preset.definition.duration_weeks ? Math.round(preset.definition.duration_weeks * 7) : null);
 
   return <main className="min-h-screen bg-secondary/20"><ProtocolHeader /><section className="mx-auto w-full max-w-5xl px-5 pb-16 pt-8 sm:px-8 lg:px-10">
-    <Button variant="ghost" size="sm" asChild><Link href={`/templates/${preset.catalogueSlug}?preset=${preset.category}`}><ArrowLeft className="size-4" />Back to preview</Link></Button>
+    <Button variant="ghost" size="sm" asChild><Link href={`/templates/${preset.catalogueSlug}?preset=${preset.category}${onboarding ? "&onboarding=1" : ""}`}><ArrowLeft className="size-4" />Back to preview</Link></Button>
     <form action={createApprovedProtocolAction} className="mt-6 space-y-7 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
       <input type="hidden" name="presetId" value={preset.id} />
+      {onboarding ? <input type="hidden" name="onboarding" value="1" /> : null}
       <div><p className="text-sm font-semibold uppercase tracking-wider text-primary">Private copy</p><h1 className="mt-2 text-3xl font-bold tracking-[-0.04em]">Customise {preset.definition.label}</h1><p className="mt-3 max-w-3xl leading-7 text-muted-foreground">Changes are saved only to your account. The approved source remains unchanged.</p></div>
       {query.error ? <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive">{query.error}</p> : null}
       <div className="grid gap-5 sm:grid-cols-2"><label className="space-y-2 sm:col-span-2"><span className="text-sm font-semibold">Protocol name</span><input className="h-12 w-full rounded-xl border bg-background px-4" name="name" defaultValue={`${preset.displayName} — ${preset.definition.label}`} required minLength={3} maxLength={100} /></label>{preset.durationType === "fixed_cycle" ? <label className="space-y-2"><span className="text-sm font-semibold">Duration in days</span><input className="h-12 w-full rounded-xl border bg-background px-4" type="number" name="durationDays" defaultValue={durationDays ?? undefined} min={1} max={3650} required /></label> : <div className="rounded-xl border bg-muted/30 p-4 text-sm"><span className="font-semibold">Duration:</span> {preset.durationType === "open_ended" ? "Open-ended" : "As needed"}</div>}<label className="space-y-2 sm:col-span-2"><span className="text-sm font-semibold">Private notes</span><textarea className="w-full rounded-xl border bg-background px-4 py-3" rows={3} name="description" defaultValue={preset.definition.notes} /></label></div>

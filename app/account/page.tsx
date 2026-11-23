@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Compass, ExternalLink, FlaskConical, LockKeyhole, MapPin, ShieldCheck, UserRound } from "lucide-react";
+import { Compass, ExternalLink, LockKeyhole, MapPin, ShieldCheck, UserRound } from "lucide-react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { AnalyticsPreferenceForm } from "@/components/profile/analytics-preference-form";
 import { InjectionSitePreferencesForm } from "@/components/injection/site-preferences-form";
-import { AppNavigation } from "@/components/navigation/app-navigation";
+import { CalendarHeader } from "@/components/protocol-calendar/calendar-header";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { Button } from "@/components/ui/button";
 import { requireCompletedProfile } from "@/lib/auth/session";
@@ -20,34 +20,12 @@ export default async function AccountPage() {
   const disabledSiteIds = await getDisabledInjectionSiteIds(actor);
 
   return (
-    <main className="min-h-screen bg-secondary/30 px-5 py-8 sm:px-8">
-      <div className="mx-auto max-w-3xl">
-        <header className="flex items-start justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <FlaskConical className="size-5" aria-hidden="true" />
-            </span>
-            <span className="text-xl font-bold tracking-[-0.03em]">PepPilot</span>
-          </Link>
-          <div className="flex items-center gap-2"><AppNavigation /><SignOutButton /></div>
-        </header>
+    <main className="min-h-screen bg-secondary/20">
+      <CalendarHeader />
+      <div className="mx-auto w-full max-w-6xl px-5 pb-16 pt-10 sm:px-8 lg:px-10">
+        <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between"><div><div className="grid size-14 place-items-center rounded-2xl bg-secondary text-primary"><UserRound className="size-7" aria-hidden="true" /></div><h1 className="mt-5 text-4xl font-bold tracking-[-0.05em] sm:text-5xl">Your profile</h1><p className="mt-3 max-w-2xl leading-7 text-muted-foreground">Choose what visitors see on your public profile. Your username is permanent.</p></div><div className="flex flex-col gap-2 sm:flex-row"><Button variant="outline" asChild><Link href={`/u/${profile.username}`}><ExternalLink className="size-4" />View public profile</Link></Button><Button asChild><Link href="/onboarding"><Compass className="size-4" />Guided setup</Link></Button></div></header>
 
-        <section className="mt-12 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="grid size-12 place-items-center rounded-2xl bg-secondary text-primary">
-                <UserRound className="size-6" aria-hidden="true" />
-              </div>
-              <h1 className="mt-6 text-3xl font-bold tracking-[-0.04em]">Your profile</h1>
-              <p className="mt-3 max-w-xl leading-7 text-muted-foreground">
-                Choose what visitors see on your public profile. Your username is permanent.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 sm:items-end">
-              <Button variant="outline" asChild><Link href="/onboarding"><Compass className="size-4" aria-hidden="true" />Guided setup</Link></Button>
-              <Button variant="ghost" asChild><Link href={`/u/${profile.username}`}>View public profile<ExternalLink className="size-4" aria-hidden="true" /></Link></Button>
-            </div>
-          </div>
+        <section id="profile" className="mt-8 scroll-mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
 
           <dl className="mt-8 grid gap-4 rounded-2xl border bg-muted/40 p-5 sm:grid-cols-2">
             <div>
@@ -68,7 +46,7 @@ export default async function AccountPage() {
           <ProfileForm displayName={profile.displayName} bio={profile.bio} />
         </section>
 
-        <section id="injection-sites" className="mt-6 scroll-mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
+        <section id="settings" className="mt-6 scroll-mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
           <div className="grid size-12 place-items-center rounded-2xl bg-secondary text-primary">
             <ShieldCheck className="size-6" aria-hidden="true" />
           </div>
@@ -80,12 +58,13 @@ export default async function AccountPage() {
           <AnalyticsPreferenceForm enabled={profile.communityAnalyticsEnabled} />
         </section>
 
-        <section className="mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
+        <section id="injection-sites" className="mt-6 scroll-mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
           <div className="grid size-12 place-items-center rounded-2xl bg-secondary text-primary"><MapPin className="size-6" aria-hidden="true" /></div>
           <h2 className="mt-6 text-2xl font-bold tracking-[-0.035em]">Injection sites</h2>
           <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">Uncheck subzones you do not use. Rotation suggestions only consider enabled subzones; they remain history-based references, not suitability or safety guarantees.</p>
           <InjectionSitePreferencesForm disabledSiteIds={disabledSiteIds} />
         </section>
+        <div className="mt-6 flex justify-end"><SignOutButton /></div>
       </div>
     </main>
   );
