@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { AppBrand } from "@/components/brand/app-brand";
 import { SignInForm } from "@/components/auth/sign-in-form";
+import { getAuthenticatedActor } from "@/lib/auth/authorization";
+import { safeReturnPath } from "@/lib/auth/return-path";
 
 export const metadata: Metadata = {
   title: "Sign in",
 };
 
 type SignInPageProps = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 };
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
+  const returnTo = safeReturnPath(next, "/account");
+  if (await getAuthenticatedActor(await headers())) redirect(returnTo);
   const normalizedError = error?.toLowerCase();
   const invalidLinkErrors = new Set([
     "invalid-link",
@@ -35,7 +41,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           No password needed. We&apos;ll send a one-time link to verify your email securely.
         </p>
 
-        <SignInForm authError={authError} />
+        <SignInForm authError={authError} returnTo={returnTo} />
       </section>
     </main>
   );

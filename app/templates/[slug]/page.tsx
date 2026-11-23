@@ -26,7 +26,7 @@ export default async function TemplateDetailPage({ params, searchParams }: Templ
   const onboarding = query.onboarding === "1";
   const approved = await getApprovedProtocolsBySlug(slug);
   if (approved.length === 3) {
-    return <main className="relative min-h-screen overflow-hidden"><TemplateHeader onboarding={onboarding} /><article className="mx-auto w-full max-w-5xl px-5 pb-20 pt-8 sm:px-8 sm:pt-14 lg:px-10"><Button variant="ghost" size="sm" asChild><Link href={`/templates${onboarding ? "?onboarding=1" : ""}`}><ArrowLeft className="size-4" aria-hidden="true" />All compounds</Link></Button><ApprovedProtocolDetail presets={approved} requested={query.preset} onboarding={onboarding} /></article></main>;
+    return <main className="relative min-h-screen overflow-hidden"><TemplateHeader onboarding={onboarding} /><article className="mx-auto w-full max-w-5xl px-4 pb-20 pt-5 sm:px-8 sm:pt-10 lg:px-10"><Button variant="ghost" size="sm" asChild><Link href={`/templates${onboarding ? "?onboarding=1" : ""}`}><ArrowLeft className="size-4" aria-hidden="true" />All compounds</Link></Button><ApprovedProtocolDetail presets={approved} requested={query.preset} onboarding={onboarding} /></article></main>;
   }
   const template = await getPublishedProtocolTemplateBySlug(slug);
   if (!template) notFound();

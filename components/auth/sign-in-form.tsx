@@ -9,6 +9,7 @@ import { authClient } from "@/lib/auth-client";
 
 type SignInFormProps = {
   authError?: "invalid-link" | "unexpected";
+  returnTo?: string;
 };
 
 type Feedback = {
@@ -16,7 +17,7 @@ type Feedback = {
   tone: "error" | "success";
 };
 
-export function SignInForm({ authError }: SignInFormProps) {
+export function SignInForm({ authError, returnTo = "/account" }: SignInFormProps) {
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | undefined>(
     authError === "invalid-link"
@@ -36,9 +37,9 @@ export function SignInForm({ authError }: SignInFormProps) {
     try {
       const result = await authClient.signIn.magicLink({
         email,
-        callbackURL: "/account",
+        callbackURL: returnTo,
         newUserCallbackURL: "/account",
-        errorCallbackURL: "/sign-in?error=invalid-link",
+        errorCallbackURL: `/sign-in?error=invalid-link&next=${encodeURIComponent(returnTo)}`,
       });
 
       if (result.error?.status === 429) {

@@ -22,12 +22,12 @@ export default async function ApprovedProtocolCopyPage({ searchParams }: { searc
   if (!preset) notFound();
   const durationDays = preset.definition.duration_days ?? (preset.definition.duration_weeks ? Math.round(preset.definition.duration_weeks * 7) : null);
 
-  return <main className="min-h-screen bg-secondary/20"><ProtocolHeader /><section className="mx-auto w-full max-w-5xl px-5 pb-16 pt-8 sm:px-8 lg:px-10">
+  return <main className="min-h-screen bg-secondary/20"><ProtocolHeader /><section className="mx-auto w-full max-w-5xl px-4 pb-16 pt-5 sm:px-8 sm:pt-8 lg:px-10">
     <Button variant="ghost" size="sm" asChild><Link href={`/templates/${preset.catalogueSlug}?preset=${preset.category}${onboarding ? "&onboarding=1" : ""}`}><ArrowLeft className="size-4" />Back to preview</Link></Button>
-    <form action={createApprovedProtocolAction} className="mt-6 space-y-7 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
+    <form action={createApprovedProtocolAction} className="mt-4 space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:mt-6 sm:space-y-7 sm:rounded-[2rem] sm:p-9">
       <input type="hidden" name="presetId" value={preset.id} />
       {onboarding ? <input type="hidden" name="onboarding" value="1" /> : null}
-      <div><p className="text-sm font-semibold uppercase tracking-wider text-primary">Private copy</p><h1 className="mt-2 text-3xl font-bold tracking-[-0.04em]">Customise {preset.definition.label}</h1><p className="mt-3 max-w-3xl leading-7 text-muted-foreground">Changes are saved only to your account. The approved source remains unchanged.</p></div>
+      <div><p className="text-xs font-semibold uppercase tracking-wider text-primary sm:text-sm">Private copy</p><h1 className="mt-2 text-2xl font-bold tracking-[-0.04em] sm:text-3xl">Customise {preset.definition.label}</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:mt-3 sm:text-base sm:leading-7">Changes are saved only to your account. The approved source remains unchanged.</p></div>
       {query.error ? <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive">{query.error}</p> : null}
       <div className="grid gap-5 sm:grid-cols-2"><label className="space-y-2 sm:col-span-2"><span className="text-sm font-semibold">Protocol name</span><input className="h-12 w-full rounded-xl border bg-background px-4" name="name" defaultValue={`${preset.displayName} — ${preset.definition.label}`} required minLength={3} maxLength={100} /></label>{preset.durationType === "fixed_cycle" ? <label className="space-y-2"><span className="text-sm font-semibold">Duration in days</span><input className="h-12 w-full rounded-xl border bg-background px-4" type="number" name="durationDays" defaultValue={durationDays ?? undefined} min={1} max={3650} required /></label> : <div className="rounded-xl border bg-muted/30 p-4 text-sm"><span className="font-semibold">Duration:</span> {preset.durationType === "open_ended" ? "Open-ended" : "As needed"}</div>}<label className="space-y-2 sm:col-span-2"><span className="text-sm font-semibold">Private notes</span><textarea className="w-full rounded-xl border bg-background px-4 py-3" rows={3} name="description" defaultValue={preset.definition.notes} /></label></div>
       <section><h2 className="text-xl font-bold">Schedule stages</h2><p className="mt-1 text-sm text-muted-foreground">Review every value. Fields marked by the source as unspecified must be chosen before saving.</p><div className="mt-5 space-y-5">{preset.definition.schedule.map((stage, index) => {
@@ -41,7 +41,7 @@ export default async function ApprovedProtocolCopyPage({ searchParams }: { searc
           {stage.ingredient_doses.map((ingredient, ingredientIndex) => <label key={ingredient.name} className="space-y-2"><span className="text-sm font-medium">{ingredient.name} ({ingredient.dose_unit})</span><input className="h-11 w-full rounded-xl border bg-background px-3" type="number" min="0.0001" max="99999999.9999" step="0.0001" name={`stage.${index}.ingredient.${ingredientIndex}`} defaultValue={formatApprovedDecimal(ingredient.dose_amount)} inputMode="decimal" required /></label>)}
         </div></fieldset>;
       })}</div></section>
-      <div className="border-t pt-6"><Button size="lg" type="submit"><Copy className="size-4" />Create private draft</Button><p className="mt-3 text-sm text-muted-foreground">You can review the saved draft before starting a cycle.</p></div>
+      <div className="border-t pt-5 sm:pt-6"><Button className="w-full sm:w-auto" size="lg" type="submit"><Copy className="size-4" />Create private draft</Button><p className="mt-2 text-sm text-muted-foreground sm:mt-3">You can review the saved draft before starting a cycle.</p></div>
     </form>
   </section></main>;
 }

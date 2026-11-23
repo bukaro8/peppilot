@@ -28,6 +28,7 @@ export class ProtocolCycleError extends Error {
 }
 
 type CycleRow = {
+  approvedDefinition: unknown | null;
   createdAt: Date;
   endedOn: string | null;
   firstDeviatedOn: string | null;
@@ -148,6 +149,7 @@ function cycleSelection() {
     cycle.start_date::text as "startDate",
     cycle.planned_end_date::text as "plannedEndDate",
     cycle.duration_type as "durationType",
+    cycle.approved_definition as "approvedDefinition",
     cycle.preparation,
     cycle.status,
     cycle.source_template_id as "sourceTemplateId",

@@ -46,13 +46,13 @@ export default async function NewProtocolPage({ searchParams }: NewProtocolPageP
   return (
     <main className="min-h-screen bg-secondary/20">
       <ProtocolHeader />
-      <section className="mx-auto w-full max-w-5xl px-5 pb-16 pt-8 sm:px-8 lg:px-10">
+      <section className="mx-auto w-full max-w-5xl px-4 pb-16 pt-5 sm:px-8 sm:pt-8 lg:px-10">
         <Button variant="ghost" size="sm" asChild><Link href={inOnboarding ? "/onboarding/protocols" : source ? `/templates/${source.slug}` : "/protocols"}><ArrowLeft className="size-4" aria-hidden="true" />Back</Link></Button>
-        <div className="mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-9">
+        <div className="mt-4 rounded-2xl border bg-background p-5 shadow-sm sm:mt-6 sm:rounded-[2rem] sm:p-9">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">Private draft</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em]">{source ? "Copy and customise template" : "Create custom protocol"}</h1>
-          <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">{source ? "Review the published schedule, make any private changes, and preview it before saving." : "Build a schedule from scratch without supplied dose or timing defaults."}</p>
-          <div className="mt-9">
+          <h1 className="mt-2 text-2xl font-bold tracking-[-0.04em] sm:text-3xl">{source ? "Copy and customise template" : "Create custom protocol"}</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:mt-3 sm:text-base sm:leading-7">{source ? "Review the published schedule, make any private changes, and preview it before saving." : "Build a schedule from scratch without supplied dose or timing defaults."}</p>
+          <div className="mt-6 sm:mt-9">
             <ProtocolForm
               catalogue={catalogue.map(({ id, displayName }) => ({ id, displayName }))}
               initial={initial}

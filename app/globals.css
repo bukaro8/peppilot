@@ -116,7 +116,13 @@ input:not([type="checkbox"]):not([type="radio"]):focus-visible, select:focus-vis
 
 @media (min-width: 64rem) {
   body:has([data-app-sidebar]) > main {
-    margin-left: 18rem;
+    padding-left: 18rem;
+  }
+
+  [data-app-sidebar] {
+    bottom: auto;
+    height: 100dvh;
+    left: -18rem;
   }
 
   .app-topbar {

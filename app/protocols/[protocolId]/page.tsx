@@ -38,13 +38,13 @@ export default async function ProtocolPage({ params, searchParams }: ProtocolPag
   return (
     <main className="min-h-screen bg-secondary/20">
       <ProtocolHeader />
-      <article className="mx-auto w-full max-w-4xl px-5 pb-16 pt-8 sm:px-8 lg:px-10">
+      <article className="mx-auto w-full max-w-4xl px-4 pb-16 pt-5 sm:px-8 sm:pt-8 lg:px-10">
         <Button variant="ghost" size="sm" asChild><Link href="/protocols"><ArrowLeft className="size-4" aria-hidden="true" />Back to protocols</Link></Button>
-        <div className="mt-6 rounded-[2rem] border bg-background p-6 shadow-sm sm:p-10">
+        <div className="mt-4 rounded-2xl border bg-background p-5 shadow-sm sm:mt-6 sm:rounded-[2rem] sm:p-10">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex flex-wrap gap-2"><span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold">Private draft</span>{protocol.origin === "template" ? <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"><Copy className="size-3.5" aria-hidden="true" />{protocol.templateScheduleUnchanged ? "Template unchanged" : "Template customised"}</span> : <span className="rounded-full border px-3 py-1.5 text-xs font-semibold">Custom</span>}</div>
-              <h1 className="mt-6 text-4xl font-bold tracking-[-0.05em] sm:text-5xl">{protocol.name}</h1>
+              <div className="flex flex-wrap gap-2"><span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold">Private draft</span>{protocol.origin === "template" ? <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"><Copy className="size-3.5" aria-hidden="true" />{protocol.templateScheduleUnchanged ? "Template unchanged" : "Template customised"}</span> : protocol.origin === "approved_preset" ? <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"><Copy className="size-3.5" aria-hidden="true" />Approved copy</span> : <span className="rounded-full border px-3 py-1.5 text-xs font-semibold">Custom</span>}</div>
+              <h1 className="mt-4 text-3xl font-bold tracking-[-0.05em] sm:mt-6 sm:text-5xl">{protocol.name}</h1>
               {protocol.description ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{protocol.description}</p> : null}
             </div>
             <div className="flex flex-wrap gap-2">{protocol.origin !== "approved_preset" ? <Button variant="outline" asChild><Link href={`/protocols/${protocol.id}/edit`}><Pencil className="size-4" aria-hidden="true" />Edit draft</Link></Button> : null}<Button asChild><Link href={`/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />Start cycle</Link></Button></div>
