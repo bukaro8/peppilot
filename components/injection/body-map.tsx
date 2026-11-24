@@ -58,7 +58,7 @@ function MapView({
   selected: InjectionSiteId | null;
   view: "front" | "rear";
 }) {
-  const sites = injectionSites.filter((site) => site.view === view);
+  const sites = injectionSites.filter((site) => site.view === view && (!rotation.disabledSiteIds.includes(site.id) || (!readOnly && selected === site.id)));
   return (
     <section
       className={`rounded-2xl border bg-muted/20 ${readOnly ? "p-2 sm:p-4" : "p-4"}`}
@@ -184,7 +184,7 @@ export function BodyMap({
           readOnly={readOnly}
         />
       </div>
-      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4">
+      <div className={`grid grid-cols-2 gap-2 text-xs text-muted-foreground ${readOnly ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
         <span className="inline-flex items-center gap-2">
           <span className="size-3 rounded-full bg-red-600" />
           Resting
@@ -197,10 +197,10 @@ export function BodyMap({
           <span className="size-3 rounded-full bg-green-600" />
           Available
         </span>
-        <span className="inline-flex items-center gap-2">
+        {!readOnly ? <span className="inline-flex items-center gap-2">
           <span className="size-3 rounded-full bg-muted ring-1 ring-border" />
           Disabled
-        </span>
+        </span> : null}
       </div>
       {!readOnly ? (
         <div className="flex flex-col gap-3 rounded-2xl border bg-background p-4 sm:flex-row sm:items-center sm:justify-between">

@@ -73,13 +73,14 @@ export function QuickInjectionForm({
     () => options.find((option) => option.id === occurrenceId) ?? null,
     [occurrenceId, options],
   );
-  const [siteId, setSiteId] = useState<InjectionSiteId | null>(initialSiteId);
+  const enabledInitialSite = initialSiteId && !rotation.disabledSiteIds.includes(initialSiteId) ? initialSiteId : null;
+  const [siteId, setSiteId] = useState<InjectionSiteId | null>(enabledInitialSite);
   const [actualDose, setActualDose] = useState(initialOption?.doseAmount ?? "");
   const [actualUnit, setActualUnit] = useState(initialOption?.doseUnit ?? "mg");
   const [actualDate, setActualDate] = useState(() => localNow().date || dashboardDate);
   const [actualTime, setActualTime] = useState(() => localNow().time);
   const [acknowledged, setAcknowledged] = useState(false);
-  const [changingSite, setChangingSite] = useState(!initialSiteId);
+  const [changingSite, setChangingSite] = useState(!enabledInitialSite);
 
   function chooseProtocol(option: Option) {
     setOccurrenceId(option.id);

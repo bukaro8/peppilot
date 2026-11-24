@@ -135,9 +135,7 @@ function SiteCard({
   const state = availability(rotation, siteId);
   const details = groupDetails[state];
   const lastUsed = rotation.lastUsed[siteId];
-  const disabled = rotation.disabledSiteIds.includes(siteId);
   const lastLabel = lastUsed ? `${rotation.lastCompound[siteId] ?? "Injection"} — ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${lastUsed}T12:00:00Z`))}` : "Not used yet";
-  if (disabled) return <div className="flex min-h-24 flex-col justify-between rounded-2xl border bg-muted p-3"><h4 className="text-sm font-bold">{formatAnatomicalInjectionSite(siteId)}</h4><p className="text-xs text-muted-foreground">Disabled</p><p className="text-xs text-muted-foreground">{lastLabel}</p></div>;
   return (
     <Link
       href={`/injections/new?site=${siteId}&date=${date}`}
@@ -325,14 +323,15 @@ export function InjectionDashboard({
         <section className="mt-8" aria-labelledby="site-cards-heading">
           <div>
             <h2 id="site-cards-heading" className="text-2xl font-bold">
-              All injection sites
+              Enabled injection sites
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Sites stay in anatomical order. Yellow and red sites explain their
               cooldown before logging.
             </p>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-4">{injectionSites.map((site) => <SiteCard key={site.id} siteId={site.id} date={date} rotation={rotation} />)}</div>
+          <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-4">{injectionSites.filter((site) => !rotation.disabledSiteIds.includes(site.id)).map((site) => <SiteCard key={site.id} siteId={site.id} date={date} rotation={rotation} />)}</div>
+          {injectionSites.every((site) => rotation.disabledSiteIds.includes(site.id)) ? <p className="mt-4 text-sm text-muted-foreground">No sites enabled. <Link className="font-semibold text-primary underline" href="/account#injection-sites">Manage injection-site preferences</Link></p> : null}
         </section>
 
         <section className="mt-10" aria-labelledby="recent-injections-heading">

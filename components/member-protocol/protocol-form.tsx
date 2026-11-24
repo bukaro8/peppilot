@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowDown,
   ArrowUp,
@@ -158,6 +159,7 @@ export function ProtocolForm({
   preferredCatalogueId,
   source,
 }: Props) {
+  const router = useRouter();
   const action = initial?.protocolId
     ? updateMemberProtocolAction.bind(null, initial.protocolId)
     : createMemberProtocolAction.bind(
@@ -417,14 +419,17 @@ export function ProtocolForm({
                         name={`${prefix}.catalogueEntryId`}
                         required
                         value={row.catalogueEntryId}
-                        onChange={(event) =>
-                          update(row.key, {
-                            catalogueEntryId: event.target.value,
-                          })
-                        }
+                        onChange={(event) => {
+                          if (event.target.value === "__new_private_compound__") {
+                            router.push("/protocols/new/compound");
+                            return;
+                          }
+                          update(row.key, { catalogueEntryId: event.target.value });
+                        }}
                         className="h-11 w-full rounded-xl border bg-background px-3"
                       >
                         <option value="">Select a compound</option>
+                        <option value="__new_private_compound__">+ Add new private compound…</option>
                         {catalogue.map((entry) => (
                           <option key={entry.id} value={entry.id}>
                             {entry.displayName}
