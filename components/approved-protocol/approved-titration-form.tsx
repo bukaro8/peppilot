@@ -128,6 +128,7 @@ export function ApprovedTitrationForm({
     preset.durationType === "open_ended",
   );
   const [lastAdded, setLastAdded] = useState<string | null>(null);
+  const [validationMessage, setValidationMessage] = useState("");
   const ranges = useMemo(
     () =>
       calculateTimelineRanges(
@@ -192,6 +193,12 @@ export function ApprovedTitrationForm({
   return (
     <form
       action={createApprovedProtocolAction}
+      onInvalidCapture={(event) => {
+        const field = event.target as HTMLInputElement;
+        const details = field.closest("details");
+        if (details) details.open = true;
+        setValidationMessage("Complete the highlighted required fields before creating your private draft.");
+      }}
       className="mt-4 space-y-7 rounded-2xl border bg-background p-5 shadow-sm sm:mt-6 sm:rounded-[2rem] sm:p-9"
     >
       <input type="hidden" name="presetId" value={preset.id} />
@@ -293,6 +300,11 @@ export function ApprovedTitrationForm({
                     value={range.endDay ?? ""}
                   />
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <label className="space-y-2 sm:col-span-2">
+                      <span className="text-sm font-medium">Administrations per day{row.frequencyType === "daily" || row.doseBasis === "combined_daily_mass" ? " (required)" : " (optional)"}</span>
+                      <input className="h-11 w-full rounded-xl border bg-background px-3" type="number" min={1} max={12} step={1} name={`${prefix}.administrationsPerDay`} value={row.administrationsPerDay} required={row.frequencyType === "daily" || row.doseBasis === "combined_daily_mass"} onChange={(event) => update(row.key, { administrationsPerDay: event.target.value })} aria-describedby={`${prefix}-administrations-help`} />
+                      <p id={`${prefix}-administrations-help`} className="text-xs leading-5 text-muted-foreground">{row.doseBasis === "combined_daily_mass" ? "The dose below is the combined daily total. Enter your intended number of administrations per day so it can be divided into per-administration doses. The approved source does not choose this for you." : "Enter the number of administrations in a day."}</p>
+                    </label>
                     <label className="space-y-2">
                       <span className="text-sm font-medium">
                         {row.doseBasis === "single_compound_mass"
@@ -461,28 +473,6 @@ export function ApprovedTitrationForm({
                           placeholder="Enter route"
                         />
                       </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium">
-                          Administrations per day
-                        </span>
-                        <input
-                          className="h-11 w-full rounded-xl border bg-background px-3"
-                          type="number"
-                          min={1}
-                          max={12}
-                          name={`${prefix}.administrationsPerDay`}
-                          value={row.administrationsPerDay}
-                          required={
-                            row.frequencyType === "daily" ||
-                            row.doseBasis === "combined_daily_mass"
-                          }
-                          onChange={(event) =>
-                            update(row.key, {
-                              administrationsPerDay: event.target.value,
-                            })
-                          }
-                        />
-                      </label>
                       {row.ingredientDoses.map(
                         (ingredient, ingredientIndex) => (
                           <label
@@ -594,6 +584,7 @@ export function ApprovedTitrationForm({
         </div>
       </section>
       <div className="border-t pt-5">
+        {validationMessage ? <p role="alert" className="mb-3 text-sm font-semibold text-destructive">{validationMessage}</p> : null}
         <Button className="w-full sm:w-auto" size="lg" type="submit">
           <Copy className="size-4" />
           Create private draft

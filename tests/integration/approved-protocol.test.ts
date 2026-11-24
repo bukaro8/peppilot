@@ -147,6 +147,16 @@ describe("approved protocol private copies", () => {
     expect(events).toHaveLength(2);
     expect(events.map((event) => event.doseAmount)).toEqual(["100.0000", "100.0000"]);
   });
+  it("requires an explicit administration count for CJC Conservative without inventing a dose", async () => {
+    const preset = (await approved.getApprovedProtocolsBySlug("cjc-1295-no-dac-ipamorelin")).find((entry) => entry.category === "conservative")!;
+    expect(preset.definition.schedule[0].frequency.administrations_per_day).toBeNull();
+    const input = { description: null, durationDays: 56, name: "CJC Conservative explicit count", presetId: preset.id, stages: stagesFor(preset) };
+    await expect(copies.createApprovedProtocolCopy(owner, input)).rejects.toThrow("Choose daily administrations for stage 1");
+    const copy = await copies.createApprovedProtocolCopy(owner, { ...input, stages: stagesFor(preset, { administrationOverride: 2 }) });
+    const saved = await protocols.getMemberProtocol(owner, copy.protocolId);
+    expect(saved?.steps[0]).toMatchObject({ doseAmount: "100.0000", doseUnit: "mcg", administrationsPerDay: 2, startDay: 1, endDay: 56 });
+    expect(saved?.steps[0].ingredientDoses).toEqual(preset.definition.schedule[0].ingredient_doses);
+  });
 
   it("saves GLOW Most Used unchanged and keeps exact 56-day duration", async () => {
     const preset = (await approved.getApprovedProtocolsBySlug("glow")).find((entry) => entry.category === "most_used")!;
