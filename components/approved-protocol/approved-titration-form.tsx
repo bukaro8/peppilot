@@ -68,7 +68,7 @@ function makeRow(
 ): Row {
   return {
     administrationsPerDay:
-      stage.frequency.administrations_per_day?.toString() ?? "",
+      stage.frequency.administrations_per_day?.toString() ?? "1",
     days: String(sourceDays(stage, durationDays)),
     doseAmount: formatApprovedDecimal(stage.dose_amount),
     doseBasis: stage.dose_basis,
@@ -303,7 +303,7 @@ export function ApprovedTitrationForm({
                     <label className="space-y-2 sm:col-span-2">
                       <span className="text-sm font-medium">Administrations per day{row.frequencyType === "daily" || row.doseBasis === "combined_daily_mass" ? " (required)" : " (optional)"}</span>
                       <input className="h-11 w-full rounded-xl border bg-background px-3" type="number" min={1} max={12} step={1} name={`${prefix}.administrationsPerDay`} value={row.administrationsPerDay} required={row.frequencyType === "daily" || row.doseBasis === "combined_daily_mass"} onChange={(event) => update(row.key, { administrationsPerDay: event.target.value })} aria-describedby={`${prefix}-administrations-help`} />
-                      <p id={`${prefix}-administrations-help`} className="text-xs leading-5 text-muted-foreground">{row.doseBasis === "combined_daily_mass" ? "The dose below is the combined daily total. Enter your intended number of administrations per day so it can be divided into per-administration doses. The approved source does not choose this for you." : "Enter the number of administrations in a day."}</p>
+                      <p id={`${prefix}-administrations-help`} className="text-xs leading-5 text-muted-foreground">{row.doseBasis === "combined_daily_mass" ? "The dose below is the combined daily total, divided by this count for each administration. When the source leaves this unspecified, the form defaults to 1; you can change it." : "Enter the number of administrations in a day. Defaults to 1 when unspecified."}</p>
                     </label>
                     <label className="space-y-2">
                       <span className="text-sm font-medium">
