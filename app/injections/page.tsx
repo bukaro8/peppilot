@@ -28,9 +28,9 @@ export const metadata: Metadata = { title: "Injection sites" };
 
 type SearchParams = Record<string, string | string[] | undefined>;
 const statusStyles = {
-  completed: "bg-emerald-100 text-emerald-800",
+  completed: "status-positive text-[color:var(--positive-ink)]",
   skipped: "bg-slate-100 text-slate-700",
-  missed: "bg-rose-100 text-rose-800",
+  missed: "status-rest text-[color:var(--rest-ink)]",
 } as const;
 const one = (value: string | string[] | undefined) =>
   typeof value === "string" ? value : undefined;

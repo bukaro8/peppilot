@@ -27,10 +27,10 @@ import {
 import { formatDoseAmount } from "@/lib/protocol-template/presentation";
 
 const statusStyles = {
-  completed: "bg-emerald-100 text-emerald-800",
-  missed: "bg-rose-100 text-rose-800",
-  overdue: "bg-rose-100 text-rose-800",
-  pending: "bg-amber-100 text-amber-900",
+  completed: "status-positive text-[color:var(--positive-ink)]",
+  missed: "status-rest text-[color:var(--rest-ink)]",
+  overdue: "status-rest text-[color:var(--rest-ink)]",
+  pending: "status-caution text-[color:var(--caution-ink)]",
   skipped: "bg-slate-100 text-slate-700",
 } as const;
 
@@ -94,23 +94,23 @@ const groupDetails = {
   green: {
     heading: "Available",
     description: "Ready for selection",
-    card: "border-emerald-200 bg-emerald-50/70",
+    card: "border-emerald-200 status-positive",
     dot: "bg-emerald-500",
-    text: "text-emerald-800",
+    text: "text-[color:var(--positive-ink)]",
   },
   yellow: {
     heading: "Caution",
     description: "Recently used — review cooldown",
-    card: "border-amber-200 bg-amber-50/70",
+    card: "border-amber-200 status-caution",
     dot: "bg-amber-400",
-    text: "text-amber-900",
+    text: "text-[color:var(--caution-ink)]",
   },
   red: {
     heading: "Resting",
     description: "Cooling down after recent use",
-    card: "border-rose-200 bg-rose-50/70",
+    card: "border-rose-200 status-rest",
     dot: "bg-rose-500",
-    text: "text-rose-800",
+    text: "text-[color:var(--rest-ink)]",
   },
 } as const;
 
@@ -138,15 +138,15 @@ function SiteCard({
   return (
     <Link
       href={`/injections/new?site=${siteId}&date=${date}`}
-      className={`group flex min-h-28 flex-col justify-between rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${details.card}`}
+      className={`group flex min-h-24 min-w-0 flex-col justify-between rounded-2xl border p-3 shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${details.card}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="font-bold text-foreground">
+          <h4 className="text-sm font-bold text-foreground">
             {formatAnatomicalInjectionSite(siteId)}
           </h4>
           <p className={`mt-1 text-xs font-semibold ${details.text}`}>
-            {details.description}
+            {details.heading}
           </p>
         </div>
         <span
@@ -154,7 +154,7 @@ function SiteCard({
         />
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        {lastUsed ? `Last injection ${lastUsed}` : "No injection recorded here"}
+        {lastUsed ? `Last: ${lastUsed}` : "Not used yet"}
       </p>
     </Link>
   );
@@ -260,7 +260,7 @@ export function InjectionDashboard({
             </div>
           </div>
           <div className="space-y-5">
-            <div className="rounded-3xl border border-primary/20 bg-gradient-to-br from-violet-50 to-orange-50 p-5 shadow-sm sm:p-6">
+            <div className="feature-surface rounded-3xl border border-primary/20 p-5 shadow-sm sm:p-6">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                 Recommended available site
               </p>
@@ -357,7 +357,7 @@ export function InjectionDashboard({
                     {sites.length}
                   </span>
                 </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-4">
                   {sites.map((site) => (
                     <SiteCard
                       key={site.id}
@@ -446,7 +446,7 @@ export function InjectionDashboard({
           )}
         </section>
         {actions.overdueActions.length ? (
-          <div className="mt-8 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+          <div className="mt-8 rounded-2xl border border-rose-200 status-rest p-4 text-sm text-[color:var(--rest-ink)]">
             <p className="flex items-center gap-2 font-bold">
               <AlertTriangle className="size-4" />
               {actions.overdueActions.length} overdue injection

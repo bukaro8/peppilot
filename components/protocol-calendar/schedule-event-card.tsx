@@ -6,10 +6,10 @@ import type { ScheduledProtocolEvent } from "@/lib/protocol-calendar/service";
 import { formatDoseAmount } from "@/lib/protocol-template/presentation";
 
 const statusStyles = {
-  completed: "bg-emerald-100 text-emerald-800",
-  missed: "bg-rose-100 text-rose-800",
-  overdue: "bg-rose-100 text-rose-800",
-  pending: "bg-amber-100 text-amber-900",
+  completed: "status-positive text-[color:var(--positive-ink)]",
+  missed: "status-rest text-[color:var(--rest-ink)]",
+  overdue: "status-rest text-[color:var(--rest-ink)]",
+  pending: "status-caution text-[color:var(--caution-ink)]",
   skipped: "bg-slate-100 text-slate-700",
 } as const;
 

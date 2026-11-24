@@ -38,52 +38,9 @@ const positions: Record<
 function BodySilhouette({ view }: { view: "front" | "rear" }) {
   return (
     <svg viewBox="0 0 240 440" className="h-auto w-full" aria-hidden="true">
-      <circle
-        cx="120"
-        cy="38"
-        r="28"
-        className="fill-secondary stroke-border"
-        strokeWidth="3"
-      />
-      <path
-        d="M93 72 C76 84 70 122 72 168 L80 230 L91 424 L114 424 L120 250 L126 424 L149 424 L160 230 L168 168 C170 122 164 84 147 72 C137 81 103 81 93 72Z"
-        className="fill-secondary stroke-border"
-        strokeWidth="3"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M81 92 C54 108 45 160 36 223 L54 228 L78 148"
-        className="fill-secondary stroke-border"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M159 92 C186 108 195 160 204 223 L186 228 L162 148"
-        className="fill-secondary stroke-border"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M120 86 L120 232"
-        className="stroke-border/60"
-        strokeWidth="2"
-        strokeDasharray="5 7"
-      />
-      {view === "front" ? (
-        <path
-          d="M91 180 C106 190 134 190 149 180"
-          className="fill-none stroke-border/70"
-          strokeWidth="2"
-        />
-      ) : (
-        <path
-          d="M88 215 C103 204 137 204 152 215 M120 207 L120 245"
-          className="fill-none stroke-border/70"
-          strokeWidth="2"
-        />
-      )}
+      <defs><linearGradient id={`body-${view}`} x1="0" x2="1"><stop stopColor="var(--secondary)" /><stop offset="0.5" stopColor="var(--body-fill)" /><stop offset="1" stopColor="var(--secondary)" /></linearGradient></defs>
+      <path d="M101 18 Q120 4 139 18 Q148 34 137 55 L134 70 Q144 78 162 82 Q179 87 186 108 L199 170 L213 227 L207 246 L198 249 L194 231 L181 190 L163 140 Q158 172 159 200 Q165 231 157 255 L149 349 L143 420 L126 424 L122 343 L120 272 L118 343 L114 424 L97 420 L91 349 L83 255 Q75 231 81 200 Q82 172 77 140 L59 190 L46 231 L42 249 L33 246 L27 227 L41 170 L54 108 Q61 87 78 82 Q96 78 106 70 L103 55 Q92 34 101 18Z" fill={`url(#body-${view})`} className="stroke-border" strokeWidth="2" />
+      <path d={view === "front" ? "M80 105 Q98 97 117 111 M123 111 Q142 97 160 105 M120 120 L120 174 M94 157 Q120 169 146 157 M101 185 Q120 193 139 185 M88 220 L113 243 M152 220 L127 243" : "M85 99 Q105 104 114 136 M155 99 Q135 104 126 136 M120 88 L120 211 M88 219 Q103 206 117 221 M152 219 Q137 206 123 221"} className="fill-none stroke-border" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -139,7 +96,7 @@ function MapView({
                 aria-label={`${label}: ${disabled ? "disabled" : activity === "red" ? "resting" : activity === "yellow" ? "caution" : "available"}`}
                 title={label}
                 style={{ left: position.left, top: position.top }}
-                className={`pointer-events-none absolute h-6 w-8 -translate-x-1/2 -translate-y-1/2 rounded-[45%] border-2 shadow-sm sm:h-8 sm:w-11 ${activityClass}`}
+                className={`pointer-events-none absolute h-[7%] w-[16%] -translate-x-1/2 -translate-y-1/2 rounded-[45%] border shadow-sm ${activityClass}`}
               />
             );
           }

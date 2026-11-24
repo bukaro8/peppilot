@@ -43,9 +43,9 @@ function siteState(rotation: BodyMapRotation, siteId: InjectionSiteId) {
 }
 
 const siteStyles = {
-  green: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  yellow: "border-amber-200 bg-amber-50 text-amber-950",
-  red: "border-rose-200 bg-rose-50 text-rose-900",
+  green: "border-emerald-200 status-positive text-[color:var(--positive-ink)]",
+  yellow: "border-amber-200 status-caution text-[color:var(--caution-ink)]",
+  red: "border-rose-200 status-rest text-[color:var(--rest-ink)]",
 } as const;
 
 export function QuickInjectionForm({
@@ -78,6 +78,7 @@ export function QuickInjectionForm({
   const [actualDate, setActualDate] = useState(() => localNow().date || dashboardDate);
   const [actualTime, setActualTime] = useState(() => localNow().time);
   const [acknowledged, setAcknowledged] = useState(false);
+  const [changingSite, setChangingSite] = useState(!initialSiteId);
 
   function chooseProtocol(option: Option) {
     setOccurrenceId(option.id);
@@ -87,6 +88,7 @@ export function QuickInjectionForm({
   function chooseSite(value: InjectionSiteId) {
     setSiteId(value);
     setAcknowledged(false);
+    setChangingSite(false);
   }
 
   const selectedState = siteId ? siteState(rotation, siteId) : null;
@@ -145,6 +147,7 @@ export function QuickInjectionForm({
           </span>
         </div>
       ) : null}
+      {siteId ? <button type="button" className="text-sm font-semibold text-primary underline" onClick={() => setChangingSite(!changingSite)}>{changingSite ? "Keep selected site" : "Change site"}</button> : null}
 
       <section aria-labelledby="quick-protocol-heading">
         <div className="flex items-center gap-3">
@@ -200,7 +203,7 @@ export function QuickInjectionForm({
         ) : null}
       </section>
 
-      <section aria-labelledby="quick-site-heading">
+      {changingSite ? <section aria-labelledby="quick-site-heading">
         <div className="flex items-center gap-3">
           <span className="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
             2
@@ -245,11 +248,11 @@ export function QuickInjectionForm({
             );
           })}
         </div>
-      </section>
+      </section> : null}
 
       {siteId && requiresAcknowledgement ? (
         <div
-          className={`rounded-2xl border p-4 ${selectedState === "red" ? "border-rose-200 bg-rose-50" : "border-amber-200 bg-amber-50"}`}
+          className={`rounded-2xl border p-4 ${selectedState === "red" ? "border-rose-200 status-rest" : "border-amber-200 status-caution"}`}
         >
           <p className="flex items-center gap-2 font-bold">
             <AlertTriangle className="size-4" />

@@ -26,6 +26,14 @@
   --slate: #303a60;
   --surface-shadow: 0 20px 55px -35px rgba(42, 36, 91, 0.38);
   --radius: 1rem;
+  --positive-surface: #ecfdf5;
+  --positive-ink: #065f46;
+  --caution-surface: #fffbeb;
+  --caution-ink: #78350f;
+  --rest-surface: #fff1f2;
+  --rest-ink: #9f1239;
+  --feature-surface: #ede9ff;
+  --body-fill: #d8d3ee;
 }
 
 [data-theme="dark"] {
@@ -49,7 +57,23 @@
   --ring: #a591ff;
   --page-background: #232a50;
   --surface-shadow: 0 20px 55px -35px rgba(8, 10, 31, 0.7);
+  --positive-surface: #183e38;
+  --positive-ink: #a7f3d0;
+  --caution-surface: #45391f;
+  --caution-ink: #fde68a;
+  --rest-surface: #492c3d;
+  --rest-ink: #fecdd3;
+  --feature-surface: #39345e;
+  --body-fill: #797da4;
 }
+
+/* Shared semantic surfaces keep nested labels and secondary copy legible. */
+.status-positive { background: var(--positive-surface); color: var(--positive-ink); }
+.status-caution { background: var(--caution-surface); color: var(--caution-ink); }
+.status-rest { background: var(--rest-surface); color: var(--rest-ink); }
+.feature-surface { background: var(--feature-surface); color: var(--foreground); }
+.status-positive .text-foreground, .status-caution .text-foreground, .status-rest .text-foreground { color: inherit; }
+.status-positive .text-muted-foreground, .status-caution .text-muted-foreground, .status-rest .text-muted-foreground { color: inherit; opacity: 0.85; }
 
 @theme inline {
   --color-background: var(--background);

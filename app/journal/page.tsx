@@ -14,7 +14,7 @@ import { formatCalendarDate } from "@/lib/protocol-calendar/presentation";
 export const metadata: Metadata = { title: "Health journal" };
 
 const typeLabels: Record<JournalRecordType, string> = { check_in: "Check-in", measurement: "Measurement", symptom: "Symptom" };
-const typeStyles: Record<JournalRecordType, string> = { check_in: "bg-sky-100 text-sky-800", measurement: "bg-emerald-100 text-emerald-800", symptom: "bg-rose-100 text-rose-800" };
+const typeStyles: Record<JournalRecordType, string> = { check_in: "bg-sky-100 text-sky-800", measurement: "status-positive text-[color:var(--positive-ink)]", symptom: "status-rest text-[color:var(--rest-ink)]" };
 const TypeIcon = ({ type }: { type: JournalRecordType }) => type === "measurement" ? <Ruler className="size-4" aria-hidden="true" /> : type === "check_in" ? <ClipboardCheck className="size-4" aria-hidden="true" /> : <Activity className="size-4" aria-hidden="true" />;
 
 export default async function JournalPage({ searchParams }: { searchParams: Promise<{ from?: string; metric?: string; to?: string; type?: string }> }) {

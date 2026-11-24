@@ -37,7 +37,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('peppilot-theme');if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch(e){}})()` }} /></head>
+      <head><script dangerouslySetInnerHTML={{ __html: `(function(){try{var m=matchMedia('(prefers-color-scheme:dark)');function apply(){var p=localStorage.getItem('peppilot-theme');var t=p==='light'||p==='dark'?p:m.matches?'dark':'light';document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}apply();m.addEventListener('change',apply);window.addEventListener('storage',apply)}catch(e){}})()` }} /></head>
       <body className="antialiased">{children}</body>
     </html>
   );

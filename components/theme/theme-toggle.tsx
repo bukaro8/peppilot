@@ -1,19 +1,22 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { useSyncExternalStore } from "react";
+
+function subscribe(callback: () => void) {
+  window.addEventListener("peppilot-theme-change", callback);
+  window.addEventListener("storage", callback);
+  return () => { window.removeEventListener("peppilot-theme-change", callback); window.removeEventListener("storage", callback); };
+}
 
 export function ThemeToggle({ inverse = false }: { inverse?: boolean }) {
-  function toggle() {
-    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = next;
-    document.documentElement.style.colorScheme = next;
+  const preference = useSyncExternalStore(subscribe, () => localStorage.getItem("peppilot-theme") ?? "auto", () => "auto");
+  function toggle(next: string) {
+    const resolved = next === "auto" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : next;
+    document.documentElement.dataset.theme = resolved;
+    document.documentElement.style.colorScheme = resolved;
     localStorage.setItem("peppilot-theme", next);
+    window.dispatchEvent(new Event("peppilot-theme-change"));
   }
 
-  return <button type="button" onClick={toggle} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45 ${inverse ? "border-white/15 bg-white/10 text-white hover:bg-white/15" : "bg-card text-foreground hover:bg-secondary"}`} aria-label="Toggle colour theme">
-    <Moon className="size-4 dark:hidden" aria-hidden="true" />
-    <Sun className="hidden size-4 dark:block" aria-hidden="true" />
-    <span className="dark:hidden">Dark mode</span>
-    <span className="hidden dark:inline">Light mode</span>
-  </button>;
+  return <label className={`flex min-h-11 items-center justify-between gap-3 rounded-xl border px-3 text-sm font-semibold ${inverse ? "border-white/20 bg-white/10 text-white" : "bg-card text-foreground"}`}>Appearance<select aria-label="Colour theme" value={preference} onChange={(event) => toggle(event.target.value)} className="min-h-11 rounded-lg bg-background px-2 text-foreground"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>;
 }
