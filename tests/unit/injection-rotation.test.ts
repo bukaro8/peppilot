@@ -12,12 +12,22 @@ const historyItem = (
   actualDate: string,
   actualTime = "08:00",
   actualVolumeMl: string | null = null,
-): InjectionSiteHistoryItem => ({ actualDate, actualTime, actualVolumeMl, injectionSiteId, recordId });
+): InjectionSiteHistoryItem => ({
+  actualDate,
+  actualTime,
+  actualVolumeMl,
+  injectionSiteId,
+  recordId,
+});
 
 describe("injection-site rotation", () => {
   it("rotates deterministically after multiple injections on the same day", () => {
     const candidates = injectionSites.map((site) => site.id);
-    const first = calculateInjectionSiteRotation({ asOfDate: "2026-11-02", candidateSiteIds: candidates, history: [] });
+    const first = calculateInjectionSiteRotation({
+      asOfDate: "2026-11-02",
+      candidateSiteIds: candidates,
+      history: [],
+    });
     expect(first.suggestedSiteId).toBe("abdomen_left_upper");
     const second = calculateInjectionSiteRotation({
       asOfDate: "2026-11-02",
@@ -31,7 +41,9 @@ describe("injection-site rotation", () => {
 
   it("prefers oldest use, then fewer injections, then stable catalogue order", () => {
     const candidates: InjectionSiteId[] = [
-      "abdomen_left_upper", "abdomen_left_lower", "abdomen_right_upper",
+      "abdomen_left_upper",
+      "abdomen_left_lower",
+      "abdomen_right_upper",
     ];
     const result = calculateInjectionSiteRotation({
       asOfDate: "2026-11-10",
@@ -52,10 +64,34 @@ describe("injection-site rotation", () => {
       asOfDate: "2026-11-10",
       candidateSiteIds: ["upper_buttock_right"],
       history: [
-        historyItem("today", "abdomen_left_upper", "2026-11-10"),
-        historyItem("yesterday", "abdomen_left_lower", "2026-11-09"),
-        historyItem("two-days", "abdomen_right_upper", "2026-11-08"),
-        historyItem("older", "abdomen_right_lower", "2026-11-07"),
+        historyItem(
+          "today",
+          "abdomen_left_upper",
+          "2026-11-10",
+          "08:00",
+          "0.8",
+        ),
+        historyItem(
+          "yesterday",
+          "abdomen_left_lower",
+          "2026-11-09",
+          "08:00",
+          "0.8",
+        ),
+        historyItem(
+          "two-days",
+          "abdomen_right_upper",
+          "2026-11-08",
+          "08:00",
+          "0.8",
+        ),
+        historyItem(
+          "older",
+          "abdomen_right_lower",
+          "2026-11-07",
+          "08:00",
+          "0.8",
+        ),
       ],
     });
     expect(result.activity).toMatchObject({
@@ -67,16 +103,63 @@ describe("injection-site rotation", () => {
     });
   });
 
+  it("uses the longer cooldown when injection volume is unknown", () => {
+    const result = calculateInjectionSiteRotation({
+      asOfDate: "2026-11-10",
+      candidateSiteIds: ["upper_buttock_right"],
+      history: [
+        historyItem("unknown-yesterday", "abdomen_left_upper", "2026-11-09"),
+        historyItem("unknown-two-days", "abdomen_left_lower", "2026-11-08"),
+        historyItem("unknown-three-days", "abdomen_right_upper", "2026-11-07"),
+      ],
+    });
+    expect(result.activity).toMatchObject({
+      abdomen_left_upper: "red",
+      abdomen_left_lower: "yellow",
+      abdomen_right_upper: "green",
+    });
+  });
+
   it("extends rest colours above 0.8 mL and applies the most restrictive status", () => {
     const result = calculateInjectionSiteRotation({
       asOfDate: "2026-11-10",
       candidateSiteIds: ["upper_buttock_right"],
       history: [
-        historyItem("large-yesterday", "abdomen_left_upper", "2026-11-09", "08:00", "0.9"),
-        historyItem("small-two-days", "abdomen_left_lower", "2026-11-08", "08:00", "0.8"),
-        historyItem("large-two-days", "abdomen_right_upper", "2026-11-08", "08:00", "1.0"),
-        historyItem("old-small", "thigh_left_upper", "2026-11-07", "08:00", "0.5"),
-        historyItem("today-large", "thigh_left_upper", "2026-11-10", "09:00", "1.1"),
+        historyItem(
+          "large-yesterday",
+          "abdomen_left_upper",
+          "2026-11-09",
+          "08:00",
+          "0.9",
+        ),
+        historyItem(
+          "small-two-days",
+          "abdomen_left_lower",
+          "2026-11-08",
+          "08:00",
+          "0.8",
+        ),
+        historyItem(
+          "large-two-days",
+          "abdomen_right_upper",
+          "2026-11-08",
+          "08:00",
+          "1.0",
+        ),
+        historyItem(
+          "old-small",
+          "thigh_left_upper",
+          "2026-11-07",
+          "08:00",
+          "0.5",
+        ),
+        historyItem(
+          "today-large",
+          "thigh_left_upper",
+          "2026-11-10",
+          "09:00",
+          "1.1",
+        ),
       ],
     });
     expect(result.activity).toMatchObject({

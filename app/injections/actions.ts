@@ -13,7 +13,10 @@ import {
   updateInjectionRecord,
 } from "@/lib/injection/service";
 
-export type InjectionActionState = { message?: string; status: "error" | "idle" };
+export type InjectionActionState = {
+  message?: string;
+  status: "error" | "idle";
+};
 
 function inputFromForm(formData: FormData): InjectionRecordInput {
   return {
@@ -22,7 +25,9 @@ function inputFromForm(formData: FormData): InjectionRecordInput {
     actualDoseUnit: String(formData.get("actualDoseUnit") ?? ""),
     actualTime: String(formData.get("actualTime") ?? ""),
     actualVolumeMl: String(formData.get("actualVolumeMl") ?? ""),
-    injectionSiteId: String(formData.get("injectionSiteId") ?? "") as InjectionRecordInput["injectionSiteId"],
+    injectionSiteId: String(
+      formData.get("injectionSiteId") ?? "",
+    ) as InjectionRecordInput["injectionSiteId"],
     notes: String(formData.get("notes") ?? ""),
     status: String(formData.get("status") ?? "") as InjectionStatus,
   };
@@ -35,7 +40,11 @@ export async function createAsNeededInjectionRecordAction(
 ): Promise<InjectionActionState> {
   const actor = await requireActor();
   try {
-    const result = await createAsNeededInjectionRecord(actor, cycleId, inputFromForm(formData));
+    const result = await createAsNeededInjectionRecord(
+      actor,
+      cycleId,
+      inputFromForm(formData),
+    );
     revalidatePath(`/cycles/${cycleId}`);
     revalidatePath("/injections");
     redirect(`/injections/${result.recordId}?created=1`);
@@ -45,7 +54,8 @@ export async function createAsNeededInjectionRecordAction(
 }
 
 function actionError(error: unknown): InjectionActionState {
-  if (error instanceof InjectionRecordError) return { message: error.message, status: "error" };
+  if (error instanceof InjectionRecordError)
+    return { message: error.message, status: "error" };
   throw error;
 }
 
@@ -56,13 +66,43 @@ export async function createInjectionRecordAction(
 ): Promise<InjectionActionState> {
   const actor = await requireActor();
   try {
-    const result = await createInjectionRecord(actor, occurrenceId, inputFromForm(formData));
+    const result = await createInjectionRecord(
+      actor,
+      occurrenceId,
+      inputFromForm(formData),
+    );
     revalidatePath("/dashboard");
     revalidatePath("/cycles");
     revalidatePath("/calendar/week");
     revalidatePath("/calendar/month");
     revalidatePath("/injections");
     redirect(`/injections/${result.recordId}?created=1`);
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+export async function createQuickInjectionRecordAction(
+  _previous: InjectionActionState,
+  formData: FormData,
+): Promise<InjectionActionState> {
+  const actor = await requireActor();
+  const occurrenceId = String(formData.get("occurrenceId") ?? "");
+  const peptideName = String(formData.get("peptideName") ?? "Injection").slice(
+    0,
+    100,
+  );
+  const dashboardDate = String(formData.get("dashboardDate") ?? "");
+  try {
+    await createInjectionRecord(actor, occurrenceId, inputFromForm(formData));
+    revalidatePath("/dashboard");
+    revalidatePath("/cycles");
+    revalidatePath("/calendar/week");
+    revalidatePath("/calendar/month");
+    revalidatePath("/injections");
+    redirect(
+      `/injections?date=${encodeURIComponent(dashboardDate)}&recorded=${encodeURIComponent(peptideName)}#site-dashboard`,
+    );
   } catch (error) {
     return actionError(error);
   }

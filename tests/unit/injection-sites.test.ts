@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatAnatomicalInjectionSite,
   formatInjectionSite,
   getInjectionSite,
   injectionSites,
@@ -31,5 +32,11 @@ describe("injection site catalogue", () => {
     expect(isInjectionSiteId("abdomen_middle")).toBe(false);
     expect(getInjectionSite(null)).toBeNull();
     expect(formatInjectionSite(null)).toBe("Site unspecified");
+  });
+
+  it("uses anatomical names without exposing internal zone codes", () => {
+    expect(formatAnatomicalInjectionSite("abdomen_left_upper")).toBe("Upper-left abdomen");
+    expect(formatAnatomicalInjectionSite("love_handle_right")).toBe("Right flank");
+    expect(formatAnatomicalInjectionSite("upper_buttock_left")).toBe("Left buttock");
   });
 });

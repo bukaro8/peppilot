@@ -129,7 +129,8 @@ describe("private injection records", () => {
 
   it("combines protocols, applies private disabled sites, and recalculates corrections", async () => {
     const combined = await rotation.getInjectionSiteRotation(owner, "2026-04-02");
-    expect(combined.activity.upper_arm_left).toBe("yellow");
+    expect(combined.activity.upper_arm_left).toBe("red");
+    expect(combined.lastUsed.upper_arm_left).toBe("2026-04-01");
     expect(combined.activity.thigh_left_upper).toBe("red");
     const isolated = await rotation.getInjectionSiteRotation(other, "2026-04-02");
     expect(isolated.activity.upper_arm_left).toBe("neutral");

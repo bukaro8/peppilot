@@ -108,6 +108,7 @@ describe("approved protocol private copies", () => {
     const cycle = await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-01-01" });
     expect(cycle.plannedEndDate).toBeNull();
     expect(await calendar.getScheduledEvents(owner, "2026-12-31", "2026-12-31")).toHaveLength(1);
+    expect((await injections.getDashboardInjectionActions(owner, "2026-12-31")).todayActions).toHaveLength(1);
   });
 
   it("splits combined daily mass into distinct configured administrations", async () => {

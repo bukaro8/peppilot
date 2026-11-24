@@ -123,11 +123,17 @@ function recordSelection() {
 
 function normalizeInput(input: InjectionRecordInput) {
   if (!statuses.has(input.status)) {
-    throw new InjectionRecordError("Choose a valid injection status.", "invalid");
+    throw new InjectionRecordError(
+      "Choose a valid injection status.",
+      "invalid",
+    );
   }
   const notes = input.notes?.trim() || null;
   if (notes && notes.length > 1000) {
-    throw new InjectionRecordError("Notes must be 1,000 characters or fewer.", "invalid");
+    throw new InjectionRecordError(
+      "Notes must be 1,000 characters or fewer.",
+      "invalid",
+    );
   }
   if (input.status !== "completed") {
     return {
@@ -154,16 +160,35 @@ function normalizeInput(input: InjectionRecordInput) {
     throw new InjectionRecordError("Actual date must be valid.", "invalid");
   }
   if (!timePattern.test(actualTime)) {
-    throw new InjectionRecordError("Actual time must use a valid 24-hour time.", "invalid");
+    throw new InjectionRecordError(
+      "Actual time must use a valid 24-hour time.",
+      "invalid",
+    );
   }
-  if (!actualDoseAmount || !Number.isFinite(Number(actualDoseAmount)) || Number(actualDoseAmount) <= 0) {
-    throw new InjectionRecordError("Actual dose must be greater than zero.", "invalid");
+  if (
+    !actualDoseAmount ||
+    !Number.isFinite(Number(actualDoseAmount)) ||
+    Number(actualDoseAmount) <= 0
+  ) {
+    throw new InjectionRecordError(
+      "Actual dose must be greater than zero.",
+      "invalid",
+    );
   }
   if (actualDoseUnit.length < 1 || actualDoseUnit.length > 20) {
-    throw new InjectionRecordError("Actual dose unit must be 1 to 20 characters.", "invalid");
+    throw new InjectionRecordError(
+      "Actual dose unit must be 1 to 20 characters.",
+      "invalid",
+    );
   }
-  if (actualVolumeMl !== null && (!Number.isFinite(Number(actualVolumeMl)) || Number(actualVolumeMl) <= 0)) {
-    throw new InjectionRecordError("Injection volume must be greater than zero.", "invalid");
+  if (
+    actualVolumeMl !== null &&
+    (!Number.isFinite(Number(actualVolumeMl)) || Number(actualVolumeMl) <= 0)
+  ) {
+    throw new InjectionRecordError(
+      "Injection volume must be greater than zero.",
+      "invalid",
+    );
   }
   if (injectionSiteId && !isInjectionSiteId(injectionSiteId)) {
     throw new InjectionRecordError("Choose a valid injection site.", "invalid");
@@ -182,7 +207,11 @@ function normalizeInput(input: InjectionRecordInput) {
 
 function occurrenceDate(occurrenceId: string) {
   const match = occurrenceId.match(/:(\d{4}-\d{2}-\d{2})$/);
-  if (!match) throw new InjectionRecordError("Scheduled occurrence is invalid.", "invalid");
+  if (!match)
+    throw new InjectionRecordError(
+      "Scheduled occurrence is invalid.",
+      "invalid",
+    );
   return match[1];
 }
 
@@ -190,9 +219,18 @@ export async function getScheduledOccurrence(
   actor: AuthenticatedActor,
   scheduledOccurrenceId: string,
 ) {
-  const events = await getDailySchedule(actor, occurrenceDate(scheduledOccurrenceId));
-  const event = events.find((candidate) => candidate.id === scheduledOccurrenceId);
-  if (!event) throw new InjectionRecordError("Scheduled occurrence not found.", "not_found");
+  const events = await getDailySchedule(
+    actor,
+    occurrenceDate(scheduledOccurrenceId),
+  );
+  const event = events.find(
+    (candidate) => candidate.id === scheduledOccurrenceId,
+  );
+  if (!event)
+    throw new InjectionRecordError(
+      "Scheduled occurrence not found.",
+      "not_found",
+    );
   return event;
 }
 
@@ -210,7 +248,8 @@ async function assertRecordOwnership(
     : await sql<{ ownerUserId: string }[]>`
         select owner_user_id as "ownerUserId" from injection_record where id = ${recordId}
       `;
-  if (!rows[0]) throw new InjectionRecordError("Injection record not found.", "not_found");
+  if (!rows[0])
+    throw new InjectionRecordError("Injection record not found.", "not_found");
   assertPrivateResourceAccess(actor, rows[0].ownerUserId, operation);
 }
 
@@ -240,25 +279,33 @@ export async function createInjectionRecord(
     `;
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
-      throw new InjectionRecordError("This scheduled injection has already been recorded.", "conflict");
+      throw new InjectionRecordError(
+        "This scheduled injection has already been recorded.",
+        "conflict",
+      );
     }
     throw error;
   }
   return { recordId };
 }
 
-export async function getAsNeededInjectionOption(actor: AuthenticatedActor, cycleId: string) {
+export async function getAsNeededInjectionOption(
+  actor: AuthenticatedActor,
+  cycleId: string,
+) {
   const sql = getPostgresClient();
-  const [option] = await sql<Array<{
-    catalogueEntryId: string;
-    cycleId: string;
-    cycleName: string;
-    doseAmount: string;
-    doseUnit: string;
-    peptideName: string;
-    revisionId: string;
-    scheduleStepId: string;
-  }>>`
+  const [option] = await sql<
+    Array<{
+      catalogueEntryId: string;
+      cycleId: string;
+      cycleName: string;
+      doseAmount: string;
+      doseUnit: string;
+      peptideName: string;
+      revisionId: string;
+      scheduleStepId: string;
+    }>
+  >`
     select cycle.id as "cycleId", cycle.name as "cycleName", revision.id as "revisionId",
       step.id as "scheduleStepId", entry.catalogue_entry_id as "catalogueEntryId",
       catalogue.display_name as "peptideName", step.dose_amount::text as "doseAmount",
@@ -284,10 +331,17 @@ export async function createAsNeededInjectionRecord(
   input: InjectionRecordInput,
 ) {
   const option = await getAsNeededInjectionOption(actor, cycleId);
-  if (!option) throw new InjectionRecordError("As-needed injection option not found.", "not_found");
+  if (!option)
+    throw new InjectionRecordError(
+      "As-needed injection option not found.",
+      "not_found",
+    );
   const value = normalizeInput(input);
   if (value.status !== "completed" || !value.actualDate) {
-    throw new InjectionRecordError("As-needed administrations are recorded when completed.", "invalid");
+    throw new InjectionRecordError(
+      "As-needed administrations are recorded when completed.",
+      "invalid",
+    );
   }
   const recordId = crypto.randomUUID();
   const occurrenceId = `as-needed:${option.scheduleStepId}:${recordId}:${value.actualDate}`;
@@ -309,7 +363,10 @@ export async function createAsNeededInjectionRecord(
   return { recordId };
 }
 
-export async function getInjectionRecord(actor: AuthenticatedActor, recordId: string) {
+export async function getInjectionRecord(
+  actor: AuthenticatedActor,
+  recordId: string,
+) {
   const sql = getPostgresClient();
   await assertRecordOwnership(sql, actor, recordId, "read");
   const [record] = await sql<InjectionRecordRow[]>`
@@ -348,16 +405,18 @@ export async function updateInjectionRecord(
   const sql = getPostgresClient();
   await sql.begin(async (transaction) => {
     await assertRecordOwnership(transaction, actor, recordId, "update", true);
-    const [current] = await transaction<{
-      actualDate: string | null;
-      actualDoseAmount: string | null;
-      actualDoseUnit: string | null;
-      actualTime: string | null;
-      actualVolumeMl: string | null;
-      injectionSiteId: InjectionSiteId | null;
-      notes: string | null;
-      status: InjectionStatus;
-    }[]>`
+    const [current] = await transaction<
+      {
+        actualDate: string | null;
+        actualDoseAmount: string | null;
+        actualDoseUnit: string | null;
+        actualTime: string | null;
+        actualVolumeMl: string | null;
+        injectionSiteId: InjectionSiteId | null;
+        notes: string | null;
+        status: InjectionStatus;
+      }[]
+    >`
       select status, actual_date::text as "actualDate",
         to_char(actual_time, 'HH24:MI') as "actualTime",
         actual_dose_amount::text as "actualDoseAmount",
@@ -365,7 +424,11 @@ export async function updateInjectionRecord(
         injection_site_id as "injectionSiteId", notes
       from injection_record where id = ${recordId}
     `;
-    if (!current) throw new InjectionRecordError("Injection record not found.", "not_found");
+    if (!current)
+      throw new InjectionRecordError(
+        "Injection record not found.",
+        "not_found",
+      );
     await transaction`
       insert into injection_record_history (
         id, injection_record_id, previous_status, previous_actual_date,
@@ -412,27 +475,48 @@ export async function getInjectionHistory(
   if (filters.dateFrom) parseCalendarDate(filters.dateFrom);
   if (filters.dateTo) parseCalendarDate(filters.dateTo);
   if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
-    throw new InjectionRecordError("Start date must be on or before end date.", "invalid");
+    throw new InjectionRecordError(
+      "Start date must be on or before end date.",
+      "invalid",
+    );
   }
   if (filters.status && !statuses.has(filters.status)) {
-    throw new InjectionRecordError("Choose a valid injection status.", "invalid");
+    throw new InjectionRecordError(
+      "Choose a valid injection status.",
+      "invalid",
+    );
   }
   if (filters.injectionSiteId && !isInjectionSiteId(filters.injectionSiteId)) {
     throw new InjectionRecordError("Choose a valid injection site.", "invalid");
   }
 
   const sql = getPostgresClient();
-  const pageSize = Math.min(Math.max(Math.trunc(filters.pageSize ?? 20), 1), 100);
+  const pageSize = Math.min(
+    Math.max(Math.trunc(filters.pageSize ?? 20), 1),
+    100,
+  );
   const requestedPage = Math.max(Math.trunc(filters.page ?? 1), 1);
   const query = filters.query?.trim() || null;
   const conditions = [sql`record.owner_user_id = ${actor.userId}`];
-  if (filters.dateFrom) conditions.push(sql`coalesce(record.actual_date, record.scheduled_date) >= ${filters.dateFrom}::date`);
-  if (filters.dateTo) conditions.push(sql`coalesce(record.actual_date, record.scheduled_date) <= ${filters.dateTo}::date`);
-  if (filters.peptideId) conditions.push(sql`record.catalogue_entry_id = ${filters.peptideId}`);
-  if (filters.cycleId) conditions.push(sql`record.cycle_id = ${filters.cycleId}`);
+  if (filters.dateFrom)
+    conditions.push(
+      sql`coalesce(record.actual_date, record.scheduled_date) >= ${filters.dateFrom}::date`,
+    );
+  if (filters.dateTo)
+    conditions.push(
+      sql`coalesce(record.actual_date, record.scheduled_date) <= ${filters.dateTo}::date`,
+    );
+  if (filters.peptideId)
+    conditions.push(sql`record.catalogue_entry_id = ${filters.peptideId}`);
+  if (filters.cycleId)
+    conditions.push(sql`record.cycle_id = ${filters.cycleId}`);
   if (filters.status) conditions.push(sql`record.status = ${filters.status}`);
-  if (filters.injectionSiteId) conditions.push(sql`record.injection_site_id = ${filters.injectionSiteId}`);
-  if (query) conditions.push(sql`(catalogue.display_name ilike ${`%${query}%`} or cycle.name ilike ${`%${query}%`} or coalesce(record.notes, '') ilike ${`%${query}%`})`);
+  if (filters.injectionSiteId)
+    conditions.push(sql`record.injection_site_id = ${filters.injectionSiteId}`);
+  if (query)
+    conditions.push(
+      sql`(catalogue.display_name ilike ${`%${query}%`} or cycle.name ilike ${`%${query}%`} or coalesce(record.notes, '') ilike ${`%${query}%`})`,
+    );
   const where = conditions.reduce((left, right) => sql`${left} and ${right}`);
   const [count] = await sql<{ total: number }[]>`
     select count(*)::int as total
@@ -445,8 +529,9 @@ export async function getInjectionHistory(
   const pageCount = Math.max(Math.ceil(total / pageSize), 1);
   const page = Math.min(requestedPage, pageCount);
   const offset = (page - 1) * pageSize;
-  const records = filters.sort === "asc"
-    ? await sql<InjectionRecordRow[]>`
+  const records =
+    filters.sort === "asc"
+      ? await sql<InjectionRecordRow[]>`
         select ${sql.unsafe(recordSelection())}
         from injection_record record
         join protocol_cycle cycle on cycle.id = record.cycle_id
@@ -455,7 +540,7 @@ export async function getInjectionHistory(
         order by coalesce(record.actual_date, record.scheduled_date), coalesce(record.actual_time, record.scheduled_time) nulls last, record.created_at, record.id
         limit ${pageSize} offset ${offset}
       `
-    : await sql<InjectionRecordRow[]>`
+      : await sql<InjectionRecordRow[]>`
         select ${sql.unsafe(recordSelection())}
         from injection_record record
         join protocol_cycle cycle on cycle.id = record.cycle_id
@@ -467,7 +552,9 @@ export async function getInjectionHistory(
   return { filters, page, pageCount, pageSize, records, total };
 }
 
-export async function getInjectionHistoryFilterOptions(actor: AuthenticatedActor) {
+export async function getInjectionHistoryFilterOptions(
+  actor: AuthenticatedActor,
+) {
   const sql = getPostgresClient();
   const peptides = await sql<{ id: string; name: string }[]>`
     select distinct catalogue.id, catalogue.display_name as name
@@ -515,10 +602,13 @@ export async function getCalendarInjectionActions(
     getScheduledEvents(actor, startDate, endDate, { includeCompleted: true }),
     getInjectionRecordsForRange(actor, startDate, endDate),
   ]);
-  const byOccurrence = new Map(records.map((record) => [record.scheduledOccurrenceId, record]));
+  const byOccurrence = new Map(
+    records.map((record) => [record.scheduledOccurrenceId, record]),
+  );
   const projected = events.map((event) => {
     const record = byOccurrence.get(event.id) ?? null;
-    const state: DashboardInjectionState = record?.status ?? (event.date < today ? "overdue" : "pending");
+    const state: DashboardInjectionState =
+      record?.status ?? (event.date < today ? "overdue" : "pending");
     return { event, record, state };
   });
   const eventIds = new Set(events.map((event) => event.id));
@@ -542,14 +632,20 @@ export async function getCalendarInjectionActions(
       state: record.status,
     });
   }
-  return projected.sort((left, right) =>
-    left.event.date.localeCompare(right.event.date) ||
-    (left.event.timeOfDay ?? "99:99").localeCompare(right.event.timeOfDay ?? "99:99") ||
-    left.event.peptideName.localeCompare(right.event.peptideName),
+  return projected.sort(
+    (left, right) =>
+      left.event.date.localeCompare(right.event.date) ||
+      (left.event.timeOfDay ?? "99:99").localeCompare(
+        right.event.timeOfDay ?? "99:99",
+      ) ||
+      left.event.peptideName.localeCompare(right.event.peptideName),
   );
 }
 
-export async function getDailyInjectionSchedule(actor: AuthenticatedActor, date: string) {
+export async function getDailyInjectionSchedule(
+  actor: AuthenticatedActor,
+  date: string,
+) {
   const events = await getDailySchedule(actor, date);
   const sql = getPostgresClient();
   const records = await sql<InjectionRecordRow[]>`
@@ -559,8 +655,13 @@ export async function getDailyInjectionSchedule(actor: AuthenticatedActor, date:
     join catalogue_entry catalogue on catalogue.id = record.catalogue_entry_id
     where record.owner_user_id = ${actor.userId} and record.scheduled_date = ${date}
   `;
-  const byOccurrence = new Map(records.map((record) => [record.scheduledOccurrenceId, record]));
-  return events.map((event) => ({ event, record: byOccurrence.get(event.id) ?? null }));
+  const byOccurrence = new Map(
+    records.map((record) => [record.scheduledOccurrenceId, record]),
+  );
+  return events.map((event) => ({
+    event,
+    record: byOccurrence.get(event.id) ?? null,
+  }));
 }
 
 export type DashboardInjectionState = InjectionStatus | "overdue" | "pending";
@@ -577,7 +678,9 @@ export function classifyDashboardInjectionActions(
   today: string,
 ) {
   parseCalendarDate(today);
-  const byOccurrence = new Map(records.map((record) => [record.scheduledOccurrenceId, record]));
+  const byOccurrence = new Map(
+    records.map((record) => [record.scheduledOccurrenceId, record]),
+  );
   const todayActions: DashboardInjectionAction[] = [];
   const overdueActions: DashboardInjectionAction[] = [];
   for (const event of events) {
@@ -588,8 +691,9 @@ export function classifyDashboardInjectionActions(
       overdueActions.push({ event, record: null, state: "overdue" });
     }
   }
-  const pendingCount = todayActions.filter((action) => action.state === "pending").length
-    + overdueActions.length;
+  const pendingCount =
+    todayActions.filter((action) => action.state === "pending").length +
+    overdueActions.length;
   return {
     hasPendingActions: pendingCount > 0,
     overdueActions,
@@ -598,7 +702,10 @@ export function classifyDashboardInjectionActions(
   };
 }
 
-export async function getDashboardInjectionActions(actor: AuthenticatedActor, today: string) {
+export async function getDashboardInjectionActions(
+  actor: AuthenticatedActor,
+  today: string,
+) {
   parseCalendarDate(today);
   const sql = getPostgresClient();
   const [range] = await sql<{ startDate: string | null }[]>`
@@ -607,10 +714,18 @@ export async function getDashboardInjectionActions(actor: AuthenticatedActor, to
     where owner_user_id = ${actor.userId}
       and status in ('active', 'paused')
       and start_date <= ${today}::date
-      and planned_end_date >= ${today}::date
+      and (planned_end_date is null or planned_end_date >= ${today}::date)
   `;
-  if (!range?.startDate) return classifyDashboardInjectionActions([], [], today);
-  const events = await getScheduledEvents(actor, range.startDate, today);
+  if (!range?.startDate)
+    return classifyDashboardInjectionActions([], [], today);
+  const events: ScheduledProtocolEvent[] = [];
+  let chunkStart = range.startDate;
+  while (chunkStart <= today) {
+    const remainingDays = calendarDayDifference(chunkStart, today);
+    const chunkEnd = addCalendarDays(chunkStart, Math.min(remainingDays, 62));
+    events.push(...(await getScheduledEvents(actor, chunkStart, chunkEnd)));
+    chunkStart = addCalendarDays(chunkEnd, 1);
+  }
   const records = await sql<InjectionRecordRow[]>`
     select ${sql.unsafe(recordSelection())}
     from injection_record record
@@ -622,7 +737,10 @@ export async function getDashboardInjectionActions(actor: AuthenticatedActor, to
   return classifyDashboardInjectionActions(events, records, today);
 }
 
-export type AdherenceRecord = Pick<InjectionRecordRow, "scheduledOccurrenceId" | "status">;
+export type AdherenceRecord = Pick<
+  InjectionRecordRow,
+  "scheduledOccurrenceId" | "status"
+>;
 
 export function calculateAdherence(
   events: ScheduledProtocolEvent[],
@@ -634,7 +752,9 @@ export function calculateAdherence(
   if (asOfTime !== null && !timePattern.test(asOfTime)) {
     throw new InjectionRecordError("Adherence time must be valid.", "invalid");
   }
-  const byOccurrence = new Map(records.map((record) => [record.scheduledOccurrenceId, record]));
+  const byOccurrence = new Map(
+    records.map((record) => [record.scheduledOccurrenceId, record]),
+  );
   const applicable = events.filter((event) => {
     if (event.date < asOfDate) return true;
     if (event.date > asOfDate) return false;
@@ -657,7 +777,8 @@ export function calculateAdherence(
     completed,
     missed,
     overdue,
-    percentage: scheduled === 0 ? null : Math.round((completed / scheduled) * 1000) / 10,
+    percentage:
+      scheduled === 0 ? null : Math.round((completed / scheduled) * 1000) / 10,
     scheduled,
     skipped,
   };
@@ -684,9 +805,11 @@ export async function getCycleAdherence(
     const remainingDays = calendarDayDifference(chunkStart, endDate);
     const chunkEnd = addCalendarDays(chunkStart, Math.min(remainingDays, 62));
     events.push(
-      ...(await getScheduledEvents(actor, chunkStart, chunkEnd, {
-        includeCompleted: true,
-      })).filter((event) => event.cycleId === cycleId),
+      ...(
+        await getScheduledEvents(actor, chunkStart, chunkEnd, {
+          includeCompleted: true,
+        })
+      ).filter((event) => event.cycleId === cycleId),
     );
     chunkStart = addCalendarDays(chunkEnd, 1);
   }

@@ -20,16 +20,23 @@ export type ScheduledProtocolEvent = {
   id: string;
   peptideName: string;
   revisionId: string;
+  route?: string | null;
   scheduleStepId: string;
   timeOfDay: string | null;
 };
 
 export function parseCalendarDate(value: string) {
   if (!isoDatePattern.test(value)) {
-    throw new ProtocolCycleError("Calendar date must use YYYY-MM-DD format.", "invalid");
+    throw new ProtocolCycleError(
+      "Calendar date must use YYYY-MM-DD format.",
+      "invalid",
+    );
   }
   const date = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(date.valueOf()) || date.toISOString().slice(0, 10) !== value) {
+  if (
+    Number.isNaN(date.valueOf()) ||
+    date.toISOString().slice(0, 10) !== value
+  ) {
     throw new ProtocolCycleError("Calendar date must be valid.", "invalid");
   }
   return date;
@@ -42,7 +49,10 @@ export function addCalendarDays(value: string, days: number) {
 }
 
 export function calendarDayDifference(start: string, end: string) {
-  return Math.floor((parseCalendarDate(end).valueOf() - parseCalendarDate(start).valueOf()) / dayMilliseconds);
+  return Math.floor(
+    (parseCalendarDate(end).valueOf() - parseCalendarDate(start).valueOf()) /
+      dayMilliseconds,
+  );
 }
 
 export function startOfCalendarWeek(value: string) {
@@ -54,15 +64,22 @@ export function startOfCalendarWeek(value: string) {
 export function calendarMonthRange(value: string) {
   const date = parseCalendarDate(value);
   const start = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-01`;
-  const next = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1));
-  const end = new Date(next.valueOf() - dayMilliseconds).toISOString().slice(0, 10);
+  const next = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1),
+  );
+  const end = new Date(next.valueOf() - dayMilliseconds)
+    .toISOString()
+    .slice(0, 10);
   return { start, end };
 }
 
 export function enumerateCalendarDates(startDate: string, endDate: string) {
   const length = calendarDayDifference(startDate, endDate);
-  if (length < 0) throw new ProtocolCycleError("Calendar range is invalid.", "invalid");
-  return Array.from({ length: length + 1 }, (_, index) => addCalendarDays(startDate, index));
+  if (length < 0)
+    throw new ProtocolCycleError("Calendar range is invalid.", "invalid");
+  return Array.from({ length: length + 1 }, (_, index) =>
+    addCalendarDays(startDate, index),
+  );
 }
 
 function isPausedOnDate(
@@ -84,11 +101,19 @@ function stepOccursOnDate(
   date: string,
 ) {
   const cycleDay = calendarDayDifference(cycleStartDate, date) + 1;
-  if (cycleDay < step.startDay || (step.endDay !== null && cycleDay > step.endDay)) return false;
+  if (
+    cycleDay < step.startDay ||
+    (step.endDay !== null && cycleDay > step.endDay)
+  )
+    return false;
   if (step.frequency === "as_needed") return false;
   if (step.frequency === "daily") return true;
-  if (step.frequency === "weekly") return step.daysOfWeek.includes(parseCalendarDate(date).getUTCDay());
-  return step.intervalDays !== null && (cycleDay - step.startDay) % step.intervalDays === 0;
+  if (step.frequency === "weekly")
+    return step.daysOfWeek.includes(parseCalendarDate(date).getUTCDay());
+  return (
+    step.intervalDays !== null &&
+    (cycleDay - step.startDay) % step.intervalDays === 0
+  );
 }
 
 export function generateScheduledEvents(
@@ -97,7 +122,10 @@ export function generateScheduledEvents(
   endDate: string,
 ): ScheduledProtocolEvent[] {
   const dates = enumerateCalendarDates(startDate, endDate);
-  const revisionsByCycle = new Map<string, CycleScheduleRangeSnapshot["revisions"]>();
+  const revisionsByCycle = new Map<
+    string,
+    CycleScheduleRangeSnapshot["revisions"]
+  >();
   for (const revision of snapshot.revisions) {
     const revisions = revisionsByCycle.get(revision.cycleId) ?? [];
     revisions.push(revision);
@@ -109,18 +137,30 @@ export function generateScheduledEvents(
     const revisions = revisionsByCycle.get(cycle.id) ?? [];
     for (const date of dates) {
       const cycleEndDate = cycle.endedOn ?? cycle.plannedEndDate;
-      if (date < cycle.startDate || (cycleEndDate !== null && date > cycleEndDate)) continue;
+      if (
+        date < cycle.startDate ||
+        (cycleEndDate !== null && date > cycleEndDate)
+      )
+        continue;
       if (isPausedOnDate(snapshot.pauses, cycle.id, date)) continue;
-      const revision = revisions
-        .filter((candidate) => candidate.effectiveFrom <= date)
-        .at(-1) ?? revisions.find((candidate) => candidate.revisionNumber === 1);
+      const revision =
+        revisions
+          .filter((candidate) => candidate.effectiveFrom <= date)
+          .at(-1) ??
+        revisions.find((candidate) => candidate.revisionNumber === 1);
       if (!revision) continue;
       for (const step of revision.steps) {
         if (!stepOccursOnDate(step, cycle.startDate, date)) continue;
         const administrations = step.administrationsPerDay ?? 1;
-        for (let administration = 0; administration < administrations; administration += 1) {
+        for (
+          let administration = 0;
+          administration < administrations;
+          administration += 1
+        ) {
           const labelledTime = step.timesOfDay?.[administration];
-          const timeOfDay = /^\d{2}:\d{2}$/.test(labelledTime ?? "") ? labelledTime : step.timeOfDay;
+          const timeOfDay = /^\d{2}:\d{2}$/.test(labelledTime ?? "")
+            ? labelledTime
+            : step.timeOfDay;
           events.push({
             catalogueEntryId: step.catalogueEntryId,
             cycleId: cycle.id,
@@ -128,11 +168,13 @@ export function generateScheduledEvents(
             date,
             doseAmount: step.doseAmount,
             doseUnit: step.doseUnit,
-            id: administrations === 1
-              ? `${revision.id}:${step.id}:${date}`
-              : `${revision.id}:${step.id}:${administration + 1}:${date}`,
+            id:
+              administrations === 1
+                ? `${revision.id}:${step.id}:${date}`
+                : `${revision.id}:${step.id}:${administration + 1}:${date}`,
             peptideName: step.displayName,
             revisionId: revision.id,
+            route: step.route,
             scheduleStepId: step.id,
             timeOfDay: timeOfDay ?? null,
           });
@@ -141,10 +183,11 @@ export function generateScheduledEvents(
     }
   }
 
-  return events.sort((left, right) =>
-    left.date.localeCompare(right.date) ||
-    (left.timeOfDay ?? "99:99").localeCompare(right.timeOfDay ?? "99:99") ||
-    left.peptideName.localeCompare(right.peptideName),
+  return events.sort(
+    (left, right) =>
+      left.date.localeCompare(right.date) ||
+      (left.timeOfDay ?? "99:99").localeCompare(right.timeOfDay ?? "99:99") ||
+      left.peptideName.localeCompare(right.peptideName),
   );
 }
 
@@ -154,7 +197,12 @@ export async function getScheduledEvents(
   endDate: string,
   options: { includeCompleted?: boolean } = {},
 ) {
-  const snapshot = await getCycleScheduleDataForRange(actor, startDate, endDate, options);
+  const snapshot = await getCycleScheduleDataForRange(
+    actor,
+    startDate,
+    endDate,
+    options,
+  );
   return generateScheduledEvents(snapshot, startDate, endDate);
 }
 

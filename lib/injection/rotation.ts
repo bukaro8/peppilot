@@ -12,10 +12,12 @@ export type InjectionSiteHistoryItem = {
   recordId: string;
 };
 
-export type InjectionSiteActivity = "green" | "neutral" | "red" | "suggested" | "yellow";
+export type InjectionSiteActivity =
+  "green" | "neutral" | "red" | "suggested" | "yellow";
 
 export type InjectionSiteRotation = {
   activity: Record<InjectionSiteId, InjectionSiteActivity>;
+  lastUsed: Record<InjectionSiteId, string | null>;
   reason: string;
   suggestedSiteId: InjectionSiteId | null;
   suggestionLabel: string | null;
@@ -27,20 +29,27 @@ function dateValue(date: string) {
 }
 
 export function calendarDaysSince(laterDate: string, earlierDate: string) {
-  return Math.floor((dateValue(laterDate) - dateValue(earlierDate)) / 86_400_000);
+  return Math.floor(
+    (dateValue(laterDate) - dateValue(earlierDate)) / 86_400_000,
+  );
 }
 
 function injectionActivity(
   daysSince: number,
   volumeMl: string | null,
 ): Exclude<InjectionSiteActivity, "suggested"> {
-  const isLargeVolume = volumeMl !== null && Number(volumeMl) > 0.8;
+  // Unknown volume uses the longer cooldown so it is never silently treated as <= 0.8 mL.
+  const isLargeVolume = volumeMl === null || Number(volumeMl) > 0.8;
   if (daysSince === 0 || (isLargeVolume && daysSince === 1)) return "red";
-  if ((!isLargeVolume && daysSince === 1) || (isLargeVolume && daysSince === 2)) return "yellow";
+  if ((!isLargeVolume && daysSince === 1) || (isLargeVolume && daysSince === 2))
+    return "yellow";
   return "green";
 }
 
-const activityPriority: Record<Exclude<InjectionSiteActivity, "suggested">, number> = {
+const activityPriority: Record<
+  Exclude<InjectionSiteActivity, "suggested">,
+  number
+> = {
   neutral: 0,
   green: 1,
   yellow: 2,
@@ -57,7 +66,9 @@ export function calculateInjectionSiteRotation({
   history: InjectionSiteHistoryItem[];
 }): InjectionSiteRotation {
   const order = new Map(injectionSites.map((site, index) => [site.id, index]));
-  const candidates = [...new Set(candidateSiteIds)].filter((id) => order.has(id));
+  const candidates = [...new Set(candidateSiteIds)].filter((id) =>
+    order.has(id),
+  );
   const usage = new Map<InjectionSiteId, { count: number; lastUsed: string }>();
 
   for (const item of history) {
@@ -65,7 +76,8 @@ export function calculateInjectionSiteRotation({
     const current = usage.get(item.injectionSiteId);
     usage.set(item.injectionSiteId, {
       count: (current?.count ?? 0) + 1,
-      lastUsed: !current || timestamp > current.lastUsed ? timestamp : current.lastUsed,
+      lastUsed:
+        !current || timestamp > current.lastUsed ? timestamp : current.lastUsed,
     });
   }
 
@@ -77,7 +89,8 @@ export function calculateInjectionSiteRotation({
     if (leftUsage && rightUsage) {
       const recency = leftUsage.lastUsed.localeCompare(rightUsage.lastUsed);
       if (recency !== 0) return recency;
-      if (leftUsage.count !== rightUsage.count) return leftUsage.count - rightUsage.count;
+      if (leftUsage.count !== rightUsage.count)
+        return leftUsage.count - rightUsage.count;
     }
     return (order.get(left) ?? 0) - (order.get(right) ?? 0);
   });
@@ -95,17 +108,28 @@ export function calculateInjectionSiteRotation({
           baseState = candidate;
         }
       }
-      const state: InjectionSiteActivity = site.id === suggestedSiteId && baseState !== "red" && baseState !== "yellow"
-        ? "suggested"
-        : baseState;
+      const state: InjectionSiteActivity =
+        site.id === suggestedSiteId &&
+        baseState !== "red" &&
+        baseState !== "yellow"
+          ? "suggested"
+          : baseState;
       return [site.id, state];
     }),
   ) as Record<InjectionSiteId, InjectionSiteActivity>;
+  const lastUsed = Object.fromEntries(
+    injectionSites.map((site) => [
+      site.id,
+      usage.get(site.id)?.lastUsed.slice(0, 10) ?? null,
+    ]),
+  ) as Record<InjectionSiteId, string | null>;
 
   if (!suggestedSiteId) {
     return {
       activity,
-      reason: "No enabled subzones are available. Enable a suitable site in account settings or leave the site unspecified.",
+      lastUsed,
+      reason:
+        "No enabled subzones are available. Enable a suitable site in account settings or leave the site unspecified.",
       suggestedSiteId: null,
       suggestionLabel: null,
     };
@@ -117,6 +141,7 @@ export function calculateInjectionSiteRotation({
     : "No completed injection is recorded at this enabled subzone.";
   return {
     activity,
+    lastUsed,
     reason,
     suggestedSiteId,
     suggestionLabel: formatInjectionSite(suggestedSiteId),
