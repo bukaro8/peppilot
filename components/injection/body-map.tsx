@@ -96,7 +96,7 @@ function MapView({
                 aria-label={`${label}: ${disabled ? "disabled" : activity === "red" ? "resting" : activity === "yellow" ? "caution" : "available"}`}
                 title={label}
                 style={{ left: position.left, top: position.top }}
-                className={`pointer-events-none absolute h-[7%] w-[16%] -translate-x-1/2 -translate-y-1/2 rounded-[45%] border shadow-sm ${activityClass}`}
+                className={`pointer-events-none absolute h-[7%] w-[16%] -translate-x-1/2 -translate-y-1/2 rounded-[22%] border shadow-sm ${activityClass} ${active ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
               />
             );
           }

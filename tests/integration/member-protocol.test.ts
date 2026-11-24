@@ -76,6 +76,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await sql`delete from protocol_cycle where owner_user_id = ${ownerId}`;
   if (ownerId) await sql`delete from member_protocol where owner_user_id = ${ownerId}`;
   if (templateId) await sql`delete from protocol_template where id = ${templateId}`;
   await sql`delete from "user" where id in (${adminId}, ${ownerId}, ${otherId})`;
@@ -83,6 +84,25 @@ afterAll(async () => {
 });
 
 describe("private member protocols", () => {
+  it("keeps custom blends private and starts an independent cycle", async () => {
+    const { createPrivateCompound } = await import("@/lib/catalogue/private-compound");
+    const catalogue = await import("@/lib/catalogue/service");
+    const compound = await createPrivateCompound(owner, { name: "Private test blend", kind: "blend", ingredients: "First ingredient\nSecond ingredient" });
+    expect((await catalogue.getCatalogueEntries()).some((entry) => entry.id === compound.id)).toBe(false);
+    expect((await catalogue.getCatalogueEntries({ ownerUserId: otherId })).some((entry) => entry.id === compound.id)).toBe(false);
+    expect((await catalogue.getCatalogueEntries({ ownerUserId: ownerId })).some((entry) => entry.id === compound.id)).toBe(true);
+    const [row] = await sql<{ slug: string }[]>`select slug from catalogue_entry where id = ${compound.id}`;
+    expect(await catalogue.getCatalogueEntryBySlug(row.slug, true)).toBeNull();
+    const input = { description: null, durationDays: 21, name: "Custom private blend", schedules: [{ ...schedules[0], catalogueEntryId: compound.id, doseBasis: "combined_blend_mass", ingredientDoses: [{ name: "First ingredient", dose_amount: "0.4", dose_unit: "mg" }, { name: "Second ingredient", dose_amount: "0.6", dose_unit: "mg" }] }] };
+    await expect(protocols.createMemberProtocol(other, input)).rejects.toMatchObject({ code: "invalid" });
+    const draft = await protocols.createMemberProtocol(owner, input);
+    const { startProtocolCycle } = await import("@/lib/protocol-cycle/service");
+    const cycle = await startProtocolCycle(owner, { protocolId: draft.protocolId, startDate: "2026-11-24" });
+    expect(cycle.cycleId).toBeTruthy();
+    await expect(startProtocolCycle(other, { protocolId: draft.protocolId, startDate: "2026-11-24" })).rejects.toBeDefined();
+    const [count] = await sql<{ count: number }[]>`select count(*)::int as count from catalogue_entry where owner_user_id is null`;
+    expect(count.count).toBe(28);
+  });
   it("creates a manual multi-peptide draft with overlapping schedules", async () => {
     const result = await protocols.createMemberProtocol(owner, {
       description: "Private custom draft.",

@@ -177,7 +177,8 @@ export async function createApprovedProtocolCopy(actor: AuthenticatedActor, raw:
         ${preset.durationType}, 'approved_preset', ${preset.id}, ${JSON.stringify(definition)}::jsonb, false
       )
     `;
-    await insertContent(transaction, protocolId, preset.catalogueEntryId, definition, input.stages, input.durationDays);
+    // Source indices refer to the immutable preset, not the edited/reordered copy.
+    await insertContent(transaction, protocolId, preset.catalogueEntryId, preset.definition, input.stages, input.durationDays);
   });
   return { protocolId };
 }

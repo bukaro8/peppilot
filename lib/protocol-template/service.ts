@@ -128,7 +128,7 @@ async function insertVersionContent(
 
   for (const [index, catalogueEntryId] of catalogueIds.entries()) {
     const catalogueRows = await sql<{ id: string }[]>`
-      select id from catalogue_entry where id = ${catalogueEntryId} and is_active = true limit 1
+      select id from catalogue_entry where id = ${catalogueEntryId} and is_active = true and owner_user_id is null limit 1
     `;
     if (!catalogueRows[0]) {
       throw new ProtocolTemplateError("Every schedule must use an active catalogue entry.", "invalid");

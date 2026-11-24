@@ -135,6 +135,9 @@ function SiteCard({
   const state = availability(rotation, siteId);
   const details = groupDetails[state];
   const lastUsed = rotation.lastUsed[siteId];
+  const disabled = rotation.disabledSiteIds.includes(siteId);
+  const lastLabel = lastUsed ? `${rotation.lastCompound[siteId] ?? "Injection"} — ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${lastUsed}T12:00:00Z`))}` : "Not used yet";
+  if (disabled) return <div className="flex min-h-24 flex-col justify-between rounded-2xl border bg-muted p-3"><h4 className="text-sm font-bold">{formatAnatomicalInjectionSite(siteId)}</h4><p className="text-xs text-muted-foreground">Disabled</p><p className="text-xs text-muted-foreground">{lastLabel}</p></div>;
   return (
     <Link
       href={`/injections/new?site=${siteId}&date=${date}`}
@@ -154,7 +157,7 @@ function SiteCard({
         />
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        {lastUsed ? `Last: ${lastUsed}` : "Not used yet"}
+        {lastLabel}
       </p>
     </Link>
   );
@@ -177,21 +180,6 @@ export function InjectionDashboard({
   recorded?: string;
   rotation: BodyMapRotation;
 }) {
-  const enabled = injectionSites.filter(
-    (site) => !rotation.disabledSiteIds.includes(site.id),
-  );
-  const disabled = injectionSites.filter((site) =>
-    rotation.disabledSiteIds.includes(site.id),
-  );
-  const grouped = {
-    green: enabled.filter(
-      (site) => availability(rotation, site.id) === "green",
-    ),
-    yellow: enabled.filter(
-      (site) => availability(rotation, site.id) === "yellow",
-    ),
-    red: enabled.filter((site) => availability(rotation, site.id) === "red"),
-  };
   return (
     <main className="min-h-screen bg-secondary/20">
       <section
@@ -340,62 +328,11 @@ export function InjectionDashboard({
               All injection sites
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Available sites appear first. Yellow and red sites explain their
+              Sites stay in anatomical order. Yellow and red sites explain their
               cooldown before logging.
             </p>
           </div>
-          {(["green", "yellow", "red"] as const).map((state) => {
-            const sites = grouped[state];
-            if (!sites.length) return null;
-            const details = groupDetails[state];
-            return (
-              <div className="mt-6" key={state}>
-                <div className="flex items-center gap-2">
-                  <span className={`size-3 rounded-full ${details.dot}`} />
-                  <h3 className="font-bold">{details.heading}</h3>
-                  <span className="text-sm text-muted-foreground">
-                    {sites.length}
-                  </span>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {sites.map((site) => (
-                    <SiteCard
-                      key={site.id}
-                      siteId={site.id}
-                      date={date}
-                      rotation={rotation}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          {disabled.length ? (
-            <div className="mt-6">
-              <div className="flex items-center gap-2">
-                <span className="size-3 rounded-full bg-slate-300" />
-                <h3 className="font-bold">Disabled</h3>
-                <span className="text-sm text-muted-foreground">
-                  {disabled.length}
-                </span>
-              </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {disabled.map((site) => (
-                  <div
-                    key={site.id}
-                    className="min-h-24 rounded-2xl border bg-muted/40 p-4 opacity-70"
-                  >
-                    <h4 className="font-bold">
-                      {formatAnatomicalInjectionSite(site.id)}
-                    </h4>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Disabled in site preferences
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-4">{injectionSites.map((site) => <SiteCard key={site.id} siteId={site.id} date={date} rotation={rotation} />)}</div>
         </section>
 
         <section className="mt-10" aria-labelledby="recent-injections-heading">

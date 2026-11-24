@@ -26,7 +26,7 @@ export default async function EditProtocolPage({ params }: EditProtocolPageProps
     throw error;
   }
   if (!protocol) notFound();
-  const catalogue = await getCatalogueEntries();
+  const catalogue = await getCatalogueEntries({ ownerUserId: actor.userId });
 
   return (
     <main className="min-h-screen bg-secondary/20">

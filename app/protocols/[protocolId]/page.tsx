@@ -1,3 +1,4 @@
+import { getProtocolCycles } from "@/lib/protocol-cycle/service";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, CalendarPlus, Clock3, Copy, Pencil, Plus, Trash2 } from "lucide-react";
@@ -21,6 +22,7 @@ type ProtocolPageProps = {
 
 export default async function ProtocolPage({ params, searchParams }: ProtocolPageProps) {
   const actor = await requireActor();
+  const activeCycles = (await getProtocolCycles(actor)).filter((cycle) => cycle.status === "active" || cycle.status === "paused");
   const { protocolId } = await params;
   let protocol;
   try {
@@ -47,10 +49,11 @@ export default async function ProtocolPage({ params, searchParams }: ProtocolPag
               <h1 className="mt-4 text-3xl font-bold tracking-[-0.05em] sm:mt-6 sm:text-5xl">{protocol.name}</h1>
               {protocol.description ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{protocol.description}</p> : null}
             </div>
-            <div className="flex flex-wrap gap-2">{protocol.origin !== "approved_preset" ? <Button variant="outline" asChild><Link href={`/protocols/${protocol.id}/edit`}><Pencil className="size-4" aria-hidden="true" />Edit draft</Link></Button> : null}<Button asChild><Link href={`/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />Start cycle</Link></Button></div>
+            <div className="flex flex-wrap gap-2">{protocol.origin !== "approved_preset" ? <Button variant="outline" asChild><Link href={`/protocols/${protocol.id}/edit`}><Pencil className="size-4" aria-hidden="true" />Edit draft</Link></Button> : null}<Button asChild><Link href={activeCycles.find((cycle) => cycle.sourceProtocolId === protocol.id) ? `/cycles/${activeCycles.find((cycle) => cycle.sourceProtocolId === protocol.id)!.id}` : `/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />{activeCycles.some((cycle) => cycle.sourceProtocolId === protocol.id) ? "View active cycle" : "Start cycle"}</Link></Button></div>
           </div>
 
-          {query.created ? <div className="mt-6 space-y-4"><FormMessage tone="success">Private protocol draft created. Start its first cycle or add another protocol.</FormMessage><div className="flex flex-col gap-2 sm:flex-row"><Button asChild><Link href={`/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />Start cycle</Link></Button><Button variant="outline" asChild><Link href="/protocols/new"><Plus className="size-4" aria-hidden="true" />Add another protocol</Link></Button></div></div> : null}
+          {query.created ? <div className="mt-6 space-y-4"><FormMessage tone="success">Private protocol draft created. Start its first cycle or add another protocol.</FormMessage><div className="flex flex-col gap-2 sm:flex-row"><Button asChild><Link href={activeCycles.find((cycle) => cycle.sourceProtocolId === protocol.id) ? `/cycles/${activeCycles.find((cycle) => cycle.sourceProtocolId === protocol.id)!.id}` : `/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />{activeCycles.some((cycle) => cycle.sourceProtocolId === protocol.id) ? "View active cycle" : "Start cycle"}</Link></Button><Button variant="outline" asChild><Link href="/protocols/new"><Plus className="size-4" aria-hidden="true" />Add another protocol</Link></Button></div></div> : null}
+          {activeCycles.some((cycle) => cycle.sourceProtocolId === protocol.id) ? <Link className="mt-4 block text-sm font-semibold text-primary underline" href={`/cycles/new?protocolId=${protocol.id}`}>Start another cycle</Link> : null}
           {query.saved ? <div className="mt-6"><FormMessage tone="success">Protocol draft saved.</FormMessage></div> : null}
 
           {protocol.origin === "template" ? (

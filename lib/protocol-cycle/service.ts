@@ -220,7 +220,8 @@ async function insertRevisionContent(
   for (const [index, catalogueEntryId] of catalogueIds.entries()) {
     const [catalogue] = await sql<{ id: string }[]>`
       select id from catalogue_entry
-      where id = ${catalogueEntryId} and is_active = true limit 1
+      where id = ${catalogueEntryId} and is_active = true
+        and (owner_user_id is null or owner_user_id = (select cycle.owner_user_id from protocol_cycle cycle join protocol_cycle_schedule_revision revision on revision.cycle_id = cycle.id where revision.id = ${revisionId})) limit 1
     `;
     if (!catalogue) {
       throw new ProtocolCycleError(

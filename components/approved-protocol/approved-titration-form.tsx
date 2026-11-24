@@ -553,7 +553,7 @@ export function ApprovedTitrationForm({
                       variant="ghost"
                       onClick={() =>
                         setRows((current) =>
-                          current.filter((item) => item.key !== row.key),
+                          current.length > 1 ? current.filter((item) => item.key !== row.key) : current,
                         )
                       }
                       disabled={rows.length === 1}

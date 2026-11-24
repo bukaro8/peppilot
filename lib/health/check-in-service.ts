@@ -58,7 +58,7 @@ export async function getAdaptiveQuestions(actor: AuthenticatedActor, date: stri
   const categories: CatalogueCategory[] = [];
   if (catalogueIds.length) {
     const sql = getPostgresClient();
-    const rows = await sql<{ category: string }[]>`select distinct category from catalogue_entry where id = any(${catalogueIds})`;
+    const rows = await sql<{ category: string }[]>`select distinct category from catalogue_entry where id = any(${catalogueIds}) and owner_user_id is null`;
     for (const row of rows) if (catalogueCategories.includes(row.category as CatalogueCategory)) categories.push(row.category as CatalogueCategory);
   }
   return selectAdaptiveQuestionIds(categories, preferences).map((id) => getCheckInQuestion(id)!);

@@ -7,6 +7,7 @@ import { createInjectionRecordAction } from "@/app/injections/actions";
 import { InjectionRecordForm } from "@/components/injection/injection-record-form";
 import { QuickInjectionForm } from "@/components/injection/quick-injection-form";
 import { CalendarHeader } from "@/components/protocol-calendar/calendar-header";
+import { LocalDateRedirect } from "@/components/protocol-calendar/local-date-redirect";
 import { Button } from "@/components/ui/button";
 import { requireActor } from "@/lib/auth/session";
 import { getInjectionSiteRotation } from "@/lib/injection/rotation-service";
@@ -36,6 +37,13 @@ export default async function NewInjectionPage({
 }) {
   const actor = await requireActor();
   const query = await searchParams;
+  if (!query.date) {
+    const params = new URLSearchParams();
+    if (query.occurrence) params.set("occurrence", query.occurrence);
+    if (query.site) params.set("site", query.site);
+    if (query.status) params.set("status", query.status);
+    return <LocalDateRedirect path={`/injections/new?${params.toString()}`} />;
+  }
   const fallback = new Date().toISOString().slice(0, 10);
   let date = query.date ?? fallback;
   try {

@@ -1,3 +1,4 @@
+import { getProtocolCycles } from "@/lib/protocol-cycle/service";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CalendarPlus, ClipboardPlus, Copy, FilePenLine, Plus } from "lucide-react";
@@ -14,6 +15,7 @@ type ProtocolsPageProps = { searchParams: Promise<{ deleted?: string; start?: st
 
 export default async function ProtocolsPage({ searchParams }: ProtocolsPageProps) {
   const actor = await requireActor();
+  const activeCycles = (await getProtocolCycles(actor)).filter((cycle) => cycle.status === "active" || cycle.status === "paused");
   const [protocols, query] = await Promise.all([getMemberProtocols(actor), searchParams]);
 
   return (
@@ -39,8 +41,8 @@ export default async function ProtocolsPage({ searchParams }: ProtocolsPageProps
                 <h2 className="mt-4 text-xl font-bold tracking-[-0.035em] sm:mt-6 sm:text-2xl">{protocol.name}</h2>
                 <p className="mt-1 text-sm font-medium text-primary">{protocol.durationType === "fixed_cycle" ? `${protocol.durationDays} days` : protocol.durationType === "open_ended" ? "Open-ended" : "As needed"}</p>
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">{protocol.origin === "template" ? `${protocol.templateScheduleUnchanged ? "Unchanged" : "Customised"} copy of ${protocol.sourceTemplateName ?? "a template"}, version ${protocol.sourceTemplateVersionNumber}` : protocol.origin === "approved_preset" ? "Editable copy of an approved protocol" : "Custom schedule"}</p>
-                <div className="mt-5 grid grid-cols-2 gap-2 sm:mt-auto sm:pt-6"><Button variant="outline" size="sm" asChild><Link href={`/protocols/${protocol.id}`}>View draft<ArrowRight className="size-4" aria-hidden="true" /></Link></Button><Button size="sm" asChild><Link href={`/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />Start cycle</Link></Button></div>
-              </article>
+                <div className="mt-5 grid grid-cols-2 gap-2 sm:mt-auto sm:pt-6"><Button variant="outline" size="sm" asChild><Link href={`/protocols/${protocol.id}`}>View draft<ArrowRight className="size-4" aria-hidden="true" /></Link></Button><Button size="sm" asChild><Link href={activeCycles.find((cycle) => cycle.sourceProtocolId === protocol.id) ? `/cycles/${activeCycles.find((cycle) => cycle.sourceProtocolId === protocol.id)!.id}` : `/cycles/new?protocolId=${protocol.id}`}><CalendarPlus className="size-4" aria-hidden="true" />{activeCycles.some((cycle) => cycle.sourceProtocolId === protocol.id) ? "View active cycle" : "Start cycle"}</Link></Button></div>
+              {activeCycles.some((cycle) => cycle.sourceProtocolId === protocol.id) ? <Link className="mt-3 text-sm font-semibold text-primary underline" href={`/cycles/new?protocolId=${protocol.id}`}>Start another cycle</Link> : null}</article>
             ))}
           </div>
         ) : (

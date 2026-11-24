@@ -21,6 +21,19 @@ const historyItem = (
 });
 
 describe("injection-site rotation", () => {
+  it("ignores future records for both recency and suggestions", () => {
+    const result = calculateInjectionSiteRotation({ asOfDate: "2026-11-24", candidateSiteIds: ["abdomen_left_upper", "abdomen_left_lower"], history: [{ ...historyItem("future", "abdomen_left_upper", "2026-11-25"), peptideName: "GLOW" }] });
+    expect(result.lastUsed.abdomen_left_upper).toBeNull();
+    expect(result.lastCompound.abdomen_left_upper).toBeNull();
+    expect(result.suggestedSiteId).toBe("abdomen_left_upper");
+  });
+  it.each([["0.8", ["red", "yellow", "green", "green"]], ["0.8001", ["red", "red", "yellow", "green"]], [null, ["red", "red", "yellow", "green"]]] as const)("uses local consecutive calendar days for volume %s", (volume, expected) => {
+    expected.forEach((state, index) => {
+      const result = calculateInjectionSiteRotation({ asOfDate: `2026-11-${24 + index}`, candidateSiteIds: [], history: [{ ...historyItem("one", "abdomen_left_upper", "2026-11-24", "23:59", volume), peptideName: "GLOW" }] });
+      expect(result.activity.abdomen_left_upper).toBe(state);
+      expect(result.lastCompound.abdomen_left_upper).toBe("GLOW");
+    });
+  });
   it("rotates deterministically after multiple injections on the same day", () => {
     const candidates = injectionSites.map((site) => site.id);
     const first = calculateInjectionSiteRotation({

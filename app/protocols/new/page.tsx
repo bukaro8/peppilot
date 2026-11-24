@@ -8,6 +8,7 @@ import { ProtocolHeader } from "@/components/member-protocol/protocol-header";
 import { Button } from "@/components/ui/button";
 import { requireActor } from "@/lib/auth/session";
 import { getCatalogueEntries } from "@/lib/catalogue/service";
+import { getPostgresClient } from "@/lib/db";
 import { getPublishedProtocolTemplateVersionById } from "@/lib/protocol-template/service";
 
 export const metadata: Metadata = { title: "New private protocol" };
@@ -15,14 +16,16 @@ export const metadata: Metadata = { title: "New private protocol" };
 type NewProtocolPageProps = { searchParams: Promise<{ catalogue?: string; onboarding?: string; templateVersion?: string }> };
 
 export default async function NewProtocolPage({ searchParams }: NewProtocolPageProps) {
-  await requireActor();
+  const actor = await requireActor();
   const { catalogue: preferredCatalogueId, onboarding, templateVersion } = await searchParams;
   const inOnboarding = onboarding === "1";
   const [catalogue, source] = await Promise.all([
-    getCatalogueEntries(),
+    getCatalogueEntries({ ownerUserId: actor.userId }),
     templateVersion ? getPublishedProtocolTemplateVersionById(templateVersion) : null,
   ]);
   if (templateVersion && !source) notFound();
+  const [privateCompound] = preferredCatalogueId ? await getPostgresClient()<{ kind: string; displayName: string }[]>`select kind, display_name as "displayName" from catalogue_entry where id = ${preferredCatalogueId} and owner_user_id = ${actor.userId}` : [];
+  const privateIngredients = privateCompound ? await getPostgresClient()<{ name: string }[]>`select display_name as name from catalogue_entry_ingredient where catalogue_entry_id = ${preferredCatalogueId!} order by position` : [];
 
   const initial = source
     ? {
@@ -41,7 +44,10 @@ export default async function NewProtocolPage({ searchParams }: NewProtocolPageP
           timeOfDay: step.timeOfDay,
         })),
       }
-    : undefined;
+    : privateCompound ? {
+        description: null, durationDays: 7, name: privateCompound.displayName,
+        schedules: [{ catalogueEntryId: preferredCatalogueId!, daysOfWeek: [], doseAmount: "", doseUnit: "mg", doseBasis: privateCompound.kind === "blend" ? "combined_blend_mass" : "single_compound_mass", ingredientDoses: privateIngredients.map((ingredient) => ({ name: ingredient.name, dose_amount: "", dose_unit: "mg" })), endDay: 7, frequency: "daily" as const, intervalDays: null, startDay: 1, timeOfDay: null }],
+      } : undefined;
 
   return (
     <main className="min-h-screen bg-secondary/20">
@@ -53,6 +59,7 @@ export default async function NewProtocolPage({ searchParams }: NewProtocolPageP
           <h1 className="mt-2 text-2xl font-bold tracking-[-0.04em] sm:text-3xl">{source ? "Copy and customise template" : "Create custom protocol"}</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:mt-3 sm:text-base sm:leading-7">{source ? "Review the published schedule, make any private changes, and preview it before saving." : "Build a schedule from scratch without supplied dose or timing defaults."}</p>
           <div className="mt-6 sm:mt-9">
+            <Link className="mb-5 block text-sm font-semibold text-primary underline" href="/protocols/new/compound">Add a private custom compound</Link>
             <ProtocolForm
               catalogue={catalogue.map(({ id, displayName }) => ({ id, displayName }))}
               initial={initial}

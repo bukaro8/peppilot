@@ -254,6 +254,9 @@ export function ProtocolForm({
         ...blank(previous?.catalogueEntryId, key),
         doseUnit: previous?.doseUnit ?? "mg",
         frequency: previous?.frequency ?? "daily",
+        doseBasis: previous?.doseBasis ?? "single_compound_mass",
+        ingredientDoses: previous?.ingredientDoses ?? "[]",
+        route: previous?.route ?? "",
       },
     ]);
     setTimelineEdited(true);
@@ -264,7 +267,7 @@ export function ProtocolForm({
     setTimelineEdited(true);
   }
   function remove(key: string) {
-    setRows((value) => value.filter((row) => row.key !== key));
+    setRows((value) => value.length > 1 ? value.filter((row) => row.key !== key) : value);
     setTimelineEdited(true);
   }
   function toggleDay(key: string, day: number) {
@@ -556,6 +559,8 @@ export function ProtocolForm({
                       <ChevronDown className="size-4" />
                     </summary>
                     <div className="grid gap-4 border-t p-4 sm:grid-cols-2">
+                      <label className="space-y-2"><span className="text-sm font-medium">Compound dose type</span><select value={row.doseBasis} onChange={(event) => update(row.key, { doseBasis: event.target.value })} className="h-11 w-full rounded-xl border bg-background px-3"><option value="single_compound_mass">Standalone compound</option><option value="combined_blend_mass">Blend — combined dose</option><option value="combined_daily_mass">Blend — daily total</option></select></label>
+                      <Button type="button" variant="outline" onClick={() => update(row.key, { ingredientDoses: JSON.stringify([...storedIngredients(row.ingredientDoses), { name: "", dose_amount: "", dose_unit: "mg" }]), ingredientsEdited: true })}>Add blend ingredient</Button>
                       <label className="space-y-2">
                         <span className="text-sm font-medium">
                           Administrations per day
@@ -609,11 +614,11 @@ export function ProtocolForm({
                         (ingredient, ingredientIndex) => (
                           <label
                             className="space-y-2"
-                            key={`${ingredient.name}-${ingredientIndex}`}
+                            key={ingredientIndex}
                           >
-                            <span className="text-sm font-medium">
-                              {ingredient.name} ({ingredient.dose_unit})
-                            </span>
+                            <input aria-label={`Stage ${index + 1} ingredient ${ingredientIndex + 1} name`} value={ingredient.name} onChange={(event) => update(row.key, { ingredientDoses: JSON.stringify(storedIngredients(row.ingredientDoses).map((item, i) => i === ingredientIndex ? { ...item, name: event.target.value } : item)), ingredientsEdited: true })} className="h-11 w-full rounded-xl border bg-background px-3" placeholder="Ingredient name" />
+                            <select aria-label={`Stage ${index + 1} ingredient ${ingredientIndex + 1} unit`} value={ingredient.dose_unit} onChange={(event) => update(row.key, { ingredientDoses: JSON.stringify(storedIngredients(row.ingredientDoses).map((item, i) => i === ingredientIndex ? { ...item, dose_unit: event.target.value } : item)), ingredientsEdited: true })} className="h-11 w-full rounded-xl border bg-background px-3"><option value="mg">mg</option><option value="mcg">mcg</option></select>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => update(row.key, { ingredientDoses: JSON.stringify(storedIngredients(row.ingredientDoses).filter((_, i) => i !== ingredientIndex)), ingredientsEdited: true })}>Remove ingredient</Button>
                             <input
                               inputMode="decimal"
                               value={String(ingredient.dose_amount)}

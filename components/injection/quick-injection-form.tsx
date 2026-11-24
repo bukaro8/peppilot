@@ -16,6 +16,7 @@ import {
 } from "@/app/injections/actions";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
+import { BodyMap } from "@/components/injection/body-map";
 import type { BodyMapRotation } from "@/components/injection/body-map";
 import type { ScheduledProtocolEvent } from "@/lib/protocol-calendar/service";
 import {
@@ -96,13 +97,7 @@ export function QuickInjectionForm({
     selectedState === "yellow" || selectedState === "red";
   const enabledSites = injectionSites
     .filter((site) => !rotation.disabledSiteIds.includes(site.id))
-    .sort((left, right) => {
-      const priority = { green: 0, yellow: 1, red: 2 };
-      return (
-        priority[siteState(rotation, left.id)] -
-        priority[siteState(rotation, right.id)]
-      );
-    });
+    ;
 
   return (
     <form action={formAction} className="space-y-6" aria-busy={pending}>
@@ -148,6 +143,7 @@ export function QuickInjectionForm({
         </div>
       ) : null}
       {siteId ? <button type="button" className="text-sm font-semibold text-primary underline" onClick={() => setChangingSite(!changingSite)}>{changingSite ? "Keep selected site" : "Change site"}</button> : null}
+      <BodyMap readOnly rotation={rotation} value={siteId} onChange={() => undefined} />
 
       <section aria-labelledby="quick-protocol-heading">
         <div className="flex items-center gap-3">
@@ -213,11 +209,11 @@ export function QuickInjectionForm({
               Choose injection site
             </h2>
             <p className="text-xs text-muted-foreground">
-              Available sites are listed first.
+              Sites stay in anatomical order.
             </p>
           </div>
         </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {enabledSites.map((site) => {
             const status = siteState(rotation, site.id);
             const selected = siteId === site.id;

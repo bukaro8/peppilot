@@ -127,6 +127,13 @@
       "when": 1795382376823,
       "tag": "0017_mature_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795558422061,
+      "tag": "0018_mature_risque",
+      "breakpoints": true
     }
   ]
 }

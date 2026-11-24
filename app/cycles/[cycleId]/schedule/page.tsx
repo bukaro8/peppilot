@@ -50,7 +50,7 @@ export default async function CycleSchedulePage({ params, searchParams }: Schedu
           <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em]">Revise {cycle.name}</h1>
           <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">Create a new effective-dated schedule. Revision {latest.revisionNumber} remains intact for all earlier dates.</p>
           {query.error ? <div className="mt-6"><FormMessage tone="error">{query.error}</FormMessage></div> : null}
-          <div className="mt-9"><CycleScheduleForm catalogue={(await getCatalogueEntries()).map(({ id, displayName }) => ({ id, displayName }))} cycleId={cycle.id} initial={latest.steps} minimumDate={nextDate(latest.effectiveFrom)} plannedEndDate={cycle.plannedEndDate} /></div>
+          <div className="mt-9"><CycleScheduleForm catalogue={(await getCatalogueEntries({ ownerUserId: actor.userId })).map(({ id, displayName }) => ({ id, displayName }))} cycleId={cycle.id} initial={latest.steps} minimumDate={nextDate(latest.effectiveFrom)} plannedEndDate={cycle.plannedEndDate} /></div>
         </div>
       </section>
     </main>

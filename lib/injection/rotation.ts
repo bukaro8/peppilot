@@ -10,6 +10,7 @@ export type InjectionSiteHistoryItem = {
   actualVolumeMl: string | null;
   injectionSiteId: InjectionSiteId;
   recordId: string;
+  peptideName?: string;
 };
 
 export type InjectionSiteActivity =
@@ -18,6 +19,7 @@ export type InjectionSiteActivity =
 export type InjectionSiteRotation = {
   activity: Record<InjectionSiteId, InjectionSiteActivity>;
   lastUsed: Record<InjectionSiteId, string | null>;
+  lastCompound: Record<InjectionSiteId, string | null>;
   reason: string;
   suggestedSiteId: InjectionSiteId | null;
   suggestionLabel: string | null;
@@ -72,6 +74,7 @@ export function calculateInjectionSiteRotation({
   const usage = new Map<InjectionSiteId, { count: number; lastUsed: string }>();
 
   for (const item of history) {
+    if (item.actualDate > asOfDate) continue;
     const timestamp = `${item.actualDate}T${item.actualTime}`;
     const current = usage.get(item.injectionSiteId);
     usage.set(item.injectionSiteId, {
@@ -123,11 +126,17 @@ export function calculateInjectionSiteRotation({
       usage.get(site.id)?.lastUsed.slice(0, 10) ?? null,
     ]),
   ) as Record<InjectionSiteId, string | null>;
+  const lastCompound = Object.fromEntries(injectionSites.map((site) => {
+    const latest = history.filter((item) => item.injectionSiteId === site.id && item.actualDate <= asOfDate)
+      .sort((a, b) => `${b.actualDate}T${b.actualTime}`.localeCompare(`${a.actualDate}T${a.actualTime}`) || b.recordId.localeCompare(a.recordId))[0];
+    return [site.id, latest?.peptideName ?? null];
+  })) as Record<InjectionSiteId, string | null>;
 
   if (!suggestedSiteId) {
     return {
       activity,
       lastUsed,
+      lastCompound,
       reason:
         "No enabled subzones are available. Enable a suitable site in account settings or leave the site unspecified.",
       suggestedSiteId: null,
@@ -142,6 +151,7 @@ export function calculateInjectionSiteRotation({
   return {
     activity,
     lastUsed,
+    lastCompound,
     reason,
     suggestedSiteId,
     suggestionLabel: formatInjectionSite(suggestedSiteId),

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq, ilike, or } from "drizzle-orm";
+import { and, asc, eq, ilike, or, isNull } from "drizzle-orm";
 
 import { isCatalogueCategory, type CatalogueCategory } from "@/lib/catalogue/constants";
 import { getDatabase } from "@/lib/db";
@@ -10,12 +10,14 @@ type CatalogueQuery = {
   category?: CatalogueCategory;
   includeInactive?: boolean;
   query?: string;
+  ownerUserId?: string;
 };
 
 export async function getCatalogueEntries(options: CatalogueQuery = {}) {
   const database = getDatabase();
   const query = options.query?.trim().slice(0, 80);
   const filters = [
+    options.ownerUserId ? or(isNull(catalogueEntry.ownerUserId), eq(catalogueEntry.ownerUserId, options.ownerUserId)) : isNull(catalogueEntry.ownerUserId),
     options.includeInactive ? undefined : eq(catalogueEntry.isActive, true),
     options.category && isCatalogueCategory(options.category)
       ? eq(catalogueEntry.category, options.category)
@@ -63,6 +65,7 @@ export async function getCatalogueEntryBySlug(slug: string, includeInactive = fa
     .where(
       and(
         eq(catalogueEntry.slug, normalizedSlug),
+        isNull(catalogueEntry.ownerUserId),
         includeInactive ? undefined : eq(catalogueEntry.isActive, true),
       ),
     )

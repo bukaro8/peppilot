@@ -70,6 +70,34 @@ afterAll(async () => {
 });
 
 describe("approved protocol private copies", () => {
+  it.each([0, 1, 2, 3])("saves Retatrutide after editing stage order %i and recalculating boundaries", async (deleted) => {
+    const preset = (await approved.getApprovedProtocolsBySlug("retatrutide")).find((entry) => entry.category === "most_used")!;
+    const source = stagesFor(preset);
+    const removed = deleted === 2 ? source.length - 1 : deleted;
+    const stages = source.map((stage, sourceIndex) => ({ ...stage, sourceIndex })).filter((_, index) => deleted === 3 || index !== removed);
+    if (deleted === 3) stages.reverse();
+    let day = 1;
+    for (const [index, stage] of stages.entries()) {
+      const length = stage.endWeek === null ? 28 : Math.round(stage.endWeek * 7 - (stage.startWeek - 1) * 7);
+      stage.startWeek = (day - 1) / 7 + 1;
+      stage.endWeek = index === stages.length - 1 ? null : (day + length - 1) / 7;
+      day += length;
+    }
+    const copy = await copies.createApprovedProtocolCopy(owner, { description: null, durationDays: null, name: "Retatrutide deleted stage", presetId: preset.id, stages });
+    const saved = await protocols.getMemberProtocol(owner, copy.protocolId);
+    expect(saved?.steps).toHaveLength(stages.length);
+    expect(saved?.steps.map((step) => Number(step.doseAmount))).toEqual(stages.map((stage) => Number(stage.doseAmount)));
+    const cycle = await cycles.startProtocolCycle(owner, { protocolId: copy.protocolId, startDate: "2026-11-01" });
+    for (const step of saved!.steps) {
+      const date = calendar.addCalendarDays("2026-11-01", step.startDay - 1);
+      const events = (await calendar.getScheduledEvents(owner, date, date)).filter((event) => event.cycleId === cycle.cycleId);
+      expect(events[0]?.doseAmount).toBe(step.doseAmount);
+    }
+  });
+  it("rejects removing every approved stage without writing a draft", async () => {
+    const preset = (await approved.getApprovedProtocolsBySlug("retatrutide"))[0];
+    await expect(copies.createApprovedProtocolCopy(owner, { description: null, durationDays: null, name: "Empty titration", presetId: preset.id, stages: [] })).rejects.toThrow("Add between 1 and 100");
+  });
   it("keeps the approved preset immutable and uses exact day duration", async () => {
     const preset = (await approved.getApprovedProtocolsBySlug("epitalon"))[0];
     const sourceBefore = JSON.stringify(preset.definition);

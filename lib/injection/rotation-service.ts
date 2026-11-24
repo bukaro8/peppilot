@@ -59,16 +59,17 @@ export async function getInjectionSiteRotation(
   }
   const sql = getPostgresClient();
   const history = await sql<InjectionSiteHistoryItem[]>`
-    select id as "recordId", injection_site_id as "injectionSiteId",
+    select record.id as "recordId", injection_site_id as "injectionSiteId",
       actual_date::text as "actualDate", to_char(actual_time, 'HH24:MI') as "actualTime",
-      actual_volume_ml::text as "actualVolumeMl"
-    from injection_record
-    where owner_user_id = ${actor.userId}
+      actual_volume_ml::text as "actualVolumeMl", catalogue.display_name as "peptideName"
+    from injection_record record
+    join catalogue_entry catalogue on catalogue.id = record.catalogue_entry_id
+    where record.owner_user_id = ${actor.userId}
       and status = 'completed'
       and injection_site_id is not null
       and (actual_date < ${asOfDate}::date or (actual_date = ${asOfDate}::date and actual_time <= ${asOfTime}::time))
-      and (${options.excludeRecordId ?? null}::text is null or id <> ${options.excludeRecordId ?? null})
-    order by actual_date, actual_time, id
+      and (${options.excludeRecordId ?? null}::text is null or record.id <> ${options.excludeRecordId ?? null})
+    order by actual_date, actual_time, record.id
   `;
   const disabledSiteIds = await getDisabledInjectionSiteIds(actor);
   const disabled = new Set(disabledSiteIds);

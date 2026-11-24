@@ -181,6 +181,7 @@ async function insertProtocolContent(
     const catalogueRows = await sql<{ id: string }[]>`
       select id from catalogue_entry
       where id = ${catalogueEntryId} and is_active = true
+        and (owner_user_id is null or owner_user_id = (select owner_user_id from member_protocol where id = ${protocolId}))
       limit 1
     `;
     if (!catalogueRows[0]) {

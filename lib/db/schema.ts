@@ -25,6 +25,7 @@ export const catalogueEntry = pgTable(
   "catalogue_entry",
   {
     id: text("id").primaryKey(),
+    ownerUserId: text("owner_user_id").references(() => user.id, { onDelete: "cascade" }),
     slug: text("slug").notNull().unique(),
     displayName: text("display_name").notNull(),
     category: text("category").notNull(),

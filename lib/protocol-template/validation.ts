@@ -1,3 +1,5 @@
+import { massInScaledMicrograms } from "@/lib/approved-protocol/decimal";
+
 export const protocolTemplateFrequencies = ["daily", "weekly", "interval_days", "as_needed"] as const;
 
 export type ProtocolTemplateFrequency = (typeof protocolTemplateFrequencies)[number];
@@ -111,6 +113,18 @@ export function validateProtocolTemplateInput(
       return { success: false, error: `${label} can use an interval only with interval frequency.` };
     }
 
+    const ingredients = schedule.ingredientDoses ?? [];
+    if (!Array.isArray(ingredients) || ingredients.length > 20) return { success: false, error: `${label} has invalid ingredients.` };
+    let total = BigInt(0);
+    for (const ingredient of ingredients) {
+      if (!ingredient || typeof ingredient !== "object" || !("name" in ingredient) || !("dose_amount" in ingredient) || !("dose_unit" in ingredient) || typeof ingredient.name !== "string" || !ingredient.name.trim() || ingredient.name.length > 100 || !["mg", "mcg"].includes(String(ingredient.dose_unit))) return { success: false, error: `${label} needs ingredient names, masses and units.` };
+      const mass = massInScaledMicrograms(String(ingredient.dose_amount), ingredient.dose_unit as "mg" | "mcg");
+      if (mass === null || mass <= BigInt(0)) return { success: false, error: `${label} needs positive ingredient masses.` };
+      total += mass;
+    }
+    if (schedule.doseBasis === "combined_blend_mass" && ingredients.length) {
+      if (total !== massInScaledMicrograms(doseAmount, doseUnit as "mg" | "mcg")) return { success: false, error: `${label} ingredient masses must equal the combined dose.` };
+    }
     schedules.push({
       ...schedule,
       daysOfWeek,
