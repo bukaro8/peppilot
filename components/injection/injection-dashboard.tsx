@@ -200,6 +200,7 @@ export function InjectionDashboard({
             <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
               Choose an available site
             </h1>
+            <p className="mt-2 text-sm font-semibold text-primary">Availability for {new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`))}</p>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               One shared rotation view across every active protocol. Select a
               site card to start a quick log.

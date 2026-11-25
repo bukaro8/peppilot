@@ -295,6 +295,11 @@ export function QuickInjectionForm({
         </div>
       ) : null}
 
+      <label className="block space-y-2 rounded-2xl border bg-background p-4">
+        <span className="text-sm font-semibold">Injection volume <span className="font-normal text-muted-foreground">(mL, optional)</span></span>
+        <input aria-label="Injection volume (mL)" name="actualVolumeMl" type="number" inputMode="decimal" min="0.0001" step="0.0001" className="h-11 w-full rounded-xl border bg-background px-3" />
+        <p className="text-xs leading-5 text-muted-foreground">Record the liquid volume to use the correct rotation timing. At 0.8 mL or less, or if left blank: red on the injection date, amber the next day, then green. Enter a volume above 0.8 mL to use two red calendar days, then amber, then green.</p>
+      </label>
       <details className="rounded-2xl border bg-background">
         <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 font-semibold">
           Edit details <ChevronDown className="size-4" />
@@ -343,26 +348,6 @@ export function QuickInjectionForm({
               onChange={(event) => setActualTime(event.target.value)}
               className="h-11 w-full rounded-xl border bg-background px-3"
             />
-          </label>
-          <label className="space-y-2 sm:col-span-2">
-            <span className="text-sm font-semibold">
-              Injection volume{" "}
-              <span className="font-normal text-muted-foreground">
-                (mL, optional)
-              </span>
-            </span>
-            <input
-              name="actualVolumeMl"
-              type="number"
-              inputMode="decimal"
-              min="0.0001"
-              step="0.0001"
-              className="h-11 w-full rounded-xl border bg-background px-3"
-            />
-            <p className="text-xs text-muted-foreground">
-              If left blank, PepPilot applies the longer cooldown rather than
-              assuming a small volume.
-            </p>
           </label>
           <label className="space-y-2 sm:col-span-2">
             <span className="text-sm font-semibold">

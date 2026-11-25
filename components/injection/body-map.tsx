@@ -19,16 +19,16 @@ const positions: Record<
   InjectionSiteId,
   { left: string; short: string; top: string }
 > = {
-  abdomen_left_upper: { left: "58%", short: "1LU", top: "34%" },
-  abdomen_left_lower: { left: "58%", short: "1LL", top: "43%" },
-  abdomen_right_upper: { left: "42%", short: "1RU", top: "34%" },
-  abdomen_right_lower: { left: "42%", short: "1RL", top: "43%" },
-  love_handle_left: { left: "72%", short: "2L", top: "39%" },
-  love_handle_right: { left: "28%", short: "2R", top: "39%" },
-  thigh_left_upper: { left: "58%", short: "3LU", top: "61%" },
-  thigh_left_lower: { left: "58%", short: "3LL", top: "73%" },
-  thigh_right_upper: { left: "42%", short: "3RU", top: "61%" },
-  thigh_right_lower: { left: "42%", short: "3RL", top: "73%" },
+  abdomen_left_upper: { left: "42%", short: "1LU", top: "34%" },
+  abdomen_left_lower: { left: "42%", short: "1LL", top: "43%" },
+  abdomen_right_upper: { left: "58%", short: "1RU", top: "34%" },
+  abdomen_right_lower: { left: "58%", short: "1RL", top: "43%" },
+  love_handle_left: { left: "28%", short: "2L", top: "39%" },
+  love_handle_right: { left: "72%", short: "2R", top: "39%" },
+  thigh_left_upper: { left: "42%", short: "3LU", top: "61%" },
+  thigh_left_lower: { left: "42%", short: "3LL", top: "73%" },
+  thigh_right_upper: { left: "58%", short: "3RU", top: "61%" },
+  thigh_right_lower: { left: "58%", short: "3RL", top: "73%" },
   upper_arm_left: { left: "25%", short: "4L", top: "28%" },
   upper_arm_right: { left: "75%", short: "4R", top: "28%" },
   upper_buttock_left: { left: "43%", short: "5L", top: "47%" },
@@ -37,10 +37,8 @@ const positions: Record<
 
 function BodySilhouette({ view }: { view: "front" | "rear" }) {
   return (
-    <svg viewBox="0 0 240 440" className="h-auto w-full" aria-hidden="true">
-      <defs><linearGradient id={`body-${view}`} x1="0" x2="1"><stop stopColor="var(--secondary)" /><stop offset="0.5" stopColor="var(--body-fill)" /><stop offset="1" stopColor="var(--secondary)" /></linearGradient></defs>
-      <path d="M101 18 Q120 4 139 18 Q148 34 137 55 L134 70 Q144 78 162 82 Q179 87 186 108 L199 170 L213 227 L207 246 L198 249 L194 231 L181 190 L163 140 Q158 172 159 200 Q165 231 157 255 L149 349 L143 420 L126 424 L122 343 L120 272 L118 343 L114 424 L97 420 L91 349 L83 255 Q75 231 81 200 Q82 172 77 140 L59 190 L46 231 L42 249 L33 246 L27 227 L41 170 L54 108 Q61 87 78 82 Q96 78 106 70 L103 55 Q92 34 101 18Z" fill={`url(#body-${view})`} className="stroke-border" strokeWidth="2" />
-      <path d={view === "front" ? "M80 105 Q98 97 117 111 M123 111 Q142 97 160 105 M120 120 L120 174 M94 157 Q120 169 146 157 M101 185 Q120 193 139 185 M88 220 L113 243 M152 220 L127 243" : "M85 99 Q105 104 114 136 M155 99 Q135 104 126 136 M120 88 L120 211 M88 219 Q103 206 117 221 M152 219 Q137 206 123 221"} className="fill-none stroke-border" strokeWidth="2" strokeLinecap="round" />
+    <svg viewBox={view === "front" ? "0 0 627 1254" : "627 0 627 1254"} className="h-auto w-full" aria-hidden="true">
+      <image href="/injection-body.webp" width="1254" height="1254" />
     </svg>
   );
 }
@@ -65,7 +63,7 @@ function MapView({
       aria-label={`${view === "front" ? "Front" : "Rear"} body map`}
     >
       <h3 className="text-center text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        {view === "front" ? "Front view" : "Rear view"}
+        {view === "front" ? "Front · mirror view" : "Rear view"}
       </h3>
       <div className="relative mx-auto mt-3 w-full max-w-72">
         <BodySilhouette view={view} />
@@ -84,7 +82,7 @@ function MapView({
               : activity === "red"
                 ? "border-background bg-red-600 text-white hover:bg-red-700"
                 : activity === "yellow"
-                  ? "border-background bg-yellow-400 text-yellow-950 hover:bg-yellow-500"
+                  ? "border-background bg-amber-400 text-amber-950 hover:bg-amber-500"
                   : activity === "green"
                     ? "border-background bg-green-600 text-white hover:bg-green-700"
                     : "border-background bg-green-600 text-white hover:bg-green-700";
@@ -190,7 +188,7 @@ export function BodyMap({
           Resting
         </span>
         <span className="inline-flex items-center gap-2">
-          <span className="size-3 rounded-full bg-yellow-400" />
+          <span className="size-3 rounded-full bg-amber-400" />
           Caution
         </span>
         <span className="inline-flex items-center gap-2">
@@ -222,7 +220,8 @@ export function BodyMap({
         </div>
       ) : null}
       <p className="text-xs leading-5 text-muted-foreground">
-        Left and right refer to the person shown. The illustration is a
+        Your left appears on the left of the screen in both views. The front
+        is mirrored. The illustration is a
         read-only rotation overview; use the site cards to choose a location.
       </p>
     </div>

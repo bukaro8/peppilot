@@ -4,7 +4,7 @@ Create an owner-only compound from **Create custom protocol → Add a private cu
 
 Migration `0018_mature_risque.sql` adds a nullable catalogue owner reference; existing reference entries stay shared and unchanged. Private protocol, cycle and public-template validation enforce compound ownership. Existing cycle snapshots and recorded actual doses are unchanged by draft edits.
 
-Missing injection volume retains the longer cooldown. Rotation uses recorded local dates across all completed injections, including historical corrections. Future records do not affect an earlier date's recency.
+Blank injection volume uses standard (≤0.8 mL) timing: red on the injection date, amber the following day, then green. Only an explicitly recorded volume above 0.8 mL uses two red days, one amber day, then green. Rotation uses recorded local dates across all completed injections, including historical corrections. Future records do not affect an earlier date's recency.
 
 Account fixture cleanup must delete owned cycles and drafts before deleting an account that owns private compounds, because cycle snapshots retain compound references.
 

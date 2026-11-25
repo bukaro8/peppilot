@@ -21,13 +21,19 @@ const historyItem = (
 });
 
 describe("injection-site rotation", () => {
+  it("shows caution for a GLOW injection below 0.8 mL on the following calendar date", () => {
+    const history = [{ ...historyItem("glow", "upper_buttock_right", "2026-11-23", "23:56", "0.4"), peptideName: "GLOW" }];
+    const result = calculateInjectionSiteRotation({ asOfDate: "2026-11-24", candidateSiteIds: [], history });
+    expect(result.activity.upper_buttock_right).toBe("yellow");
+    expect(calculateInjectionSiteRotation({ asOfDate: "2026-11-25", candidateSiteIds: [], history }).activity.upper_buttock_right).toBe("green");
+  });
   it("ignores future records for both recency and suggestions", () => {
     const result = calculateInjectionSiteRotation({ asOfDate: "2026-11-24", candidateSiteIds: ["abdomen_left_upper", "abdomen_left_lower"], history: [{ ...historyItem("future", "abdomen_left_upper", "2026-11-25"), peptideName: "GLOW" }] });
     expect(result.lastUsed.abdomen_left_upper).toBeNull();
     expect(result.lastCompound.abdomen_left_upper).toBeNull();
     expect(result.suggestedSiteId).toBe("abdomen_left_upper");
   });
-  it.each([["0.8", ["red", "yellow", "green", "green"]], ["0.8001", ["red", "red", "yellow", "green"]], [null, ["red", "red", "yellow", "green"]]] as const)("uses local consecutive calendar days for volume %s", (volume, expected) => {
+  it.each([["0.8", ["red", "yellow", "green", "green"]], ["0.8001", ["red", "red", "yellow", "green"]], [null, ["red", "yellow", "green", "green"]]] as const)("uses local consecutive calendar days for volume %s", (volume, expected) => {
     expected.forEach((state, index) => {
       const result = calculateInjectionSiteRotation({ asOfDate: `2026-11-${24 + index}`, candidateSiteIds: [], history: [{ ...historyItem("one", "abdomen_left_upper", "2026-11-24", "23:59", volume), peptideName: "GLOW" }] });
       expect(result.activity.abdomen_left_upper).toBe(state);
@@ -116,7 +122,7 @@ describe("injection-site rotation", () => {
     });
   });
 
-  it("uses the longer cooldown when injection volume is unknown", () => {
+  it("uses standard-volume timing when injection volume is blank", () => {
     const result = calculateInjectionSiteRotation({
       asOfDate: "2026-11-10",
       candidateSiteIds: ["upper_buttock_right"],
@@ -127,10 +133,14 @@ describe("injection-site rotation", () => {
       ],
     });
     expect(result.activity).toMatchObject({
-      abdomen_left_upper: "red",
-      abdomen_left_lower: "yellow",
+      abdomen_left_upper: "yellow",
+      abdomen_left_lower: "green",
       abdomen_right_upper: "green",
     });
+  });
+  it("does not let blank volume override an explicit higher-volume injection at the same site", () => {
+    const result = calculateInjectionSiteRotation({ asOfDate: "2026-11-25", candidateSiteIds: [], history: [historyItem("large", "upper_buttock_right", "2026-11-24", "08:00", "0.9"), historyItem("blank", "upper_buttock_right", "2026-11-24", "20:00", null)] });
+    expect(result.activity.upper_buttock_right).toBe("red");
   });
 
   it("extends rest colours above 0.8 mL and applies the most restrictive status", () => {

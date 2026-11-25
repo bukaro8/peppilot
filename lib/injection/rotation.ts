@@ -40,8 +40,8 @@ function injectionActivity(
   daysSince: number,
   volumeMl: string | null,
 ): Exclude<InjectionSiteActivity, "suggested"> {
-  // Unknown volume uses the longer cooldown so it is never silently treated as <= 0.8 mL.
-  const isLargeVolume = volumeMl === null || Number(volumeMl) > 0.8;
+  // Blank volume uses the member-requested standard-volume timing.
+  const isLargeVolume = volumeMl !== null && Number(volumeMl) > 0.8;
   if (daysSince === 0 || (isLargeVolume && daysSince === 1)) return "red";
   if ((!isLargeVolume && daysSince === 1) || (isLargeVolume && daysSince === 2))
     return "yellow";
