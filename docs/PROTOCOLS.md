@@ -19,6 +19,12 @@ Schedule steps support daily, selected-weekday, and every-N-days frequencies, wi
 
 A pause suppresses occurrences from its pause date up to, but not including, its resume date. For any calendar date, the latest revision whose effective date is on or before that date is used. Earlier dates therefore continue to use the historical revision.
 
+### Make an active cycle ongoing
+
+Open the active cycle → **Revise schedule** → **Make this active cycle ongoing**. Choose the effective date and review the complete schedule before saving. Each compound's final stage continues without an end day; earlier stages keep their bounds. The active cycle has no planned end after saving, while the source draft, older revisions and injection logs remain unchanged. Dates after a former end but before the new effective date remain unscheduled, including when the effective date is in the future.
+
+Migration `0019_flowery_tony_stark.sql` adds a nullable prior-end date to revision records for this audit and calendar behavior. Existing rows remain unchanged apart from the new null field. Conversion requires an active, owner-scoped cycle and an effective date after the latest revision and no earlier than the latest interruption. Completed and cancelled cycles cannot be converted.
+
 ## Injection adherence
 
 Each scheduled occurrence can have at most one injection record. Completed records require an actual date, time, positive dose, and unit; skipped and missed records intentionally have no actual administration values. Updates may change the outcome or actual values, but never rewrite the scheduled snapshot.

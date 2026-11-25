@@ -65,6 +65,7 @@ type PauseRow = {
 type RevisionRow = {
   createdAt: Date;
   effectiveFrom: string;
+  previousPlannedEndDate: string | null;
   id: string;
   revisionNumber: number;
   templateScheduleMatches: boolean;
@@ -101,6 +102,7 @@ export type CycleScheduleRangeSnapshot = {
   revisions: Array<{
     cycleId: string;
     effectiveFrom: string;
+    previousPlannedEndDate?: string | null;
     id: string;
     revisionNumber: number;
     steps: Array<ProtocolTemplateScheduleInput & {
@@ -445,6 +447,7 @@ export async function getProtocolCycle(actor: AuthenticatedActor, cycleId: strin
   const revisionRows = await sql<RevisionRow[]>`
     select
       id, revision_number as "revisionNumber", effective_from::text as "effectiveFrom",
+      previous_planned_end_date::text as "previousPlannedEndDate",
       template_schedule_matches as "templateScheduleMatches", created_at as "createdAt"
     from protocol_cycle_schedule_revision
     where cycle_id = ${cycleId}
@@ -506,11 +509,13 @@ export async function getCycleScheduleDataForRange(
   const revisionRows = await sql<Array<{
     cycleId: string;
     effectiveFrom: string;
+    previousPlannedEndDate: string | null;
     id: string;
     revisionNumber: number;
   }>>`
     select revision.id, revision.cycle_id as "cycleId",
       revision.effective_from::text as "effectiveFrom",
+      revision.previous_planned_end_date::text as "previousPlannedEndDate",
       revision.revision_number as "revisionNumber"
     from protocol_cycle_schedule_revision revision
     join protocol_cycle cycle on cycle.id = revision.cycle_id
@@ -518,7 +523,6 @@ export async function getCycleScheduleDataForRange(
       and (cycle.status in ('active', 'paused') or (${includeCompleted} and cycle.status = 'completed'))
       and cycle.start_date <= ${endDate}
       and (cycle.planned_end_date is null or cycle.planned_end_date >= ${startDate})
-      and (revision.revision_number = 1 or revision.effective_from <= ${endDate})
     order by revision.cycle_id, revision.revision_number
   `;
   const stepRows = await sql<Array<ProtocolTemplateScheduleInput & {
@@ -713,6 +717,7 @@ export async function reviseProtocolCycleSchedule(
   cycleId: string,
   effectiveFrom: string,
   schedules: ProtocolTemplateScheduleInput[],
+  options: { makeOngoing?: boolean } = {},
 ) {
   parseDate(effectiveFrom, "Effective date");
   const sql = getPostgresClient();
@@ -724,14 +729,19 @@ export async function reviseProtocolCycleSchedule(
         "conflict",
       );
     }
-    if (effectiveFrom < cycle.startDate || (cycle.plannedEndDate && effectiveFrom > cycle.plannedEndDate)) {
+    const convertingToOngoing = options.makeOngoing === true && cycle.plannedEndDate !== null;
+    const plannedEndDate = convertingToOngoing ? null : cycle.plannedEndDate;
+    if (effectiveFrom < cycle.startDate || (plannedEndDate && effectiveFrom > plannedEndDate)) {
       throw new ProtocolCycleError(
         "Effective date must be within the planned cycle.",
         "invalid",
       );
     }
-    const durationDays = cycle.plannedEndDate
-      ? differenceInDays(cycle.startDate, cycle.plannedEndDate) + 1
+    if (convertingToOngoing) {
+      schedules = schedules.map((schedule) => ({ ...schedule, endDay: schedules.some((other) => other.catalogueEntryId === schedule.catalogueEntryId && other.startDay > schedule.startDay) ? schedule.endDay : null }));
+    }
+    const durationDays = plannedEndDate
+      ? differenceInDays(cycle.startDate, plannedEndDate) + 1
       : 3650;
     const submittedEndDays = schedules.map((schedule) => schedule.endDay);
     const validation = validateProtocolTemplateContent({
@@ -773,7 +783,7 @@ export async function reviseProtocolCycleSchedule(
       order by paused_on desc, created_at desc
       limit 1
     `;
-    const bounds = revisionDateBounds({ startDate: cycle.startDate, plannedEndDate: cycle.plannedEndDate, latestEffectiveFrom: latest.effectiveFrom, lastInterruptionDate: lastPause?.lastEventOn });
+    const bounds = revisionDateBounds({ startDate: cycle.startDate, plannedEndDate, latestEffectiveFrom: latest.effectiveFrom, lastInterruptionDate: lastPause?.lastEventOn });
     if (!bounds.available) throw new ProtocolCycleError("No revision dates remain before this cycle's planned end. Start a new independent cycle for a later schedule.", "invalid");
     if (effectiveFrom < bounds.minimumDate) {
       throw new ProtocolCycleError(
@@ -802,7 +812,7 @@ export async function reviseProtocolCycleSchedule(
       order by step.position
     `;
     if (
-      schedulesMatchTemplate(validation.value, {
+      !convertingToOngoing && schedulesMatchTemplate(validation.value, {
         durationDays,
         steps: currentSteps,
       })
@@ -811,7 +821,7 @@ export async function reviseProtocolCycleSchedule(
     }
 
     let templateScheduleMatches = false;
-    if (cycle.sourceTemplateVersionId) {
+    if (cycle.sourceTemplateVersionId && !convertingToOngoing) {
       const source = await loadTemplateSourceInput(transaction, cycle.sourceTemplateVersionId);
       templateScheduleMatches = source
         ? schedulesMatchTemplate(validation.value, source)
@@ -821,13 +831,14 @@ export async function reviseProtocolCycleSchedule(
     const revisionNumber = latest.revisionNumber + 1;
     await transaction`
       insert into protocol_cycle_schedule_revision (
-        id, cycle_id, revision_number, effective_from, template_schedule_matches
+        id, cycle_id, revision_number, effective_from, template_schedule_matches, previous_planned_end_date
       ) values (
         ${revisionId}, ${cycleId}, ${revisionNumber}, ${effectiveFrom},
-        ${templateScheduleMatches}
+        ${templateScheduleMatches}, ${convertingToOngoing ? cycle.plannedEndDate : null}
       )
     `;
     await insertRevisionContent(transaction, revisionId, validation.value.schedules);
+    if (convertingToOngoing) await transaction`update protocol_cycle set duration_type = 'open_ended', planned_end_date = null where id = ${cycleId}`;
     if (cycle.sourceTemplateVersionId && !templateScheduleMatches) {
       await transaction`
         update protocol_cycle

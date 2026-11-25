@@ -72,6 +72,7 @@ Blends should retain their ingredient identities in the data model. **Do not cre
 - If someone modifies a template protocol after following it, **earlier matching weeks remain** in its template aggregate, while subsequent modified weeks are excluded.
 - Both **active and completed** protocol cycles contribute weekly results when otherwise eligible.
 - Every new/repeated/extended cycle is **independent**, with its own dates, baseline, records and final report. Previous cycles remain accessible in the account but are not automatically linked as a continuous cycle.
+- Explicitly converting an existing active cycle to **ongoing** is an effective-dated schedule revision, not a new cycle. Preserve recorded injections, earlier revisions and any gap after its former planned end; continue the final stage of each compound from the chosen effective date without changing the source draft.
 - Do not compare or segment by every possible combination of overlapping peptides. A member following a matching Retatrutide template can contribute to that template's statistics even if they also follow other peptides. No combined-peptide warnings/counts are required in public charts.
 
 ## 5. Daily tracking, calendar and reminders

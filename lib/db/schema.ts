@@ -439,6 +439,7 @@ export const protocolCycleScheduleRevision = pgTable(
       .references(() => protocolCycle.id, { onDelete: "cascade" }),
     revisionNumber: integer("revision_number").notNull(),
     effectiveFrom: date("effective_from", { mode: "string" }).notNull(),
+    previousPlannedEndDate: date("previous_planned_end_date", { mode: "string" }),
     templateScheduleMatches: boolean("template_schedule_matches").default(false).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },

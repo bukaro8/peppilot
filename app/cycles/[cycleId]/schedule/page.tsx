@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Revise cycle schedule" };
 
 type SchedulePageProps = {
   params: Promise<{ cycleId: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ongoing?: string }>;
 };
 
 export default async function CycleSchedulePage({ params, searchParams }: SchedulePageProps) {
@@ -46,7 +46,7 @@ export default async function CycleSchedulePage({ params, searchParams }: Schedu
           <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em]">Revise {cycle.name}</h1>
           <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">Create a new effective-dated schedule. Revision {latest.revisionNumber} remains intact for all earlier dates.</p>
           {query.error ? <div className="mt-6"><FormMessage tone="error">{query.error}</FormMessage></div> : null}
-          <div className="mt-9"><CycleScheduleForm catalogue={(await getCatalogueEntries({ ownerUserId: actor.userId })).map(({ id, displayName }) => ({ id, displayName }))} cycleId={cycle.id} initial={latest.steps} minimumDate={bounds.minimumDate} plannedEndDate={bounds.maximumDate} /></div>
+          <div className="mt-9"><CycleScheduleForm catalogue={(await getCatalogueEntries({ ownerUserId: actor.userId })).map(({ id, displayName }) => ({ id, displayName }))} cycleId={cycle.id} initial={latest.steps} minimumDate={bounds.minimumDate} plannedEndDate={bounds.maximumDate} initialOngoing={query.ongoing === "1"} /></div>
         </div>
       </section>
     </main>

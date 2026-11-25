@@ -98,6 +98,34 @@ afterAll(async () => {
 });
 
 describe("independent protocol cycles", () => {
+  it.each(["2026-11-01", "2027-01-01"])("converts a finite active cycle to ongoing from a chosen date for %s", async (startDate) => {
+    const calendar = await import("@/lib/protocol-calendar/service");
+    const injections = await import("@/lib/injection/service");
+    const cycle = await cycles.startProtocolCycle(owner, { protocolId, startDate });
+    // A one-day cycle with stages longer than its cycle end reproduces the TRT case.
+    await sql`update protocol_cycle set planned_end_date = ${startDate} where id = ${cycle.cycleId}`;
+    const oldCycle = (await cycles.getProtocolCycle(owner, cycle.cycleId))!;
+    const event = (await calendar.getScheduledEvents(owner, startDate, startDate)).find((entry) => entry.cycleId === cycle.cycleId)!;
+    const record = await injections.createInjectionRecord(owner, event.id, { status: "completed", actualDate: startDate, actualTime: "08:00", actualDoseAmount: event.doseAmount, actualDoseUnit: event.doseUnit });
+    const oldRecord = await injections.getInjectionRecord(owner, record.recordId);
+    const effective = calendar.addCalendarDays(startDate, 3);
+    await expect(cycles.reviseProtocolCycleSchedule(owner, cycle.cycleId, effective, schedules)).rejects.toMatchObject({ code: "invalid" });
+    await expect(cycles.reviseProtocolCycleSchedule(other, cycle.cycleId, effective, schedules, { makeOngoing: true })).rejects.toMatchObject({ status: 403 });
+    await expect(cycles.reviseProtocolCycleSchedule(owner, cycle.cycleId, startDate, schedules, { makeOngoing: true })).rejects.toMatchObject({ code: "invalid" });
+    await cycles.reviseProtocolCycleSchedule(owner, cycle.cycleId, effective, schedules, { makeOngoing: true });
+    const saved = (await cycles.getProtocolCycle(owner, cycle.cycleId))!;
+    expect(saved).toMatchObject({ durationType: "open_ended", plannedEndDate: null, status: "active" });
+    expect(saved.revisions[0]).toEqual(oldCycle.revisions[0]);
+    expect(saved.revisions[1].previousPlannedEndDate).toBe(startDate);
+    expect(saved.revisions[1].steps.every((step) => step.endDay === null)).toBe(true);
+    expect(await injections.getInjectionRecord(owner, record.recordId)).toEqual(oldRecord);
+    const gap = (await calendar.getScheduledEvents(owner, calendar.addCalendarDays(startDate, 1), calendar.addCalendarDays(startDate, 2))).filter((entry) => entry.cycleId === cycle.cycleId);
+    expect(gap).toEqual([]);
+    const farDate = calendar.addCalendarDays(startDate, 1100);
+    expect((await calendar.getScheduledEvents(owner, farDate, farDate)).some((entry) => entry.cycleId === cycle.cycleId)).toBe(true);
+    expect((await injections.getDashboardInjectionActions(owner, effective)).todayActions.some((action) => action.event.cycleId === cycle.cycleId)).toBe(true);
+    expect((await protocols.getMemberProtocol(owner, protocolId))?.durationType).toBe("fixed_cycle");
+  });
   it.each(["2026-11-01", "2027-01-01"])("accepts retrospective or future revision dates for cycle starting %s and preserves logs", async (startDate) => {
     const calendar = await import("@/lib/protocol-calendar/service");
     const injections = await import("@/lib/injection/service");

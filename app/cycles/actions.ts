@@ -142,10 +142,16 @@ export async function reviseProtocolCycleScheduleAction(
       cycleId,
       String(formData.get("effectiveFrom") ?? ""),
       parseSchedules(formData),
+      { makeOngoing: formData.get("makeOngoing") === "1" },
     );
   } catch (error) {
-    redirect(`/cycles/${cycleId}/schedule?error=${encodeURIComponent(errorMessage(error))}`);
+    redirect(`/cycles/${cycleId}/schedule?${formData.get("makeOngoing") === "1" ? "ongoing=1&" : ""}error=${encodeURIComponent(errorMessage(error))}`);
   }
   revalidatePath(`/cycles/${cycleId}`);
+  revalidatePath("/cycles");
+  revalidatePath("/calendar/week");
+  revalidatePath("/calendar/month");
+  revalidatePath("/dashboard");
+  revalidatePath("/injections");
   redirect(`/cycles/${cycleId}?revised=1`);
 }

@@ -143,6 +143,8 @@ export function generateScheduledEvents(
       )
         continue;
       if (isPausedOnDate(snapshot.pauses, cycle.id, date)) continue;
+      // Extending a cycle must not create events in its previous ended gap.
+      if (revisions.some((revision) => revision.previousPlannedEndDate && date > revision.previousPlannedEndDate && date < revision.effectiveFrom)) continue;
       const revision =
         revisions
           .filter((candidate) => candidate.effectiveFrom <= date)

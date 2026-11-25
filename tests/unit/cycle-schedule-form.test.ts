@@ -14,6 +14,15 @@ function render(frequency: "weekly" | "daily", daysOfWeek: number[]) {
 }
 
 describe("cycle revision weekday selection", () => {
+  it("allows an ongoing conversion beyond the old end date with no contradictory maximum", () => {
+    const html = renderToStaticMarkup(createElement(CycleScheduleForm, { catalogue: [], cycleId: "ongoing", initial: [{ catalogueEntryId: "trt", daysOfWeek: [1, 4], doseAmount: "62", doseUnit: "mg", endDay: 1, frequency: "weekly", intervalDays: null, startDay: 1, timeOfDay: null }], minimumDate: "2026-11-24", plannedEndDate: "2026-11-23", initialOngoing: true }));
+    expect(html).toContain('name="makeOngoing" value="1"');
+    const date = html.match(/<input[^>]*name="effectiveFrom"[^>]*>/)?.[0];
+    expect(date).toContain('min="2026-11-24"');
+    expect(date).not.toContain('max=');
+    expect(html).toContain('placeholder="Ongoing"');
+    expect(html).not.toContain("No revision dates remain");
+  });
   it("does not render an impossible date picker when no revision dates remain", () => {
     const html = renderToStaticMarkup(createElement(CycleScheduleForm, { catalogue: [], cycleId: "exhausted", initial: [], minimumDate: "2026-11-24", plannedEndDate: "2026-11-23" }));
     expect(html).toContain("No revision dates remain");

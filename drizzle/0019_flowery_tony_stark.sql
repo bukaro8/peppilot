@@ -1,0 +1,1 @@
+ALTER TABLE "protocol_cycle_schedule_revision" ADD COLUMN "previous_planned_end_date" date;
