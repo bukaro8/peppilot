@@ -98,6 +98,24 @@ afterAll(async () => {
 });
 
 describe("independent protocol cycles", () => {
+  it.each(["2026-11-01", "2027-01-01"])("accepts retrospective or future revision dates for cycle starting %s and preserves logs", async (startDate) => {
+    const calendar = await import("@/lib/protocol-calendar/service");
+    const injections = await import("@/lib/injection/service");
+    const cycle = await cycles.startProtocolCycle(owner, { protocolId, startDate });
+    const [event] = (await calendar.getScheduledEvents(owner, startDate, startDate)).filter((entry) => entry.cycleId === cycle.cycleId);
+    const record = await injections.createInjectionRecord(owner, event.id, { status: "completed", actualDate: startDate, actualTime: "08:00", actualDoseAmount: event.doseAmount, actualDoseUnit: event.doseUnit });
+    const before = await injections.getInjectionRecord(owner, record.recordId);
+    const effective = calendar.addCalendarDays(startDate, 7);
+    await cycles.reviseProtocolCycleSchedule(owner, cycle.cycleId, effective, [{ ...schedules[0], frequency: "weekly", daysOfWeek: [0, 2, 4, 6] }, schedules[1]]);
+    expect((await cycles.getProtocolCycle(owner, cycle.cycleId))?.revisions).toHaveLength(2);
+    expect(await injections.getInjectionRecord(owner, record.recordId)).toEqual(before);
+    const events = (await calendar.getScheduledEvents(owner, effective, calendar.addCalendarDays(effective, 6))).filter((entry) => entry.cycleId === cycle.cycleId && entry.catalogueEntryId === schedules[0].catalogueEntryId);
+    expect(events).toHaveLength(4);
+    expect(events.every((entry) => [0, 2, 4, 6].includes(new Date(`${entry.date}T00:00:00Z`).getUTCDay()))).toBe(true);
+    await expect(cycles.reviseProtocolCycleSchedule(owner, cycle.cycleId, startDate, schedules)).rejects.toMatchObject({ code: "invalid" });
+    await expect(cycles.reviseProtocolCycleSchedule(owner, cycle.cycleId, calendar.addCalendarDays(startDate, 28), schedules)).rejects.toMatchObject({ code: "invalid" });
+    await expect(cycles.reviseProtocolCycleSchedule(other, cycle.cycleId, calendar.addCalendarDays(startDate, 14), schedules)).rejects.toMatchObject({ status: 403 });
+  });
   it("starts independent cycles with schedule snapshots and provenance", async () => {
     const first = await cycles.startProtocolCycle(owner, {
       protocolId,

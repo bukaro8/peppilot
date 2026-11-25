@@ -14,6 +14,12 @@ function render(frequency: "weekly" | "daily", daysOfWeek: number[]) {
 }
 
 describe("cycle revision weekday selection", () => {
+  it("does not render an impossible date picker when no revision dates remain", () => {
+    const html = renderToStaticMarkup(createElement(CycleScheduleForm, { catalogue: [], cycleId: "exhausted", initial: [], minimumDate: "2026-11-24", plannedEndDate: "2026-11-23" }));
+    expect(html).toContain("No revision dates remain");
+    expect(html).not.toContain('type="date"');
+    expect(html).not.toContain('type="submit"');
+  });
   it("labels saved Tuesday, Thursday, Saturday and Sunday selections", () => {
     const html = render("weekly", [0, 2, 4, 6]);
     expect(html).toContain("Selected: Tuesday, Thursday, Saturday, Sunday");

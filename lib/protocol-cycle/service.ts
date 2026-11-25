@@ -8,6 +8,7 @@ import {
   type PrivateResourceOperation,
 } from "@/lib/auth/policy";
 import { getPostgresClient } from "@/lib/db";
+import { revisionDateBounds } from "@/lib/protocol-cycle/revision-dates";
 import { schedulesMatchTemplate } from "@/lib/member-protocol/service";
 import { calculateAdministration, calculatePreparation } from "@/lib/approved-protocol/calculations";
 import {
@@ -759,7 +760,7 @@ export async function reviseProtocolCycleSchedule(
       order by revision_number desc limit 1
       for update
     `;
-    if (!latest || effectiveFrom <= latest.effectiveFrom) {
+    if (!latest) {
       throw new ProtocolCycleError(
         "A revision must take effect after the current revision.",
         "invalid",
@@ -772,9 +773,11 @@ export async function reviseProtocolCycleSchedule(
       order by paused_on desc, created_at desc
       limit 1
     `;
-    if (lastPause && effectiveFrom < lastPause.lastEventOn) {
+    const bounds = revisionDateBounds({ startDate: cycle.startDate, plannedEndDate: cycle.plannedEndDate, latestEffectiveFrom: latest.effectiveFrom, lastInterruptionDate: lastPause?.lastEventOn });
+    if (!bounds.available) throw new ProtocolCycleError("No revision dates remain before this cycle's planned end. Start a new independent cycle for a later schedule.", "invalid");
+    if (effectiveFrom < bounds.minimumDate) {
       throw new ProtocolCycleError(
-        "Effective date cannot precede the latest interruption event.",
+        `Effective date must be ${bounds.minimumDate} or later, after the latest revision and interruption.`,
         "invalid",
       );
     }

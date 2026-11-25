@@ -11,6 +11,7 @@ import { AuthorizationError } from "@/lib/auth/policy";
 import { requireActor } from "@/lib/auth/session";
 import { getCatalogueEntries } from "@/lib/catalogue/service";
 import { getProtocolCycle, ProtocolCycleError } from "@/lib/protocol-cycle/service";
+import { revisionDateBounds } from "@/lib/protocol-cycle/revision-dates";
 
 export const metadata: Metadata = { title: "Revise cycle schedule" };
 
@@ -18,12 +19,6 @@ type SchedulePageProps = {
   params: Promise<{ cycleId: string }>;
   searchParams: Promise<{ error?: string }>;
 };
-
-function nextDate(value: string) {
-  const date = new Date(`${value}T00:00:00.000Z`);
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().slice(0, 10);
-}
 
 export default async function CycleSchedulePage({ params, searchParams }: SchedulePageProps) {
   const actor = await requireActor();
@@ -39,6 +34,7 @@ export default async function CycleSchedulePage({ params, searchParams }: Schedu
   const latest = cycle.revisions.at(-1);
   if (!latest) notFound();
   const query = await searchParams;
+  const bounds = revisionDateBounds({ startDate: cycle.startDate, plannedEndDate: cycle.plannedEndDate, latestEffectiveFrom: latest.effectiveFrom, lastInterruptionDate: cycle.pauses.map((pause) => pause.resumedOn ?? pause.pausedOn).sort().at(-1) });
 
   return (
     <main className="min-h-screen bg-secondary/20">
@@ -50,7 +46,7 @@ export default async function CycleSchedulePage({ params, searchParams }: Schedu
           <h1 className="mt-2 text-3xl font-bold tracking-[-0.04em]">Revise {cycle.name}</h1>
           <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">Create a new effective-dated schedule. Revision {latest.revisionNumber} remains intact for all earlier dates.</p>
           {query.error ? <div className="mt-6"><FormMessage tone="error">{query.error}</FormMessage></div> : null}
-          <div className="mt-9"><CycleScheduleForm catalogue={(await getCatalogueEntries({ ownerUserId: actor.userId })).map(({ id, displayName }) => ({ id, displayName }))} cycleId={cycle.id} initial={latest.steps} minimumDate={nextDate(latest.effectiveFrom)} plannedEndDate={cycle.plannedEndDate} /></div>
+          <div className="mt-9"><CycleScheduleForm catalogue={(await getCatalogueEntries({ ownerUserId: actor.userId })).map(({ id, displayName }) => ({ id, displayName }))} cycleId={cycle.id} initial={latest.steps} minimumDate={bounds.minimumDate} plannedEndDate={bounds.maximumDate} /></div>
         </div>
       </section>
     </main>
