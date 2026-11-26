@@ -21,7 +21,7 @@ import type {
 } from "@/lib/injection/service";
 import {
   formatAnatomicalInjectionSite,
-  injectionSites,
+  injectionSitesForDisplay as injectionSites,
   type InjectionSiteId,
 } from "@/lib/injection/sites";
 import { formatDoseAmount } from "@/lib/protocol-template/presentation";

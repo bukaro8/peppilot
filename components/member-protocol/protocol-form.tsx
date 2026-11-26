@@ -19,6 +19,7 @@ import {
   TitrationStage,
   TitrationTimeline,
 } from "@/components/protocol-titration/timeline";
+import { FrequencySelect } from "@/components/protocol-titration/frequency-select";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
 import { initialMemberProtocolActionState } from "@/lib/member-protocol/action-state";
@@ -490,31 +491,39 @@ export function ProtocolForm({
                       <span className="text-sm font-medium">
                         Administration frequency
                       </span>
-                      <select
-                        name={`${prefix}.frequency`}
-                        value={row.frequency}
-                        onChange={(event) =>
-                          update(row.key, {
-                            frequency: event.target
-                              .value as ProtocolTemplateFrequency,
-                            daysOfWeek:
-                              event.target.value === "weekly"
-                                ? row.daysOfWeek
-                                : [],
-                            intervalDays:
-                              event.target.value === "interval_days"
-                                ? row.intervalDays
-                                : "",
-                          })
-                        }
-                        className="h-11 w-full rounded-xl border bg-background px-3"
-                      >
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly — choose days</option>
-                        <option value="interval_days">Every N days</option>
-                        <option value="as_needed">As needed</option>
-                      </select>
+                      <FrequencySelect name={`${prefix}.frequency`} value={row.frequency} onChange={(value) => update(row.key, { frequency: value })} />
                     </label>
+                    {row.frequency === "weekly" ? (
+                      <div className="space-y-2 sm:col-span-2 lg:col-span-4">
+                        <span className="text-sm font-medium">
+                          Choose weekdays
+                        </span>
+                        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                          {[1, 2, 3, 4, 5, 6, 0].map((value) => (
+                            <button
+                              key={value}
+                              type="button"
+                              aria-pressed={row.daysOfWeek.includes(value)}
+                              onClick={() => toggleDay(row.key, value)}
+                              className={`min-h-11 rounded-lg border text-xs font-semibold ${row.daysOfWeek.includes(value) ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}
+                            >
+                              {weekdayNames[value]}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                  <details className="mt-4 rounded-xl border bg-muted/20">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold">
+                      Advanced settings
+                      {storedIngredients(row.ingredientDoses).length
+                        ? " & ingredients"
+                        : ""}
+                      <ChevronDown className="size-4" />
+                    </summary>
+                    <div className="grid gap-4 border-t p-4 sm:grid-cols-2">
+                      <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={row.frequency === "interval_days"} onChange={(event) => update(row.key, { frequency: event.target.checked ? "interval_days" : "daily" })} />Use a custom interval schedule</label>
                     {row.frequency === "interval_days" ? (
                       <label className="space-y-2">
                         <span className="text-sm font-medium">
@@ -534,36 +543,7 @@ export function ProtocolForm({
                         />
                       </label>
                     ) : null}
-                    {row.frequency === "weekly" ? (
-                      <div className="space-y-2 sm:col-span-2 lg:col-span-4">
-                        <span className="text-sm font-medium">
-                          Choose weekdays
-                        </span>
-                        <div className="grid grid-cols-7 gap-1">
-                          {weekdayNames.map((day, value) => (
-                            <button
-                              key={day}
-                              type="button"
-                              aria-pressed={row.daysOfWeek.includes(value)}
-                              onClick={() => toggleDay(row.key, value)}
-                              className={`min-h-11 rounded-lg border text-xs font-semibold ${row.daysOfWeek.includes(value) ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}
-                            >
-                              {day}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                  <details className="mt-4 rounded-xl border bg-muted/20">
-                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold">
-                      Advanced settings
-                      {storedIngredients(row.ingredientDoses).length
-                        ? " & ingredients"
-                        : ""}
-                      <ChevronDown className="size-4" />
-                    </summary>
-                    <div className="grid gap-4 border-t p-4 sm:grid-cols-2">
+
                       <label className="space-y-2"><span className="text-sm font-medium">Compound dose type</span><select value={row.doseBasis} onChange={(event) => update(row.key, { doseBasis: event.target.value })} className="h-11 w-full rounded-xl border bg-background px-3"><option value="single_compound_mass">Standalone compound</option><option value="combined_blend_mass">Blend — combined dose</option><option value="combined_daily_mass">Blend — daily total</option></select></label>
                       <Button type="button" variant="outline" onClick={() => update(row.key, { ingredientDoses: JSON.stringify([...storedIngredients(row.ingredientDoses), { name: "", dose_amount: "", dose_unit: "mg" }]), ingredientsEdited: true })}>Add blend ingredient</Button>
                       <label className="space-y-2">

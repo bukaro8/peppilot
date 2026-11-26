@@ -101,6 +101,9 @@ export const injectionSites = [
 
 export type InjectionSiteId = (typeof injectionSites)[number]["id"];
 
+// Display rows pair upper left/right, then lower left/right; rotation priority is unchanged.
+export const injectionSitesForDisplay = [injectionSites[0], injectionSites[2], injectionSites[1], ...injectionSites.slice(3)];
+
 const sitesById = new Map(injectionSites.map((site) => [site.id, site]));
 
 export function isInjectionSiteId(value: string): value is InjectionSiteId {

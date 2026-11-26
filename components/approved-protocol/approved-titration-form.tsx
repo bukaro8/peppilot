@@ -16,6 +16,7 @@ import {
   TitrationTimeline,
 } from "@/components/protocol-titration/timeline";
 import { Button } from "@/components/ui/button";
+import { FrequencySelect } from "@/components/protocol-titration/frequency-select";
 import { formatApprovedDecimal } from "@/lib/approved-protocol/decimal";
 import type {
   ApprovedProtocolPreset,
@@ -46,13 +47,13 @@ type Row = {
   weekdays: string[];
 };
 const weekdays = [
-  "sunday",
   "monday",
   "tuesday",
   "wednesday",
   "thursday",
   "friday",
   "saturday",
+  "sunday",
 ];
 
 function sourceDays(stage: ApprovedScheduleStage, durationDays: number | null) {
@@ -300,11 +301,6 @@ export function ApprovedTitrationForm({
                     value={range.endDay ?? ""}
                   />
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <label className="space-y-2 sm:col-span-2">
-                      <span className="text-sm font-medium">Administrations per day{row.frequencyType === "daily" || row.doseBasis === "combined_daily_mass" ? " (required)" : " (optional)"}</span>
-                      <input className="h-11 w-full rounded-xl border bg-background px-3" type="number" min={1} max={12} step={1} name={`${prefix}.administrationsPerDay`} value={row.administrationsPerDay} required={row.frequencyType === "daily" || row.doseBasis === "combined_daily_mass"} onChange={(event) => update(row.key, { administrationsPerDay: event.target.value })} aria-describedby={`${prefix}-administrations-help`} />
-                      <p id={`${prefix}-administrations-help`} className="text-xs leading-5 text-muted-foreground">{row.doseBasis === "combined_daily_mass" ? "The dose below is the combined daily total, divided by this count for each administration. When the source leaves this unspecified, the form defaults to 1; you can change it." : "Enter the number of administrations in a day. Defaults to 1 when unspecified."}</p>
-                    </label>
                     <label className="space-y-2">
                       <span className="text-sm font-medium">
                         {row.doseBasis === "single_compound_mass"
@@ -370,42 +366,22 @@ export function ApprovedTitrationForm({
                     )}
                     <label className="space-y-2">
                       <span className="text-sm font-medium">Frequency</span>
-                      <select
-                        className="h-11 w-full rounded-xl border bg-background px-3"
-                        name={`${prefix}.frequencyType`}
-                        value={row.frequencyType}
-                        onChange={(event) =>
-                          update(row.key, {
-                            frequencyType: event.target
-                              .value as Row["frequencyType"],
-                            weekdays: [],
-                          })
-                        }
-                      >
-                        <option value="daily">Daily</option>
-                        <option value="days_per_week">
-                          Weekly — choose days
-                        </option>
-                        <option value="times_per_week">
-                          Weekly — choose days
-                        </option>
-                        <option value="interval">Every N days</option>
-                        <option value="as_needed">As needed</option>
-                      </select>
+                      <FrequencySelect name={`${prefix}.frequencyType`} value={row.frequencyType} onChange={(value) => update(row.key, { frequencyType: value === "weekly" ? (row.frequencyType === "times_per_week" ? "times_per_week" : "days_per_week") : value, weekdays: row.weekdays })} />
                     </label>
                     {weekly ? (
                       <div className="space-y-2 sm:col-span-2 lg:col-span-4">
                         <span className="text-sm font-medium">
                           Choose weekdays
                         </span>
-                        <div className="grid grid-cols-7 gap-1">
+                        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
                           {weekdays.map((day) => (
                             <label
                               key={day}
-                              className={`flex min-h-11 items-center justify-center rounded-lg border text-xs font-semibold capitalize ${row.weekdays.includes(day) ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}
+                              className={`flex min-h-11 items-center justify-center rounded-lg border text-xs font-semibold capitalize focus-within:ring-3 focus-within:ring-ring/40 ${row.weekdays.includes(day) ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}
                             >
                               <input
                                 className="sr-only"
+                                aria-label={day}
                                 type="checkbox"
                                 name={`${prefix}.weekday.${day}`}
                                 value="1"
@@ -418,6 +394,28 @@ export function ApprovedTitrationForm({
                         </div>
                       </div>
                     ) : null}
+
+                  </div>
+                  {row.doseBasis === "combined_daily_mass" ? (
+                    <p className="mt-3 rounded-lg bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+                      This is the approved combined daily total, not
+                      automatically a per-administration dose.
+                    </p>
+                  ) : null}
+                  <details className="mt-4 rounded-xl border bg-muted/20">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold">
+                      Advanced settings
+                      {row.ingredientDoses.length ? " & ingredients" : ""}
+                      <ChevronDown className="size-4" />
+                    </summary>
+                    <div className="grid gap-4 border-t p-4 sm:grid-cols-2">
+                    <label className="space-y-2 sm:col-span-2">
+                      <span className="text-sm font-medium">Administrations per day{row.frequencyType === "daily" || row.doseBasis === "combined_daily_mass" ? " (required)" : " (optional)"}</span>
+                      <input className="h-11 w-full rounded-xl border bg-background px-3" type="number" min={1} max={12} step={1} name={`${prefix}.administrationsPerDay`} value={row.administrationsPerDay} required={row.frequencyType === "daily" || row.doseBasis === "combined_daily_mass"} onChange={(event) => update(row.key, { administrationsPerDay: event.target.value })} aria-describedby={`${prefix}-administrations-help`} />
+                      <p id={`${prefix}-administrations-help`} className="text-xs leading-5 text-muted-foreground">{row.doseBasis === "combined_daily_mass" ? "The stage dose is the combined daily total, divided by this count for each administration. When the source leaves this unspecified, the form defaults to 1; you can change it." : "Enter the number of administrations in a day. Defaults to 1 when unspecified."}</p>
+                    </label>
+
+                      <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={row.frequencyType === "interval"} onChange={(event) => update(row.key, { frequencyType: event.target.checked ? "interval" : "daily" })} />Use a custom interval schedule</label>
                     {row.frequencyType === "interval" ? (
                       <label className="space-y-2">
                         <span className="text-sm font-medium">
@@ -444,20 +442,6 @@ export function ApprovedTitrationForm({
                         value=""
                       />
                     )}
-                  </div>
-                  {row.doseBasis === "combined_daily_mass" ? (
-                    <p className="mt-3 rounded-lg bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
-                      This is the approved combined daily total, not
-                      automatically a per-administration dose.
-                    </p>
-                  ) : null}
-                  <details className="mt-4 rounded-xl border bg-muted/20">
-                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold">
-                      Advanced settings
-                      {row.ingredientDoses.length ? " & ingredients" : ""}
-                      <ChevronDown className="size-4" />
-                    </summary>
-                    <div className="grid gap-4 border-t p-4 sm:grid-cols-2">
                       <label className="space-y-2">
                         <span className="text-sm font-medium">
                           Administration route

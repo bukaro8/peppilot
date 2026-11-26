@@ -5,6 +5,7 @@ import {
   formatInjectionSite,
   getInjectionSite,
   injectionSites,
+  injectionSitesForDisplay,
   isInjectionSiteId,
 } from "@/lib/injection/sites";
 
@@ -26,6 +27,14 @@ describe("injection site catalogue", () => {
     expect(formatInjectionSite(site.id)).toBe(
       `Zone ${site.zone} — ${site.region} · ${site.subzone}`,
     );
+  });
+
+  it("pairs upper and lower abdomen cards without changing rotation priority", () => {
+    expect(injectionSitesForDisplay.slice(0, 4).map((site) => site.id)).toEqual([
+      "abdomen_left_upper", "abdomen_right_upper", "abdomen_left_lower", "abdomen_right_lower",
+    ]);
+    expect(injectionSites[1].id).toBe("abdomen_left_lower");
+    expect(new Set(injectionSitesForDisplay)).toEqual(new Set(injectionSites));
   });
 
   it("handles an unspecified or invalid site", () => {

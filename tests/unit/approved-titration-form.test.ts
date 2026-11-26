@@ -9,7 +9,7 @@ import { ApprovedTitrationForm } from "@/components/approved-protocol/approved-t
 import type { ApprovedProtocolPreset } from "@/lib/approved-protocol/types";
 
 describe("approved titration form required details", () => {
-  it("defaults an unspecified count to 1 outside collapsed settings without changing the source", () => {
+  it("defaults an unspecified count to 1 inside collapsed settings without changing the source", () => {
     const source = JSON.parse(readFileSync("scripts/peptide-protocols-approved.json", "utf8"));
     const compound = source.compounds.find((item: { slug: string }) => item.slug === "cjc-1295-no-dac-ipamorelin");
     const preset = { id: "test-cjc", displayName: compound.name, durationType: "fixed_cycle", definition: compound.protocols.conservative } as ApprovedProtocolPreset;
@@ -19,7 +19,7 @@ describe("approved titration form required details", () => {
     expect(input).toContain('value="1"');
     expect(preset.definition.schedule[0].frequency.administrations_per_day).toBeNull();
     expect(input).toContain("required");
-    expect(html.indexOf(input!)).toBeLessThan(html.indexOf("<details"));
+    expect(html.indexOf(input!)).toBeGreaterThan(html.indexOf("<details"));
     expect(html.match(/name="stage\.0\.administrationsPerDay"/g)).toHaveLength(1);
     expect(html).toContain("combined daily total");
   });

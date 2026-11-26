@@ -21,7 +21,7 @@ import type { BodyMapRotation } from "@/components/injection/body-map";
 import type { ScheduledProtocolEvent } from "@/lib/protocol-calendar/service";
 import {
   formatAnatomicalInjectionSite,
-  injectionSites,
+  injectionSitesForDisplay as injectionSites,
   type InjectionSiteId,
 } from "@/lib/injection/sites";
 import { formatDoseAmount } from "@/lib/protocol-template/presentation";
